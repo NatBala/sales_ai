@@ -146,9 +146,9 @@ const metrics = [
 ];
 
 const monthlyData = [
-  { month: "Jan", aum: 512, fi: 264, etfs: 118 },
-  { month: "Feb", aum: 601, fi: 298, etfs: 143 },
-  { month: "Mar", aum: 671, fi: 330, etfs: 160 },
+  { month: "Jan", aum: 682, fi: 198, etfs: 72 },
+  { month: "Feb", aum: 445, fi: 421, etfs: 89 },
+  { month: "Mar", aum: 657, fi: 273, etfs: 260 },
 ];
 
 function DonutGauge({ pct, color, trackColor, size = 140 }: {
