@@ -157,6 +157,26 @@ export interface GeneratedPrep {
   keyObjections: string[];
 }
 
+export interface GenerateCoachBody {
+  meetingId: string;
+  leadName: string;
+  leadCompany: string;
+  meetingPurpose: string;
+  focusArea?: string;
+}
+
+export type GeneratedCoachObjectionsItem = {
+  objection: string;
+  suggestedResponse: string;
+};
+
+export interface GeneratedCoach {
+  coachingTips: string[];
+  objections: GeneratedCoachObjectionsItem[];
+  openingPitches: string[];
+  winThemes: string[];
+}
+
 export interface GenerateEngageBody {
   leadName: string;
   leadCompany: string;

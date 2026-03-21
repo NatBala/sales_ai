@@ -278,6 +278,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/GeneratedPrep"
 
+  /agents/coach-me:
+    post:
+      operationId: generateCoachingPlan
+      tags: [agents]
+      summary: Generate a pre-meeting coaching plan and role-play scenarios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateCoachBody"
+      responses:
+        "200":
+          description: Generated coaching plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedCoach"
+
   /agents/engage-me:
     post:
       operationId: generateEngagementIntelligence
@@ -681,6 +700,48 @@ components:
         clientBackground:
           type: string
         keyObjections:
+          type: array
+          items:
+            type: string
+
+    GenerateCoachBody:
+      type: object
+      required: [meetingId, leadName, leadCompany, meetingPurpose]
+      properties:
+        meetingId:
+          type: string
+        leadName:
+          type: string
+        leadCompany:
+          type: string
+        meetingPurpose:
+          type: string
+        focusArea:
+          type: string
+
+    GeneratedCoach:
+      type: object
+      required: [coachingTips, objections, openingPitches, winThemes]
+      properties:
+        coachingTips:
+          type: array
+          items:
+            type: string
+        objections:
+          type: array
+          items:
+            type: object
+            required: [objection, suggestedResponse]
+            properties:
+              objection:
+                type: string
+              suggestedResponse:
+                type: string
+        openingPitches:
+          type: array
+          items:
+            type: string
+        winThemes:
           type: array
           items:
             type: string

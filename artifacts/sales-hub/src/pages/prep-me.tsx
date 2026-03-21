@@ -5,9 +5,10 @@ import { useAgentPrepMe } from "@/hooks/use-agents";
 import type { Meeting } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, FileText, Calendar as CalendarIcon, Users, ListChecks, MessageSquare, AlertCircle } from "lucide-react";
+import { Loader2, FileText, Calendar as CalendarIcon, Users, ListChecks, MessageSquare, AlertCircle, ArrowRight, BrainCircuit } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "wouter";
 
 export default function PrepMe() {
   const { data: meetingsData, isLoading: meetingsLoading } = useMeetings();
@@ -179,6 +180,30 @@ export default function PrepMe() {
                     </Card>
 
                   </div>
+
+                  {/* Next Step CTA */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="flex items-center justify-between gap-4 bg-violet-500/5 border border-violet-500/25 rounded-2xl p-5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-violet-400/10 border border-violet-400/20 flex items-center justify-center shrink-0">
+                        <BrainCircuit className="w-5 h-5 text-violet-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Next Step</p>
+                        <p className="text-sm font-semibold text-white">Coach Me — Practice objections and sharpen your pitch</p>
+                      </div>
+                    </div>
+                    <Button asChild className="shrink-0 bg-violet-500 hover:bg-violet-400 text-white shadow-lg shadow-violet-500/20">
+                      <Link href="/coach-me">
+                        Launch <ArrowRight className="w-4 h-4 ml-1.5" />
+                      </Link>
+                    </Button>
+                  </motion.div>
+
                 </motion.div>
               </AnimatePresence>
             )}

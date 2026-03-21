@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, Target, Building2, Briefcase, TrendingUp, Save, Check } from "lucide-react";
+import { Loader2, Search, Target, Building2, Briefcase, TrendingUp, Save, Check, ArrowRight, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "wouter";
 
 export default function LeadMe() {
   const [query, setQuery] = useState("");
@@ -161,6 +162,36 @@ export default function LeadMe() {
                     </motion.div>
                   );
                 })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Sequential CTA */}
+        <AnimatePresence>
+          {savedIndices.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 24 }}
+              transition={{ type: "spring", stiffness: 300, damping: 28 }}
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-xl px-4"
+            >
+              <div className="flex items-center justify-between gap-4 bg-card/90 backdrop-blur-xl border border-cyan-400/30 rounded-2xl p-4 shadow-2xl shadow-cyan-500/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center shrink-0">
+                    <Calendar className="w-5 h-5 text-cyan-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Next Step</p>
+                    <p className="text-sm font-semibold text-white">Schedule Me — Book a meeting with your lead</p>
+                  </div>
+                </div>
+                <Button asChild className="shrink-0 bg-cyan-500 hover:bg-cyan-400 text-white shadow-lg shadow-cyan-500/25">
+                  <Link href="/leads">
+                    Proceed <ArrowRight className="w-4 h-4 ml-1.5" />
+                  </Link>
+                </Button>
               </div>
             </motion.div>
           )}

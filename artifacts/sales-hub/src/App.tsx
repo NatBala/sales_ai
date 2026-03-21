@@ -10,6 +10,7 @@ import LeadsList from "@/pages/leads";
 import LeadProfile from "@/pages/lead-profile";
 import ScheduleMe from "@/pages/schedule-me";
 import PrepMe from "@/pages/prep-me";
+import CoachMe from "@/pages/coach-me";
 import EngageMe from "@/pages/engage-me";
 import FollowMe from "@/pages/follow-me";
 
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/leads/:id" component={LeadProfile} />
       <Route path="/schedule-me/:id" component={ScheduleMe} />
       <Route path="/prep-me" component={PrepMe} />
+      <Route path="/coach-me" component={CoachMe} />
       <Route path="/engage-me" component={EngageMe} />
       <Route path="/follow-me" component={FollowMe} />
       <Route component={NotFound} />

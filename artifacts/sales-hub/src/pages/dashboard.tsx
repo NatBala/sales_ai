@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Search, Calendar, FileText, Activity, CheckSquare, ArrowRight } from "lucide-react";
+import { Search, Calendar, FileText, BrainCircuit, Activity, CheckSquare, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -35,6 +35,16 @@ const agents = [
     bg: "bg-sky-400/10",
     border: "border-sky-400/25",
     path: "/prep-me"
+  },
+  {
+    id: "coach-me",
+    title: "Coach Me",
+    desc: "Practice objection handling and hone your pitch with an AI coaching session.",
+    icon: BrainCircuit,
+    color: "text-violet-400",
+    bg: "bg-violet-400/10",
+    border: "border-violet-400/25",
+    path: "/coach-me"
   },
   {
     id: "engage-me",
@@ -87,7 +97,7 @@ export default function Dashboard() {
                 Welcome to <span className="text-gradient-primary">Command Center</span>
               </h1>
               <p className="text-lg text-muted-foreground max-w-2xl">
-                Your five specialized AI agents are standing by. Where would you like to start your workflow today?
+                Your six specialized AI agents are standing by. Work the full pipeline from lead to close.
               </p>
             </motion.div>
           </div>
@@ -95,7 +105,7 @@ export default function Dashboard() {
 
         {/* Agents Grid */}
         <div>
-          <h2 className="text-2xl font-display font-semibold text-white mb-6 pl-2">Agent Pipeline</h2>
+          <h2 className="text-2xl font-display font-semibold text-white mb-6 pl-2">Agent Pipeline — 6 Steps</h2>
           
           <motion.div 
             variants={container}

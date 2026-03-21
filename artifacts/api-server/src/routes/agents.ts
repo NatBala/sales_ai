@@ -4,6 +4,7 @@ import {
   GenerateLeadsBody,
   GenerateEmailBody,
   GenerateMeetingPrepBody,
+  GenerateCoachingPlanBody,
   GenerateEngagementIntelligenceBody,
   GenerateFollowUpTasksBody,
 } from "@workspace/api-zod";
@@ -169,6 +170,55 @@ Make everything specific, actionable, and relevant to a financial services sales
   } catch (err) {
     req.log.error({ err }, "Meeting prep generation failed");
     res.status(500).json({ error: "Failed to generate prep materials" });
+  }
+});
+
+router.post("/agents/coach-me", async (req: Request, res: Response) => {
+  const parsed = GenerateCoachingPlanBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid request" });
+    return;
+  }
+
+  const { leadName, leadCompany, meetingPurpose, focusArea } = parsed.data;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-5.2",
+      max_completion_tokens: 8192,
+      messages: [
+        {
+          role: "system",
+          content: `You are an elite sales coach for financial services professionals at Capital Group. 
+Your job is to prepare salespeople with targeted coaching before their client meetings.
+You provide practical, specific, and actionable coaching materials. Always respond with valid JSON only.`,
+        },
+        {
+          role: "user",
+          content: `Create a pre-meeting coaching plan for this upcoming meeting:
+Client: ${leadName} at ${leadCompany}
+Meeting Purpose: ${meetingPurpose}
+Focus Area: ${focusArea || "General meeting preparation"}
+
+Return a JSON object with:
+- coachingTips: Array of 4-6 specific coaching tips tailored to this client and meeting (strings). These should be strategic advice about how to handle this particular client.
+- objections: Array of 4-5 likely objections this client will raise. Each item is an object with:
+  - objection: The exact phrasing the client might use (string)
+  - suggestedResponse: A concise, effective response the salesperson should give (string, 2-3 sentences)
+- openingPitches: Array of 3 alternative opening pitch variations for the first 60 seconds of the call. Each should be distinct in tone (confident, consultative, value-first) (strings)
+- winThemes: Array of 3-4 core value propositions or "win themes" to weave throughout the conversation specific to this client's likely needs (strings)
+
+Make everything specific to a financial services / investment management context.`,
+        },
+      ],
+    });
+
+    const content = response.choices[0]?.message?.content ?? "{}";
+    const data = parseAIJson(content);
+    res.json(data);
+  } catch (err) {
+    req.log.error({ err }, "Coaching plan generation failed");
+    res.status(500).json({ error: "Failed to generate coaching plan" });
   }
 });
 

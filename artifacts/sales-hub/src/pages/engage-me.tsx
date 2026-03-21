@@ -5,7 +5,8 @@ import { useAgentEngageMe } from "@/hooks/use-agents";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Activity, Play, Square, Mic, Lightbulb, Zap, ArrowRightCircle } from "lucide-react";
+import { Loader2, Activity, Play, Square, Mic, Lightbulb, Zap, ArrowRightCircle, ArrowRight, CheckSquare } from "lucide-react";
+import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function EngageMe() {
@@ -15,6 +16,7 @@ export default function EngageMe() {
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
   const [topic, setTopic] = useState("");
   const [isActive, setIsActive] = useState(false);
+  const [sessionCompleted, setSessionCompleted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const meetings = meetingsData?.meetings?.filter(m => m.status === 'scheduled') || [];
@@ -59,7 +61,10 @@ export default function EngageMe() {
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium text-muted-foreground">Live with <span className="text-white">{selectedMeeting.leadName}</span></span>
               <Button 
-                onClick={() => setIsActive(!isActive)}
+                onClick={() => {
+                  if (isActive) setSessionCompleted(true);
+                  setIsActive(!isActive);
+                }}
                 variant={isActive ? "destructive" : "default"}
                 className={`w-32 ${!isActive ? 'bg-rose-500 hover:bg-rose-600 text-white' : ''}`}
               >
@@ -186,6 +191,34 @@ export default function EngageMe() {
                 </Button>
               </form>
             </div>
+
+            {/* Next Step CTA */}
+            <AnimatePresence>
+              {sessionCompleted && (
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 16 }}
+                  className="shrink-0 flex items-center justify-between gap-4 bg-amber-500/5 border border-amber-500/25 rounded-2xl p-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center shrink-0">
+                      <CheckSquare className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Next Step</p>
+                      <p className="text-sm font-semibold text-white">Follow Me — Turn meeting notes into action items</p>
+                    </div>
+                  </div>
+                  <Button asChild className="shrink-0 bg-amber-500 hover:bg-amber-400 text-white shadow-lg shadow-amber-500/20">
+                    <Link href="/follow-me">
+                      Proceed <ArrowRight className="w-4 h-4 ml-1.5" />
+                    </Link>
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
           </div>
         )}
       </div>

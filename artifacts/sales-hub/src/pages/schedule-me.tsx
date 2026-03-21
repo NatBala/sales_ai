@@ -77,7 +77,7 @@ export default function ScheduleMe() {
     }, {
       onSuccess: () => {
         toast({ title: "Meeting Scheduled!", description: "The outreach email has been queued." });
-        setLocation("/"); // Navigate back to dashboard
+        setLocation("/prep-me");
       }
     });
   };

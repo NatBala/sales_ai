@@ -3,6 +3,7 @@ import {
   Search,
   Calendar,
   FileText,
+  BrainCircuit,
   Activity,
   CheckSquare,
   Users,
@@ -23,6 +24,7 @@ const agents = [
   { title: "Lead Me", url: "/lead-me", icon: Search, desc: "Lead Gen" },
   { title: "Schedule Me", url: "/schedule-me", icon: Calendar, desc: "Outreach" },
   { title: "Prep Me", url: "/prep-me", icon: FileText, desc: "Meeting Prep" },
+  { title: "Coach Me", url: "/coach-me", icon: BrainCircuit, desc: "Coaching" },
   { title: "Engage Me", url: "/engage-me", icon: Activity, desc: "Live Intel" },
   { title: "Follow Me", url: "/follow-me", icon: CheckSquare, desc: "Tasks" },
 ];

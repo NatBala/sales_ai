@@ -231,6 +231,29 @@ export const GenerateMeetingPrepResponse = zod.object({
 });
 
 /**
+ * @summary Generate a pre-meeting coaching plan and role-play scenarios
+ */
+export const GenerateCoachingPlanBody = zod.object({
+  meetingId: zod.string(),
+  leadName: zod.string(),
+  leadCompany: zod.string(),
+  meetingPurpose: zod.string(),
+  focusArea: zod.string().optional(),
+});
+
+export const GenerateCoachingPlanResponse = zod.object({
+  coachingTips: zod.array(zod.string()),
+  objections: zod.array(
+    zod.object({
+      objection: zod.string(),
+      suggestedResponse: zod.string(),
+    }),
+  ),
+  openingPitches: zod.array(zod.string()),
+  winThemes: zod.array(zod.string()),
+});
+
+/**
  * @summary Generate real-time meeting intelligence
  */
 export const GenerateEngagementIntelligenceBody = zod.object({

@@ -23,12 +23,14 @@ import type {
   CreateMeetingBody,
   CreateTaskBody,
   ErrorEnvelope,
+  GenerateCoachBody,
   GenerateEmailBody,
   GenerateEngageBody,
   GenerateFollowUpBody,
   GenerateLeads200,
   GenerateLeadsBody,
   GeneratePrepBody,
+  GeneratedCoach,
   GeneratedEmail,
   GeneratedEngagement,
   GeneratedFollowUp,
@@ -1139,6 +1141,92 @@ export const useGenerateMeetingPrep = <
   TContext
 > => {
   return useMutation(getGenerateMeetingPrepMutationOptions(options));
+};
+
+/**
+ * @summary Generate a pre-meeting coaching plan and role-play scenarios
+ */
+export const getGenerateCoachingPlanUrl = () => {
+  return `/api/agents/coach-me`;
+};
+
+export const generateCoachingPlan = async (
+  generateCoachBody: GenerateCoachBody,
+  options?: RequestInit,
+): Promise<GeneratedCoach> => {
+  return customFetch<GeneratedCoach>(getGenerateCoachingPlanUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(generateCoachBody),
+  });
+};
+
+export const getGenerateCoachingPlanMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateCoachingPlan>>,
+    TError,
+    { data: BodyType<GenerateCoachBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateCoachingPlan>>,
+  TError,
+  { data: BodyType<GenerateCoachBody> },
+  TContext
+> => {
+  const mutationKey = ["generateCoachingPlan"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateCoachingPlan>>,
+    { data: BodyType<GenerateCoachBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateCoachingPlan(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateCoachingPlanMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateCoachingPlan>>
+>;
+export type GenerateCoachingPlanMutationBody = BodyType<GenerateCoachBody>;
+export type GenerateCoachingPlanMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Generate a pre-meeting coaching plan and role-play scenarios
+ */
+export const useGenerateCoachingPlan = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateCoachingPlan>>,
+    TError,
+    { data: BodyType<GenerateCoachBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateCoachingPlan>>,
+  TError,
+  { data: BodyType<GenerateCoachBody> },
+  TContext
+> => {
+  return useMutation(getGenerateCoachingPlanMutationOptions(options));
 };
 
 /**
