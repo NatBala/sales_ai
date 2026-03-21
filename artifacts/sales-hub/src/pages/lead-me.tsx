@@ -61,13 +61,31 @@ export default function LeadMe() {
           body: JSON.stringify({ audioBase64: base64, mimeType: blob.type }),
         });
 
-        if (!resp.ok) {
+        if (!resp.ok || !resp.body) {
           throw new Error("Transcription request failed");
         }
 
-        const data = await resp.json() as { text?: string; error?: string };
-        if (data.text) {
-          setQuery(data.text);
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split("\n");
+          buf = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const payload = line.slice(6).trim();
+            if (payload === "[DONE]") break;
+            try {
+              const parsed = JSON.parse(payload) as { delta?: string; error?: string };
+              if (parsed.delta) setQuery(prev => prev + parsed.delta);
+            } catch { /* skip malformed */ }
+          }
         }
       } catch (err) {
         toast({ title: "Transcription failed", description: "Please try again or type your query.", variant: "destructive" });

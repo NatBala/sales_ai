@@ -3,87 +3,13 @@ import { Layout } from "@/components/layout";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search, Calendar, FileText, BrainCircuit, Activity,
-  CheckSquare, ArrowRight, TrendingUp, Target, Award, Sparkles, ChevronDown
+  TrendingUp, Target, Award, Sparkles, ChevronDown, Plane, Users, Coffee, BarChart2, Phone, FileText, Mail
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from "recharts";
-
-const agents = [
-  {
-    id: "lead-me",
-    title: "Lead Me",
-    desc: "Generate hyper-targeted leads using natural language queries and financial data.",
-    icon: Search,
-    color: "text-blue-400",
-    bg: "bg-blue-400/10",
-    border: "border-blue-400/25",
-    path: "/lead-me"
-  },
-  {
-    id: "schedule-me",
-    title: "Schedule Me",
-    desc: "Craft highly personalized outreach emails and seamlessly book meetings.",
-    icon: Calendar,
-    color: "text-cyan-400",
-    bg: "bg-cyan-400/10",
-    border: "border-cyan-400/25",
-    path: "/leads"
-  },
-  {
-    id: "prep-me",
-    title: "Prep Me",
-    desc: "Synthesize client background, agendas, and talking points before the call.",
-    icon: FileText,
-    color: "text-sky-400",
-    bg: "bg-sky-400/10",
-    border: "border-sky-400/25",
-    path: "/prep-me"
-  },
-  {
-    id: "coach-me",
-    title: "Coach Me",
-    desc: "Practice objection handling and hone your pitch with an AI coaching session.",
-    icon: BrainCircuit,
-    color: "text-violet-400",
-    bg: "bg-violet-400/10",
-    border: "border-violet-400/25",
-    path: "/coach-me"
-  },
-  {
-    id: "engage-me",
-    title: "Engage Me",
-    desc: "Real-time conversation intelligence, objection handling, and quick facts.",
-    icon: Activity,
-    color: "text-blue-300",
-    bg: "bg-blue-300/10",
-    border: "border-blue-300/25",
-    path: "/engage-me"
-  },
-  {
-    id: "follow-me",
-    title: "Follow Me",
-    desc: "Automate post-meeting summaries and generate actionable task lists.",
-    icon: CheckSquare,
-    color: "text-teal-400",
-    bg: "bg-teal-400/10",
-    border: "border-teal-400/25",
-    path: "/follow-me"
-  }
-];
-
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.08 } }
-};
-
-const itemAnim = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
-};
 
 const metrics = [
   {
@@ -174,27 +100,10 @@ function DonutGauge({ pct, color, trackColor, size = 140 }: {
         transform="rotate(-90 60 60)"
         style={{ filter: `drop-shadow(0 0 6px ${color}66)` }}
       />
-      <text
-        x="60"
-        y="55"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill="white"
-        fontSize="20"
-        fontWeight="700"
-        fontFamily="system-ui"
-      >
+      <text x="60" y="55" textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="20" fontWeight="700" fontFamily="system-ui">
         {pct}%
       </text>
-      <text
-        x="60"
-        y="75"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill="rgba(255,255,255,0.45)"
-        fontSize="10"
-        fontFamily="system-ui"
-      >
+      <text x="60" y="75" textAnchor="middle" dominantBaseline="middle" fill="rgba(255,255,255,0.45)" fontSize="10" fontFamily="system-ui">
         of target
       </text>
     </svg>
@@ -216,6 +125,180 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     </div>
   );
 };
+
+const HOUR_H = 56;
+const START_H = 8;
+const END_H = 21;
+const HOURS = Array.from({ length: END_H - START_H }, (_, i) => START_H + i);
+
+const DAYS = [
+  { label: "Mon", date: "Mar 23", short: "23" },
+  { label: "Tue", date: "Mar 24", short: "24" },
+  { label: "Wed", date: "Mar 25", short: "25", highlight: true },
+  { label: "Thu", date: "Mar 26", short: "26" },
+  { label: "Fri", date: "Mar 27", short: "27" },
+];
+
+type EventColor = "sky" | "blue" | "violet" | "cyan" | "muted" | "amber" | "emerald";
+
+const EVENT_COLORS: Record<EventColor, { bg: string; border: string; text: string; bar: string }> = {
+  sky:     { bg: "bg-sky-500/10",     border: "border-sky-500/20",     text: "text-sky-300",     bar: "bg-sky-400" },
+  blue:    { bg: "bg-blue-500/10",    border: "border-blue-500/20",    text: "text-blue-300",    bar: "bg-blue-400" },
+  violet:  { bg: "bg-violet-500/10",  border: "border-violet-500/20",  text: "text-violet-300",  bar: "bg-violet-400" },
+  cyan:    { bg: "bg-cyan-500/10",    border: "border-cyan-500/20",    text: "text-cyan-300",    bar: "bg-cyan-400" },
+  muted:   { bg: "bg-white/[0.04]",   border: "border-white/8",        text: "text-white/50",    bar: "bg-white/25" },
+  amber:   { bg: "bg-amber-500/10",   border: "border-amber-500/25",   text: "text-amber-300",   bar: "bg-amber-400" },
+  emerald: { bg: "bg-emerald-500/10", border: "border-emerald-500/25", text: "text-emerald-300", bar: "bg-emerald-400" },
+};
+
+interface CalEvent { day: number; title: string; detail: string; start: number; end: number; color: EventColor; Icon?: React.ElementType; }
+
+const EVENTS: CalEvent[] = [
+  { day: 0, title: "Team Standup",           detail: "All-hands sync",         start: 9,    end: 9.5,  color: "sky",    Icon: Users },
+  { day: 0, title: "Pacific Wealth",         detail: "Client call",            start: 10.5, end: 11.5, color: "blue",   Icon: Phone },
+  { day: 0, title: "Cornerstone Pitch Prep", detail: "Strategy & deck review", start: 13,   end: 14,   color: "violet", Icon: FileText },
+  { day: 0, title: "CRM & Pipeline",         detail: "Admin review",           start: 15,   end: 16,   color: "muted",  Icon: BarChart2 },
+  { day: 0, title: "Prospecting Block",      detail: "Outbound calls",         start: 16.5, end: 17.5, color: "cyan",   Icon: Phone },
+
+  { day: 1, title: "Morning Standup",        detail: "Team sync",              start: 9,    end: 9.5,  color: "sky",    Icon: Users },
+  { day: 1, title: "Summit Capital",         detail: "Client call",            start: 10.5, end: 11.5, color: "blue",   Icon: Phone },
+  { day: 1, title: "Q1 Report Prep",         detail: "Internal review",        start: 13,   end: 14.5, color: "violet", Icon: FileText },
+  { day: 1, title: "Strategy Session",       detail: "Regional managers",      start: 15.5, end: 16.5, color: "muted",  Icon: Users },
+  { day: 1, title: "Flight to Chicago",      detail: "United 2847 · ORD",      start: 18,   end: 20.5, color: "amber",  Icon: Plane },
+
+  { day: 2, title: "EJ Financial Advisor",   detail: "Edward Jones · 8:00 AM", start: 8,    end: 8.5,  color: "emerald", Icon: Coffee },
+  { day: 2, title: "Prospect Call Block",    detail: "Follow-ups",             start: 10.5, end: 11.5, color: "cyan",   Icon: Phone },
+  { day: 2, title: "Lakefront Capital",      detail: "Client lunch · Chicago", start: 13,   end: 14,   color: "blue",   Icon: Users },
+  { day: 2, title: "Afternoon Calls",        detail: "Outbound",               start: 15,   end: 16,   color: "sky",    Icon: Phone },
+  { day: 2, title: "Follow-up Emails",       detail: "Close-out items",        start: 16.5, end: 17,   color: "muted",  Icon: Mail },
+
+  { day: 3, title: "Internal Alignment",     detail: "Cross-team sync",        start: 9,    end: 10,   color: "sky",    Icon: Users },
+  { day: 3, title: "Product Demo",           detail: "Client walkthrough",     start: 11,   end: 12,   color: "blue",   Icon: BarChart2 },
+  { day: 3, title: "Lunch & Learn",          detail: "Team session",           start: 13,   end: 14,   color: "sky",    Icon: Coffee },
+  { day: 3, title: "Client Presentation",    detail: "Quarterly review deck",  start: 15,   end: 16.5, color: "violet", Icon: FileText },
+  { day: 3, title: "Day Wrap-up",            detail: "Notes & follow-ups",     start: 17,   end: 17.5, color: "muted",  Icon: Mail },
+
+  { day: 4, title: "Pipeline Review",        detail: "Week metrics",           start: 9,    end: 10,   color: "sky",    Icon: BarChart2 },
+  { day: 4, title: "Prospect Calls",         detail: "Outbound block",         start: 10.5, end: 11.5, color: "cyan",   Icon: Phone },
+  { day: 4, title: "Weekly Wrap-up",         detail: "Task close-out",         start: 13,   end: 14,   color: "blue",   Icon: Users },
+  { day: 4, title: "Admin & CRM",            detail: "End-of-week update",     start: 14.5, end: 15.5, color: "muted",  Icon: BarChart2 },
+];
+
+function fmtHour(h: number) {
+  if (h === 12) return "12p";
+  if (h > 12) return `${h - 12}p`;
+  return `${h}a`;
+}
+
+function WeekCalendar() {
+  const totalH = HOURS.length * HOUR_H;
+
+  return (
+    <div className="overflow-x-auto rounded-xl">
+      <div className="min-w-[620px]">
+        {/* Day header row */}
+        <div className="grid border-b border-white/8" style={{ gridTemplateColumns: "48px repeat(5, 1fr)" }}>
+          <div />
+          {DAYS.map((d) => (
+            <div
+              key={d.label}
+              className={`text-center py-3 px-1 border-l border-white/8 ${d.highlight ? "bg-emerald-500/5" : ""}`}
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{d.label}</p>
+              <p className={`text-sm font-bold mt-0.5 ${d.highlight ? "text-emerald-300" : "text-white"}`}>{d.date}</p>
+              {d.highlight && (
+                <span className="inline-block text-[9px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded-full mt-1 font-semibold tracking-wide">
+                  Chicago
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Body */}
+        <div className="flex" style={{ height: totalH }}>
+          {/* Time gutter */}
+          <div className="w-12 shrink-0 relative">
+            {HOURS.map((h) => (
+              <div
+                key={h}
+                className="absolute w-full flex items-start justify-end pr-2"
+                style={{ top: (h - START_H) * HOUR_H, height: HOUR_H }}
+              >
+                <span className="text-[10px] text-muted-foreground/50 mt-0.5">{fmtHour(h)}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Day columns */}
+          {DAYS.map((d, dayIdx) => {
+            const dayEvents = EVENTS.filter(e => e.day === dayIdx);
+            return (
+              <div
+                key={d.label}
+                className={`flex-1 relative border-l border-white/8 ${d.highlight ? "bg-emerald-500/[0.02]" : ""}`}
+                style={{ height: totalH }}
+              >
+                {/* Hour grid lines */}
+                {HOURS.map((h) => (
+                  <div
+                    key={h}
+                    className="absolute w-full border-b border-white/[0.05]"
+                    style={{ top: (h - START_H) * HOUR_H }}
+                  />
+                ))}
+
+                {/* Free block — Wed 8:30–10:30 AM */}
+                {dayIdx === 2 && (
+                  <div
+                    className="absolute left-1 right-1 rounded-lg border border-dashed border-emerald-500/30 flex flex-col items-center justify-center gap-0.5 z-10"
+                    style={{
+                      top: (8.5 - START_H) * HOUR_H + 2,
+                      height: 2 * HOUR_H - 4,
+                    }}
+                  >
+                    <Sparkles className="w-3 h-3 text-emerald-400/40" />
+                    <p className="text-[11px] font-semibold text-emerald-400/60">Free</p>
+                    <p className="text-[9px] text-emerald-400/40">8:30 – 10:30 AM</p>
+                  </div>
+                )}
+
+                {/* Events */}
+                {dayEvents.map((evt, i) => {
+                  const c = EVENT_COLORS[evt.color];
+                  const topPx = (evt.start - START_H) * HOUR_H + 1;
+                  const rawH = (evt.end - evt.start) * HOUR_H - 3;
+                  const heightPx = Math.max(rawH, 38);
+                  const isShort = rawH < 42;
+                  const EIcon = evt.Icon;
+
+                  return (
+                    <div
+                      key={i}
+                      className={`absolute left-1 right-1 rounded-md border overflow-hidden ${c.bg} ${c.border}`}
+                      style={{ top: topPx, height: heightPx, zIndex: 20 }}
+                    >
+                      <div className={`absolute left-0 top-0 bottom-0 w-[3px] rounded-l-sm ${c.bar}`} />
+                      <div className="pl-2.5 pr-1.5 py-1 h-full flex flex-col justify-center">
+                        <div className="flex items-center gap-1 min-w-0">
+                          {EIcon && <EIcon className={`w-2.5 h-2.5 shrink-0 ${c.text} opacity-70`} />}
+                          <p className={`text-[11px] font-semibold leading-tight truncate ${c.text}`}>{evt.title}</p>
+                        </div>
+                        {!isShort && (
+                          <p className="text-[9px] text-white/35 truncate mt-0.5 pl-[14px]">{evt.detail}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
@@ -239,7 +322,6 @@ export default function Dashboard() {
           transition={{ duration: 0.4 }}
           className="space-y-5"
         >
-          {/* Header Row */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <h1 className="text-3xl font-display font-bold text-white">Q1 2026 Performance</h1>
@@ -256,7 +338,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Quarter Progress Bar */}
           <div className="h-1 bg-white/5 rounded-full overflow-hidden">
             <motion.div
               className="h-full rounded-full bg-gradient-to-r from-primary via-accent to-primary/60"
@@ -266,7 +347,6 @@ export default function Dashboard() {
             />
           </div>
 
-          {/* Three Metric Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {metrics.map((m, i) => {
               const isSelected = selectedMetric === m.label;
@@ -286,10 +366,7 @@ export default function Dashboard() {
                     style={isSelected ? { borderColor: `${m.color}55`, boxShadow: `0 0 0 1px ${m.color}33, 0 8px 24px ${m.color}15` } : {}}
                     onClick={() => m.canGenerateLeads && setSelectedMetric(isSelected ? null : m.label)}
                   >
-                    <div
-                      className="absolute inset-0 opacity-[0.03]"
-                      style={{ background: `radial-gradient(ellipse at top right, ${m.color}, transparent 70%)` }}
-                    />
+                    <div className="absolute inset-0 opacity-[0.03]" style={{ background: `radial-gradient(ellipse at top right, ${m.color}, transparent 70%)` }} />
                     <CardContent className="pt-6 pb-6">
                       <div className="flex items-start justify-between mb-4">
                         <div>
@@ -311,17 +388,13 @@ export default function Dashboard() {
                         <div className="flex flex-col items-end gap-1">
                           <DonutGauge pct={m.pct} color={m.color} trackColor={m.trackColor} size={110} />
                           {m.canGenerateLeads && (
-                            <motion.div
-                              animate={{ rotate: isSelected ? 180 : 0 }}
-                              transition={{ duration: 0.2 }}
-                            >
+                            <motion.div animate={{ rotate: isSelected ? 180 : 0 }} transition={{ duration: 0.2 }}>
                               <ChevronDown className="w-4 h-4 text-muted-foreground" />
                             </motion.div>
                           )}
                         </div>
                       </div>
 
-                      {/* Linear Progress */}
                       <div className="space-y-1.5">
                         <div className="flex justify-between text-xs text-muted-foreground">
                           <span>Progress</span>
@@ -340,7 +413,6 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      {/* Expandable Generate Leads Panel */}
                       <AnimatePresence>
                         {isSelected && m.canGenerateLeads && (
                           <motion.div
@@ -350,18 +422,11 @@ export default function Dashboard() {
                             transition={{ duration: 0.25, ease: "easeInOut" }}
                             className="overflow-hidden"
                           >
-                            <div
-                              className="rounded-xl p-4 border"
-                              style={{ background: `${m.color}08`, borderColor: `${m.color}25` }}
-                            >
+                            <div className="rounded-xl p-4 border" style={{ background: `${m.color}08`, borderColor: `${m.color}25` }}>
                               <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
                                 You're <span className="text-white font-semibold">{100 - m.pct}%</span> away from your {m.label} target. Generate fresh leads to close the gap.
                               </p>
-                              <Button
-                                asChild
-                                className="w-full font-semibold shadow-md"
-                                style={{ background: m.color, color: "#fff" }}
-                              >
+                              <Button asChild className="w-full font-semibold shadow-md" style={{ background: m.color, color: "#fff" }}>
                                 <Link href={`/lead-me?q=${encodeURIComponent(m.leadQuery)}`}>
                                   <Sparkles className="w-4 h-4 mr-2" />
                                   Generate {m.label} Leads
@@ -387,27 +452,14 @@ export default function Dashboard() {
             <CardContent className="pt-6">
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={monthlyData} barCategoryGap="35%" barGap={4}>
-                  <XAxis
-                    dataKey="month"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 12 }}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 11 }}
-                    tickFormatter={(v) => `$${v}M`}
-                    width={52}
-                  />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 12 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 11 }} tickFormatter={(v) => `$${v}M`} width={52} />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
                   <Bar dataKey="aum" name="Total AUM" radius={[4, 4, 0, 0]} fill="#3b82f6" />
                   <Bar dataKey="fi" name="Fixed Income" radius={[4, 4, 0, 0]} fill="#2dd4bf" />
                   <Bar dataKey="etfs" name="Active ETFs" radius={[4, 4, 0, 0]} fill="#a78bfa" />
                 </BarChart>
               </ResponsiveContainer>
-
-              {/* Legend */}
               <div className="flex items-center gap-5 mt-4 justify-center">
                 {[
                   { color: "#3b82f6", label: "Total AUM" },
@@ -424,40 +476,39 @@ export default function Dashboard() {
           </Card>
         </motion.div>
 
-        {/* Agents Grid */}
-        <div>
-          <h2 className="text-xl font-display font-semibold text-white mb-5 pl-1">Agent Pipeline — 6 Steps</h2>
+        {/* Weekly Calendar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-xl font-display font-semibold text-white">This Week</h2>
+              <p className="text-muted-foreground text-sm mt-0.5">March 23 – 27, 2026</p>
+            </div>
+            <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
+              {[
+                { color: "bg-blue-400", label: "Client" },
+                { color: "bg-violet-400", label: "Strategy" },
+                { color: "bg-cyan-400", label: "Prospecting" },
+                { color: "bg-amber-400", label: "Travel" },
+                { color: "bg-emerald-400", label: "Priority" },
+              ].map(l => (
+                <div key={l.label} className="hidden sm:flex items-center gap-1.5">
+                  <span className={`w-2 h-2 rounded-full ${l.color}`} />
+                  {l.label}
+                </div>
+              ))}
+            </div>
+          </div>
 
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
-          >
-            {agents.map((agent) => (
-              <motion.div key={agent.id} variants={itemAnim}>
-                <Card className="h-full bg-card/50 backdrop-blur-sm border-white/5 hover:border-white/15 transition-all duration-300 group hover:-translate-y-1 hover:shadow-xl">
-                  <CardHeader>
-                    <div className={`w-12 h-12 rounded-2xl ${agent.bg} ${agent.border} border flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300`}>
-                      <agent.icon className={`w-6 h-6 ${agent.color}`} />
-                    </div>
-                    <CardTitle className="text-lg text-white">{agent.title}</CardTitle>
-                    <CardDescription className="text-sm mt-1.5 leading-relaxed">
-                      {agent.desc}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pt-2 mt-auto">
-                    <Button asChild variant="secondary" className="w-full bg-secondary/50 hover:bg-secondary text-white group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                      <Link href={agent.path}>
-                        Launch Agent <ArrowRight className="w-4 h-4 ml-2" />
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
+          <Card className="bg-card/40 border-white/8 overflow-hidden">
+            <CardContent className="p-0">
+              <WeekCalendar />
+            </CardContent>
+          </Card>
+        </motion.div>
 
       </div>
     </Layout>

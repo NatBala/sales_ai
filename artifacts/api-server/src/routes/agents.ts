@@ -92,10 +92,29 @@ router.post("/agents/lead-me/transcribe", async (req: Request, res: Response) =>
     const buf = Buffer.from(audioBase64, "base64");
     const { buffer, format } = await ensureCompatibleFormat(buf);
     const text = await speechToText(buffer, format);
-    res.json({ text });
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+
+    const words = text.trim().split(/\s+/);
+    for (let i = 0; i < words.length; i++) {
+      const delta = (i === 0 ? "" : " ") + words[i];
+      res.write(`data: ${JSON.stringify({ delta })}\n\n`);
+      await new Promise(r => setTimeout(r, 35));
+    }
+
+    res.write("data: [DONE]\n\n");
+    res.end();
   } catch (err) {
     req.log.error({ err }, "Lead Me transcription failed");
-    res.status(500).json({ error: "Transcription failed" });
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Transcription failed" });
+    } else {
+      res.write(`data: ${JSON.stringify({ error: "Transcription failed" })}\n\n`);
+      res.end();
+    }
   }
 });
 
