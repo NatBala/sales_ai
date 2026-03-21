@@ -4,9 +4,19 @@ import {
   useCreateTask as useGeneratedCreateTask,
   useCompleteTask as useGeneratedCompleteTask,
   getGetMeetingTasksQueryKey,
+  getMeetingTasks,
 } from "@workspace/api-client-react";
+import type { UseQueryOptions } from "@tanstack/react-query";
 
-export const useMeetingTasks = useGetMeetingTasks;
+export function useMeetingTasks(meetingId: string) {
+  return useGetMeetingTasks(meetingId, {
+    query: {
+      enabled: !!meetingId,
+      queryKey: getGetMeetingTasksQueryKey(meetingId),
+      queryFn: () => getMeetingTasks(meetingId),
+    } as UseQueryOptions<Awaited<ReturnType<typeof getMeetingTasks>>>,
+  });
+}
 
 export function useCreateTask(meetingId: string) {
   const queryClient = useQueryClient();
@@ -24,7 +34,6 @@ export function useCompleteTask(meetingId: string) {
   return useGeneratedCompleteTask({
     mutation: {
       onSuccess: () => {
-        // Also invalidate the specific meeting's tasks to reflect the completed state
         queryClient.invalidateQueries({ queryKey: getGetMeetingTasksQueryKey(meetingId) });
       },
     },

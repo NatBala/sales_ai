@@ -105,6 +105,17 @@ router.post("/meetings/:id/tasks", async (req: Request, res: Response) => {
   }
 
   const taskMeetingId = req.params.id as string;
+
+  const [meeting] = await db
+    .select({ id: meetingsTable.id })
+    .from(meetingsTable)
+    .where(and(eq(meetingsTable.id, taskMeetingId), eq(meetingsTable.userId, req.user.id)));
+
+  if (!meeting) {
+    res.status(404).json({ error: "Meeting not found" });
+    return;
+  }
+
   const [task] = await db
     .insert(tasksTable)
     .values({

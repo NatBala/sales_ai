@@ -10,6 +10,20 @@ import {
 
 const router: IRouter = Router();
 
+function parseAIJson(content: string): Record<string, unknown> {
+  const jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/) ?? content.match(/({[\s\S]*})/);
+  const raw = jsonMatch ? jsonMatch[1] : content;
+  try {
+    const parsed: unknown = JSON.parse(raw.trim());
+    if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+    return {};
+  } catch {
+    return {};
+  }
+}
+
 router.post("/agents/lead-me", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
     res.status(401).json({ error: "Unauthorized" });
@@ -61,7 +75,7 @@ Make the data realistic and varied. High scores (85+) for top matches, 70-84 for
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    const data = JSON.parse(content);
+    const data = parseAIJson(content);
     res.json(data);
   } catch (err) {
     req.log.error({ err }, "Lead generation failed");
@@ -112,7 +126,7 @@ The email should feel hand-written, not templated. Reference their role and comp
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    const data = JSON.parse(content);
+    const data = parseAIJson(content);
     res.json(data);
   } catch (err) {
     req.log.error({ err }, "Email generation failed");
@@ -165,7 +179,7 @@ Make everything specific, actionable, and relevant to a financial services sales
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    const data = JSON.parse(content);
+    const data = parseAIJson(content);
     res.json(data);
   } catch (err) {
     req.log.error({ err }, "Meeting prep generation failed");
@@ -216,7 +230,7 @@ Keep everything brief and immediately actionable for a live meeting.`,
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    const data = JSON.parse(content);
+    const data = parseAIJson(content);
     res.json(data);
   } catch (err) {
     req.log.error({ err }, "Engagement intelligence generation failed");
@@ -265,7 +279,7 @@ Tasks should be prioritized (most urgent first) and specific to what was discuss
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    const data = JSON.parse(content);
+    const data = parseAIJson(content);
     res.json(data);
   } catch (err) {
     req.log.error({ err }, "Follow-up task generation failed");
