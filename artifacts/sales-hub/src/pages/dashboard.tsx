@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { Layout } from "@/components/layout";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Calendar, FileText, BrainCircuit, Activity,
-  CheckSquare, ArrowRight, TrendingUp, Target, Award
+  CheckSquare, ArrowRight, TrendingUp, Target, Award, Sparkles, ChevronDown
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,8 @@ const metrics = [
     iconColor: "text-blue-400",
     iconBg: "bg-blue-400/10",
     iconBorder: "border-blue-400/20",
+    canGenerateLeads: false,
+    leadQuery: "",
   },
   {
     label: "Fixed Income",
@@ -118,6 +121,8 @@ const metrics = [
     iconColor: "text-teal-400",
     iconBg: "bg-teal-400/10",
     iconBorder: "border-teal-400/20",
+    canGenerateLeads: true,
+    leadQuery: "Fixed income fund managers and institutional allocators seeking yield opportunities",
   },
   {
     label: "Active ETFs",
@@ -135,6 +140,8 @@ const metrics = [
     iconColor: "text-violet-400",
     iconBg: "bg-violet-400/10",
     iconBorder: "border-violet-400/20",
+    canGenerateLeads: true,
+    leadQuery: "ETF strategists and portfolio managers looking to expand active ETF exposure",
   }
 ];
 
@@ -211,6 +218,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function Dashboard() {
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+
   const today = new Date();
   const qEnd = new Date(2026, 2, 31);
   const qStart = new Date(2026, 0, 1);
@@ -259,53 +268,114 @@ export default function Dashboard() {
 
           {/* Three Metric Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {metrics.map((m, i) => (
-              <motion.div
-                key={m.label}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 + i * 0.1, duration: 0.4 }}
-              >
-                <Card className="relative overflow-hidden bg-card/40 border-white/8 hover:border-white/15 transition-all duration-300">
-                  <div
-                    className="absolute inset-0 opacity-[0.03]"
-                    style={{ background: `radial-gradient(ellipse at top right, ${m.color}, transparent 70%)` }}
-                  />
-                  <CardContent className="pt-6 pb-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <div className={`w-9 h-9 rounded-xl ${m.iconBg} border ${m.iconBorder} flex items-center justify-center mb-3`}>
-                          <m.icon className={`w-4.5 h-4.5 ${m.iconColor}`} />
+            {metrics.map((m, i) => {
+              const isSelected = selectedMetric === m.label;
+              return (
+                <motion.div
+                  key={m.label}
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 + i * 0.1, duration: 0.4 }}
+                >
+                  <Card
+                    className={`relative overflow-hidden bg-card/40 transition-all duration-300 ${
+                      m.canGenerateLeads
+                        ? "cursor-pointer hover:border-white/20 hover:-translate-y-0.5 hover:shadow-lg"
+                        : "border-white/8"
+                    } ${isSelected ? "shadow-lg" : "border-white/8"}`}
+                    style={isSelected ? { borderColor: `${m.color}55`, boxShadow: `0 0 0 1px ${m.color}33, 0 8px 24px ${m.color}15` } : {}}
+                    onClick={() => m.canGenerateLeads && setSelectedMetric(isSelected ? null : m.label)}
+                  >
+                    <div
+                      className="absolute inset-0 opacity-[0.03]"
+                      style={{ background: `radial-gradient(ellipse at top right, ${m.color}, transparent 70%)` }}
+                    />
+                    <CardContent className="pt-6 pb-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className={`w-9 h-9 rounded-xl ${m.iconBg} border ${m.iconBorder} flex items-center justify-center`}>
+                              <m.icon className={`w-4 h-4 ${m.iconColor}`} />
+                            </div>
+                            {m.canGenerateLeads && (
+                              <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border"
+                                style={{ color: m.color, borderColor: `${m.color}40`, background: `${m.color}10` }}>
+                                Click to expand
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium text-muted-foreground">{m.label}</p>
+                          <p className="text-2xl font-bold text-white mt-0.5">{m.displayAchieved}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">of {m.displayTarget} target</p>
                         </div>
-                        <p className="text-sm font-medium text-muted-foreground">{m.label}</p>
-                        <p className="text-2xl font-bold text-white mt-0.5">{m.displayAchieved}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">of {m.displayTarget} target</p>
+                        <div className="flex flex-col items-end gap-1">
+                          <DonutGauge pct={m.pct} color={m.color} trackColor={m.trackColor} size={110} />
+                          {m.canGenerateLeads && (
+                            <motion.div
+                              animate={{ rotate: isSelected ? 180 : 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            </motion.div>
+                          )}
+                        </div>
                       </div>
-                      <DonutGauge pct={m.pct} color={m.color} trackColor={m.trackColor} size={110} />
-                    </div>
 
-                    {/* Linear Progress */}
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Progress</span>
-                        <span className="text-emerald-400 font-medium flex items-center gap-1">
-                          <TrendingUp className="w-3 h-3" /> {m.trend} vs Q4
-                        </span>
+                      {/* Linear Progress */}
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>Progress</span>
+                          <span className="text-emerald-400 font-medium flex items-center gap-1">
+                            <TrendingUp className="w-3 h-3" /> {m.trend} vs Q4
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                          <motion.div
+                            className="h-full rounded-full"
+                            style={{ background: m.color }}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${m.pct}%` }}
+                            transition={{ delay: 0.4 + i * 0.1, duration: 0.8, ease: "easeOut" }}
+                          />
+                        </div>
                       </div>
-                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full rounded-full"
-                          style={{ background: m.color }}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${m.pct}%` }}
-                          transition={{ delay: 0.4 + i * 0.1, duration: 0.8, ease: "easeOut" }}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+
+                      {/* Expandable Generate Leads Panel */}
+                      <AnimatePresence>
+                        {isSelected && m.canGenerateLeads && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                            animate={{ opacity: 1, height: "auto", marginTop: 16 }}
+                            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                            className="overflow-hidden"
+                          >
+                            <div
+                              className="rounded-xl p-4 border"
+                              style={{ background: `${m.color}08`, borderColor: `${m.color}25` }}
+                            >
+                              <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+                                You're <span className="text-white font-semibold">{100 - m.pct}%</span> away from your {m.label} target. Generate fresh leads to close the gap.
+                              </p>
+                              <Button
+                                asChild
+                                className="w-full font-semibold shadow-md"
+                                style={{ background: m.color, color: "#fff" }}
+                              >
+                                <Link href={`/lead-me?q=${encodeURIComponent(m.leadQuery)}`}>
+                                  <Sparkles className="w-4 h-4 mr-2" />
+                                  Generate {m.label} Leads
+                                </Link>
+                              </Button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
 
           {/* Monthly Bar Chart */}

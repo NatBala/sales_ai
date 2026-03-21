@@ -10,10 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Search, Target, Building2, Briefcase, TrendingUp, Save, Check, ArrowRight, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 
 export default function LeadMe() {
-  const [query, setQuery] = useState("");
+  const search = useSearch();
+  const initialQuery = new URLSearchParams(search).get("q") ?? "";
+  const [query, setQuery] = useState(initialQuery);
   const { mutate: generateLeads, isPending: isGenerating, data } = useAgentLeadMe();
   const { mutate: saveLead, isPending: isSaving } = useCreateLead();
   const { toast } = useToast();
