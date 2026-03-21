@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Layout } from "@/components/layout";
 import { useAgentLeadMe } from "@/hooks/use-agents";
 import { useCreateLead } from "@/hooks/use-leads";
@@ -11,7 +11,7 @@ import {
   Loader2, Search, Building2, TrendingUp,
   Save, Check, ArrowRight, Calendar, Mic, MicOff,
   ChevronDown, ChevronUp, MapPin, Zap, Users, ExternalLink,
-  SlidersHorizontal
+  SlidersHorizontal, Database, Brain, Filter, Star, BarChart3, CheckCircle2, Sparkles, Network
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -343,6 +343,133 @@ function AdvisorExpandedView({ lead, advisor }: { lead: GeneratedLead; advisor: 
   );
 }
 
+const PROGRESS_STEPS = [
+  { icon: Database,  label: "Connecting to advisor database",          detail: "Loading 200 advisor records from Vanguard CRM…",            ms: 600 },
+  { icon: Brain,     label: "Parsing your query with AI",              detail: "Extracting intent, filters, and target criteria…",           ms: 900 },
+  { icon: Filter,    label: "Applying segmentation & territory filters", detail: "Narrowing by firm, segment, county, and channel…",          ms: 700 },
+  { icon: Network,   label: "Identifying matching advisors",            detail: "Cross-referencing buying units and competitor exposure…",     ms: 800 },
+  { icon: BarChart3, label: "Scoring opportunities across 200 advisors", detail: "Calculating FI, ETF, and alpha opportunity for each match…", ms: 700 },
+  { icon: Star,      label: "Running AI fit scoring",                   detail: "Ranking advisors by alignment with your search intent…",     ms: 600 },
+  { icon: Sparkles,  label: "Finalizing your top matches",              detail: "Preparing advisor cards and AI analysis…",                   ms: 500 },
+];
+
+function GeneratingProgress({ step }: { step: number }) {
+  const total = PROGRESS_STEPS.length;
+  const pct = Math.min(Math.round((step / total) * 100), 98);
+
+  return (
+    <motion.div
+      key="progress"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.35 }}
+    >
+      <Card className="bg-card/40 border-primary/15 overflow-hidden">
+        <CardContent className="p-6 space-y-5">
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Generating your leads…</p>
+              <p className="text-xs text-muted-foreground">AI is searching your advisor dataset</p>
+            </div>
+            <div className="ml-auto text-right">
+              <p className="text-2xl font-bold text-primary">{pct}%</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">complete</p>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-primary via-blue-400 to-primary/70"
+              animate={{ width: `${pct}%` }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            />
+          </div>
+
+          {/* Steps list */}
+          <div className="space-y-2">
+            {PROGRESS_STEPS.map((s, i) => {
+              const done = i < step;
+              const active = i === step;
+              const pending = i > step;
+              const Icon = s.icon;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: pending ? 0.3 : 1, x: 0 }}
+                  transition={{ delay: i * 0.05, duration: 0.3 }}
+                  className={`flex items-start gap-3 rounded-xl px-3 py-2.5 transition-all duration-300 ${
+                    active  ? "bg-primary/8 border border-primary/20" :
+                    done    ? "bg-white/[0.02]" : ""
+                  }`}
+                >
+                  {/* Icon / status indicator */}
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                    done   ? "bg-emerald-500/15 border border-emerald-500/25" :
+                    active ? "bg-primary/15 border border-primary/30" :
+                             "bg-white/4 border border-white/8"
+                  }`}>
+                    {done ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    ) : active ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
+                      >
+                        <Loader2 className="w-3.5 h-3.5 text-primary" />
+                      </motion.div>
+                    ) : (
+                      <Icon className="w-3.5 h-3.5 text-muted-foreground/40" />
+                    )}
+                  </div>
+
+                  {/* Text */}
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-semibold leading-tight ${
+                      done ? "text-white/60" : active ? "text-white" : "text-muted-foreground/50"
+                    }`}>
+                      {s.label}
+                    </p>
+                    {active && (
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-xs text-muted-foreground mt-0.5"
+                      >
+                        {s.detail}
+                      </motion.p>
+                    )}
+                  </div>
+
+                  {/* Done tick / timing */}
+                  {done && (
+                    <span className="text-[10px] text-emerald-500/60 font-medium shrink-0 mt-1">done</span>
+                  )}
+                  {active && (
+                    <motion.span
+                      animate={{ opacity: [0.4, 1, 0.4] }}
+                      transition={{ repeat: Infinity, duration: 1.2 }}
+                      className="text-[10px] text-primary/70 font-medium shrink-0 mt-1"
+                    >
+                      running…
+                    </motion.span>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
 export default function LeadMe() {
   const [query, setQuery] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -353,6 +480,32 @@ export default function LeadMe() {
   const { toast } = useToast();
   const [savedIndices, setSavedIndices] = useState<number[]>([]);
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+
+  const [progressStep, setProgressStep] = useState(0);
+  const progressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (isGenerating) {
+      setProgressStep(0);
+      let step = 0;
+
+      const advance = () => {
+        step += 1;
+        if (step < PROGRESS_STEPS.length) {
+          setProgressStep(step);
+          progressTimerRef.current = setTimeout(advance, PROGRESS_STEPS[step].ms);
+        }
+      };
+
+      progressTimerRef.current = setTimeout(advance, PROGRESS_STEPS[0].ms);
+    } else {
+      if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
+    }
+
+    return () => {
+      if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
+    };
+  }, [isGenerating]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -504,10 +657,13 @@ export default function LeadMe() {
           )}
         </AnimatePresence>
 
-        {/* Results */}
+        {/* Results / Progress */}
         <AnimatePresence mode="wait">
-          {data?.leads && data.leads.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+          {isGenerating ? (
+            <GeneratingProgress key="generating" step={progressStep} />
+          ) : null}
+          {!isGenerating && data?.leads && data.leads.length > 0 && (
+            <motion.div key="results" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
 
               {/* Query Intelligence Panel */}
               {(data as any).parsedFilters && (
