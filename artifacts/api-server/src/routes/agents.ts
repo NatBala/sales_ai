@@ -25,11 +25,6 @@ function parseAIJson(content: string): Record<string, unknown> {
 }
 
 router.post("/agents/lead-me", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
   const parsed = GenerateLeadsBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request" });
@@ -84,11 +79,6 @@ Make the data realistic and varied. High scores (85+) for top matches, 70-84 for
 });
 
 router.post("/agents/schedule-me", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
   const parsed = GenerateEmailBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request" });
@@ -135,11 +125,6 @@ The email should feel hand-written, not templated. Reference their role and comp
 });
 
 router.post("/agents/prep-me", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
   const parsed = GenerateMeetingPrepBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request" });
@@ -188,11 +173,6 @@ Make everything specific, actionable, and relevant to a financial services sales
 });
 
 router.post("/agents/engage-me", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
   const parsed = GenerateEngagementIntelligenceBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request" });
@@ -239,11 +219,6 @@ Keep everything brief and immediately actionable for a live meeting.`,
 });
 
 router.post("/agents/follow-me", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
   const parsed = GenerateFollowUpTasksBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request" });

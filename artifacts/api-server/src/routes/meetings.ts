@@ -4,6 +4,7 @@ import { eq, and } from "drizzle-orm";
 import { CreateMeetingBody, CreateTaskBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+const DEMO_USER_ID = "demo-user";
 
 function formatMeeting(m: typeof meetingsTable.$inferSelect) {
   return {
@@ -32,27 +33,17 @@ function formatTask(t: typeof tasksTable.$inferSelect) {
   };
 }
 
-router.get("/meetings", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
+router.get("/meetings", async (_req: Request, res: Response) => {
   const meetings = await db
     .select()
     .from(meetingsTable)
-    .where(eq(meetingsTable.userId, req.user.id))
+    .where(eq(meetingsTable.userId, DEMO_USER_ID))
     .orderBy(meetingsTable.scheduledAt);
 
   res.json({ meetings: meetings.map(formatMeeting) });
 });
 
 router.post("/meetings", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
   const parsed = CreateMeetingBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request" });
@@ -63,7 +54,7 @@ router.post("/meetings", async (req: Request, res: Response) => {
     .insert(meetingsTable)
     .values({
       ...parsed.data,
-      userId: req.user.id,
+      userId: DEMO_USER_ID,
       scheduledAt: new Date(parsed.data.scheduledAt),
     })
     .returning();
@@ -72,11 +63,6 @@ router.post("/meetings", async (req: Request, res: Response) => {
 });
 
 router.get("/meetings/:id/tasks", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
   const meetingId = req.params.id as string;
   const tasks = await db
     .select()
@@ -84,7 +70,7 @@ router.get("/meetings/:id/tasks", async (req: Request, res: Response) => {
     .where(
       and(
         eq(tasksTable.meetingId, meetingId),
-        eq(tasksTable.userId, req.user.id),
+        eq(tasksTable.userId, DEMO_USER_ID),
       ),
     )
     .orderBy(tasksTable.createdAt);
@@ -93,11 +79,6 @@ router.get("/meetings/:id/tasks", async (req: Request, res: Response) => {
 });
 
 router.post("/meetings/:id/tasks", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
   const parsed = CreateTaskBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request" });
@@ -109,7 +90,7 @@ router.post("/meetings/:id/tasks", async (req: Request, res: Response) => {
   const [meeting] = await db
     .select({ id: meetingsTable.id })
     .from(meetingsTable)
-    .where(and(eq(meetingsTable.id, taskMeetingId), eq(meetingsTable.userId, req.user.id)));
+    .where(and(eq(meetingsTable.id, taskMeetingId), eq(meetingsTable.userId, DEMO_USER_ID)));
 
   if (!meeting) {
     res.status(404).json({ error: "Meeting not found" });
@@ -121,7 +102,7 @@ router.post("/meetings/:id/tasks", async (req: Request, res: Response) => {
     .values({
       ...parsed.data,
       meetingId: taskMeetingId,
-      userId: req.user.id,
+      userId: DEMO_USER_ID,
     })
     .returning();
 
@@ -129,11 +110,6 @@ router.post("/meetings/:id/tasks", async (req: Request, res: Response) => {
 });
 
 router.patch("/tasks/:id/complete", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
   const taskId = req.params.id as string;
   const [task] = await db
     .update(tasksTable)
@@ -141,7 +117,7 @@ router.patch("/tasks/:id/complete", async (req: Request, res: Response) => {
     .where(
       and(
         eq(tasksTable.id, taskId),
-        eq(tasksTable.userId, req.user.id),
+        eq(tasksTable.userId, DEMO_USER_ID),
       ),
     )
     .returning();

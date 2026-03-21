@@ -676,6 +676,13 @@ importers:
         version: 19.2.14
 
   scripts:
+    dependencies:
+      '@workspace/db':
+        specifier: workspace:*
+        version: link:../lib/db
+      '@workspace/integrations-openai-ai-server':
+        specifier: workspace:*
+        version: link:../lib/integrations-openai-ai-server
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

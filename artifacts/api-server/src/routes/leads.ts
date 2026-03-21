@@ -4,17 +4,13 @@ import { eq, and } from "drizzle-orm";
 import { CreateLeadBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+const DEMO_USER_ID = "demo-user";
 
-router.get("/leads", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
+router.get("/leads", async (_req: Request, res: Response) => {
   const leads = await db
     .select()
     .from(leadsTable)
-    .where(eq(leadsTable.userId, req.user.id))
+    .where(eq(leadsTable.userId, DEMO_USER_ID))
     .orderBy(leadsTable.createdAt);
 
   res.json({
@@ -40,11 +36,6 @@ router.get("/leads", async (req: Request, res: Response) => {
 });
 
 router.post("/leads", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
   const parsed = CreateLeadBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request" });
@@ -53,7 +44,7 @@ router.post("/leads", async (req: Request, res: Response) => {
 
   const [lead] = await db
     .insert(leadsTable)
-    .values({ ...parsed.data, userId: req.user.id })
+    .values({ ...parsed.data, userId: DEMO_USER_ID })
     .returning();
 
   res.status(201).json({
@@ -77,16 +68,11 @@ router.post("/leads", async (req: Request, res: Response) => {
 });
 
 router.get("/leads/:id", async (req: Request, res: Response) => {
-  if (!req.isAuthenticated()) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
   const leadId = req.params.id as string;
   const [lead] = await db
     .select()
     .from(leadsTable)
-    .where(and(eq(leadsTable.id, leadId), eq(leadsTable.userId, req.user.id)));
+    .where(and(eq(leadsTable.id, leadId), eq(leadsTable.userId, DEMO_USER_ID)));
 
   if (!lead) {
     res.status(404).json({ error: "Lead not found" });
