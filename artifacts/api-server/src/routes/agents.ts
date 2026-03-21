@@ -88,28 +88,14 @@ router.post("/agents/lead-me/transcribe", async (req: Request, res: Response) =>
     return;
   }
 
-  const format: "webm" | "mp3" | "wav" =
-    mimeType?.includes("mp4") || mimeType?.includes("aac") ? "mp3" : "webm";
-
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-  res.flushHeaders();
-
   try {
     const buf = Buffer.from(audioBase64, "base64");
-    const stream = await speechToTextStream(buf, format);
-
-    for await (const delta of stream) {
-      res.write(`data: ${JSON.stringify({ delta })}\n\n`);
-    }
-
-    res.write("data: [DONE]\n\n");
-    res.end();
+    const { buffer, format } = await ensureCompatibleFormat(buf);
+    const text = await speechToText(buffer, format);
+    res.json({ text });
   } catch (err) {
     req.log.error({ err }, "Lead Me transcription failed");
-    res.write(`data: ${JSON.stringify({ error: "Transcription failed" })}\n\n`);
-    res.end();
+    res.status(500).json({ error: "Transcription failed" });
   }
 });
 
