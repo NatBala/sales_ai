@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/layout";
-import { useParams, useLocation } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import { useLead } from "@/hooks/use-leads";
 import { useAgentScheduleMe } from "@/hooks/use-agents";
 import { useCreateMeeting } from "@/hooks/use-meetings";
@@ -9,10 +9,38 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Calendar, Mail, Send, User, Sparkles, Mic, MicOff, Square, Volume2 } from "lucide-react";
+import { Loader2, Calendar, Mail, Send, User, Sparkles, Mic, Square, Volume2, Building2, MapPin, TrendingUp, Zap, ArrowLeft, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+
+interface AdvisorData {
+  aumM: number; salesAmt: number; redemption: number;
+  fiOpportunities: number; etfOpportunities: number; alpha: number;
+  competitors: string[]; buyingUnit: string; territory: string;
+  segment: string; ratings: number | null;
+}
+
+function parseAdvisorData(assets: string): AdvisorData | null {
+  try {
+    const obj = JSON.parse(assets) as { __advisorData?: AdvisorData };
+    return obj.__advisorData ?? null;
+  } catch { return null; }
+}
+
+function fmt(n: number): string {
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`;
+  return `$${n}`;
+}
+
+const SEGMENT_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  A: { label: "Top Tier",   color: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/25" },
+  B: { label: "High Value", color: "text-blue-300",    bg: "bg-blue-500/10",    border: "border-blue-500/25" },
+  C: { label: "Mid-Market", color: "text-sky-300",     bg: "bg-sky-500/10",     border: "border-sky-500/25" },
+  D: { label: "Developing", color: "text-amber-300",   bg: "bg-amber-500/10",   border: "border-amber-500/25" },
+  E: { label: "Emerging",   color: "text-violet-300",  bg: "bg-violet-500/10",  border: "border-violet-500/25" },
+};
 
 type VoicePhase = "idle" | "recording" | "processing" | "done" | "error";
 
@@ -161,19 +189,99 @@ export default function ScheduleMe() {
 
   const isRecording = recorderState === "recording";
   const isProcessing = voicePhase === "processing";
+  const advisor = parseAdvisorData(lead.assets ?? "");
+  const seg = advisor ? (SEGMENT_CONFIG[advisor.segment] ?? SEGMENT_CONFIG.C) : null;
 
   return (
     <Layout>
-      <div className="space-y-8 max-w-5xl mx-auto pb-12">
+      <div className="space-y-6 max-w-5xl mx-auto pb-12">
 
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
+        {/* Back nav */}
+        <Link href="/leads" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-white transition-colors">
+          <ArrowLeft className="w-4 h-4" /> Back to Pipeline
+        </Link>
+
+        {/* ── Advisor Card (top, always first) ───────────────────────────── */}
+        <Card className="bg-card/50 border-teal-400/20 overflow-hidden relative"
+          style={{ borderTop: "3px solid rgba(45,212,191,0.5)" }}>
+          <div className="absolute inset-0 opacity-[0.03]"
+            style={{ background: "radial-gradient(ellipse at top left, #2dd4bf, transparent 60%)" }} />
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row gap-5 items-start">
+              {/* Avatar */}
+              <div className="w-14 h-14 rounded-2xl bg-teal-400/10 border border-teal-400/25 flex items-center justify-center shrink-0">
+                <span className="text-2xl font-bold text-teal-400">{lead.name[0]}</span>
+              </div>
+
+              {/* Name + details */}
+              <div className="flex-1 min-w-0 space-y-3">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2.5 mb-1">
+                    <p className="text-[11px] uppercase tracking-widest text-teal-400/70 font-semibold">Scheduling with</p>
+                  </div>
+                  <h2 className="text-2xl font-display font-bold text-white">{lead.name}</h2>
+                  <div className="flex flex-wrap items-center gap-3 mt-1.5">
+                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Building2 className="w-3.5 h-3.5 text-teal-400/60" /> {lead.company}
+                    </span>
+                    {lead.location && (
+                      <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <MapPin className="w-3.5 h-3.5 text-teal-400/60" /> {lead.location}
+                      </span>
+                    )}
+                    {seg && advisor && (
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${seg.bg} ${seg.border} ${seg.color}`}>
+                        Seg {advisor.segment} · {seg.label}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Metrics row */}
+                {advisor && (
+                  <div className="flex flex-wrap gap-3">
+                    {[
+                      { icon: TrendingUp, label: "AUM",   value: `$${advisor.aumM.toFixed(1)}M`, color: "text-blue-400" },
+                      { icon: Zap,        label: "Alpha",  value: fmt(advisor.alpha),              color: "text-violet-400" },
+                      { icon: Calendar,   label: "FI Opp", value: fmt(advisor.fiOpportunities),   color: "text-teal-400" },
+                      { icon: Calendar,   label: "ETF Opp",value: fmt(advisor.etfOpportunities),  color: "text-purple-400" },
+                    ].map((m, i) => (
+                      <div key={i} className="flex items-center gap-2 bg-white/4 border border-white/8 rounded-xl px-3 py-2">
+                        <m.icon className={`w-3.5 h-3.5 ${m.color}`} />
+                        <div className="text-xs">
+                          <span className="text-muted-foreground">{m.label}: </span>
+                          <span className={`font-bold ${m.color}`}>{m.value}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Fit score + profile link */}
+              <div className="flex flex-col items-center gap-2 shrink-0">
+                <div className="bg-primary/10 border border-primary/25 rounded-2xl px-5 py-3 text-center">
+                  <p className="text-3xl font-bold text-white">{lead.score}</p>
+                  <p className="text-[10px] text-primary uppercase tracking-wider font-semibold">Fit Score</p>
+                </div>
+                <Button asChild variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-white w-full">
+                  <Link href={`/leads/${lead.id}`}>
+                    <ExternalLink className="w-3 h-3 mr-1" /> Full Profile
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Page header */}
+        <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-teal-400/10 border border-teal-400/20 flex items-center justify-center">
             <Calendar className="w-6 h-6 text-teal-400" />
           </div>
           <div>
             <h1 className="text-3xl font-display font-bold text-white">Schedule Me</h1>
-            <p className="text-muted-foreground">Draft outreach and schedule a meeting with {lead.name}.</p>
+            <p className="text-muted-foreground">Draft outreach and schedule a meeting.</p>
           </div>
         </div>
 

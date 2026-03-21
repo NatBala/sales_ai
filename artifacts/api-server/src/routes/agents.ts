@@ -123,7 +123,7 @@ Dataset schema:
 - Counties: Cook County, Los Angeles County, Maricopa County, Harris County, Dallas County, Miami-Dade County, Orange County, San Diego County, Clark County, King County, Broward County, Alameda County, Tarrant County, Santa Clara County, Wayne County
 - AUM in millions (typical range: $10M–$100M)
 - FI/ETF Opportunities and Alpha in dollars
-- Competitors: BlackRock, Vanguard, State Street, Invesco, Fidelity, PIMCO, CapitalGroup
+- Competitors (brands held by advisors): BlackRock, CapitalGroup, State Street, Invesco, Fidelity, PIMCO, JPMorgan
 
 Return ONLY a JSON object with these exact keys. Use empty arrays [] and null for fields not mentioned:
 {"firms":[],"segments":[],"counties":[],"channels":[],"aumMin":null,"aumMax":null,"netFlow":null,"fiOppMin":null,"etfOppMin":null,"alphaMin":null,"ratingsMin":null,"competitors":[],"totalOppMin":null}`,
@@ -230,7 +230,7 @@ router.post("/agents/lead-me", async (req: Request, res: Response) => {
       messages: [
         {
           role: "system",
-          content: `You are a sales intelligence AI for Capital Group financial services salespeople. Select the 8 best-matching advisors from the dataset and score their fit 0-100. Segments: A=top tier, B=high value, C=mid-market, D=developing, E=emerging. XC=exclusive channel, FC=flexible channel. Return valid JSON only.`,
+          content: `You are a sales intelligence AI for Vanguard financial services salespeople. Select the 8 best-matching advisors from the dataset and score their fit 0-100. Segments: A=top tier, B=high value, C=mid-market, D=developing, E=emerging. XC=exclusive channel, FC=flexible channel. Return valid JSON only.`,
         },
         {
           role: "user",
@@ -417,7 +417,7 @@ router.post("/agents/coach-me", async (req: Request, res: Response) => {
       messages: [
         {
           role: "system",
-          content: `You are an elite sales coach for financial services professionals at Capital Group. 
+          content: `You are an elite sales coach for financial services professionals at Vanguard. 
 Your job is to prepare salespeople with targeted coaching before their client meetings.
 You provide practical, specific, and actionable coaching materials. Always respond with valid JSON only.`,
         },
@@ -463,7 +463,7 @@ router.post("/agents/coach-me/persona", async (req: Request, res: Response) => {
         { role: "system", content: "You are a persona generator for sales training simulations. Generate realistic financial advisor personas. Always respond with valid JSON only." },
         {
           role: "user",
-          content: `Generate a realistic financial advisor persona for a Capital Group practice session.
+          content: `Generate a realistic financial advisor persona for a Vanguard practice session.
 Meeting context: "${meetingPurpose}"
 Lead: ${leadName} at ${leadCompany}${leadTitle ? `, ${leadTitle}` : ""}
 
@@ -513,7 +513,7 @@ Personality: ${persona.personality}
 Your key concerns: ${persona.concerns.join("; ")}.
 Communication style: ${persona.style}.
 
-You are in a sales roleplay practice session. A Capital Group salesperson is practicing their pitch with you.
+You are in a sales roleplay practice session. A Vanguard salesperson is practicing their pitch with you.
 Rules:
 - Stay firmly in character as this advisor. Never break character.
 - Ask realistic, challenging questions. Be appropriately skeptical.
@@ -568,7 +568,7 @@ router.post("/agents/coach-me/scorecard", async (req: Request, res: Response) =>
       messages: [
         {
           role: "system",
-          content: `You are an elite sales coach evaluating financial services sales conversations against the Capital Group "VG Way" Professional Engagement Framework. Be rigorous and specific. Always respond with valid JSON only.`,
+          content: `You are an elite sales coach evaluating financial services sales conversations against the Vanguard "VG Way" Professional Engagement Framework. Be rigorous and specific. Always respond with valid JSON only.`,
         },
         {
           role: "user",

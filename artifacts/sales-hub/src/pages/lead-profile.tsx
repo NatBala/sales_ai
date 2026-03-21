@@ -310,14 +310,14 @@ export default function LeadProfile() {
               </Card>
             </motion.div>
 
-            {/* Capital Group Opportunities */}
+            {/* Vanguard Opportunities */}
             <motion.div
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4 }}
             >
               <Card className="bg-card/40 border-white/8">
                 <CardHeader className="border-b border-white/5 pb-4">
                   <CardTitle className="text-base text-white flex items-center gap-2">
-                    <Target className="w-5 h-5 text-teal-400" /> Capital Group Opportunity Breakdown
+                    <Target className="w-5 h-5 text-teal-400" /> Vanguard Opportunity Breakdown
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">
@@ -340,7 +340,7 @@ export default function LeadProfile() {
                       ))}
                       <div className="pt-2 border-t border-white/5">
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Total Capital Group Opportunity</span>
+                          <span className="text-muted-foreground">Total Vanguard Opportunity</span>
                           <span className="text-white font-bold">{fmt(advisor.fiOpportunities + advisor.etfOpportunities)}</span>
                         </div>
                       </div>
@@ -375,7 +375,7 @@ export default function LeadProfile() {
                     <div className="space-y-3">
                       {advisor.competitors.map((c, i) => {
                         const [brand, product] = c.split(":");
-                        const isCapGroup = brand === "CapitalGroup";
+                        const isCapGroup = brand === "Vanguard";
                         return (
                           <div key={i} className={`flex items-center justify-between p-3 rounded-xl border ${isCapGroup ? "bg-primary/8 border-primary/20" : "bg-red-500/8 border-red-500/20"}`}>
                             <div className="flex items-center gap-3">

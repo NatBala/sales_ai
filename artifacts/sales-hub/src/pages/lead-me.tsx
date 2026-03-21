@@ -294,7 +294,7 @@ function AdvisorExpandedView({ lead, advisor }: { lead: GeneratedLead; advisor: 
             </div>
           </div>
           <div className="bg-background/40 rounded-xl p-4 border border-white/5">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">Capital Group Opportunities</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">Vanguard Opportunities</p>
             <ResponsiveContainer width="100%" height={80}>
               <BarChart data={oppData} layout="vertical" margin={{ left: 0, right: 8 }}>
                 <XAxis type="number" hide tickFormatter={v => fmt(v)} />
