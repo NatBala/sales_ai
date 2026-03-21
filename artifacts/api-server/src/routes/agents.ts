@@ -256,6 +256,169 @@ Make everything specific to a financial services / investment management context
   }
 });
 
+router.post("/agents/coach-me/persona", async (req: Request, res: Response) => {
+  const { leadName, leadCompany, leadTitle, meetingPurpose } = req.body as {
+    leadName: string; leadCompany: string; leadTitle?: string; meetingPurpose: string;
+  };
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-5.2",
+      max_completion_tokens: 1024,
+      messages: [
+        { role: "system", content: "You are a persona generator for sales training simulations. Generate realistic financial advisor personas. Always respond with valid JSON only." },
+        {
+          role: "user",
+          content: `Generate a realistic financial advisor persona for a Capital Group practice session.
+Meeting context: "${meetingPurpose}"
+Lead: ${leadName} at ${leadCompany}${leadTitle ? `, ${leadTitle}` : ""}
+
+Return JSON with:
+- name: string (realistic full name — NOT the same as "${leadName}", create a different name)
+- role: string (specific job title matching the advisor type)
+- company: string (use "${leadCompany}")
+- firmType: string (e.g. "Registered Investment Advisor", "Wirehouse", "Family Office", "Pension Fund", "Insurance")
+- aumRange: string (e.g. "$450M–$600M" realistic for firm type)
+- personality: string (2-sentence description of communication style and decision-making approach — should be realistic and specific)
+- concerns: string[] (exactly 3 specific skeptical questions or objections they would raise in this meeting)
+- style: string (exactly one of: "Analytical", "Skeptical", "Collaborative", "Assertive", "Inquisitive")
+- openingLine: string (the first thing this advisor would say to open the meeting — 1–2 sentences, in first person, stay in character)`,
+        },
+      ],
+    });
+
+    const content = response.choices[0]?.message?.content ?? "{}";
+    res.json(parseAIJson(content));
+  } catch (err) {
+    req.log.error({ err }, "Persona generation failed");
+    res.status(500).json({ error: "Failed to generate persona" });
+  }
+});
+
+router.post("/agents/coach-me/persona-chat", async (req: Request, res: Response) => {
+  const { persona, history, audioBase64, mimeType } = req.body as {
+    persona: { name: string; role: string; company: string; firmType: string; aumRange: string; personality: string; concerns: string[]; style: string; openingLine: string };
+    history: { role: "user" | "advisor"; content: string }[];
+    audioBase64?: string | null;
+    mimeType?: string;
+  };
+
+  try {
+    let userTranscript = "";
+
+    if (audioBase64) {
+      const format: "webm" | "mp3" | "wav" =
+        mimeType?.includes("mp4") || mimeType?.includes("aac") ? "mp3" : "webm";
+      const buf = Buffer.from(audioBase64, "base64");
+      userTranscript = await speechToText(buf, format);
+    }
+
+    const systemPrompt = `You are playing the role of ${persona.name}, ${persona.role} at ${persona.company} (${persona.firmType}).
+AUM Range: ${persona.aumRange}.
+Personality: ${persona.personality}
+Your key concerns: ${persona.concerns.join("; ")}.
+Communication style: ${persona.style}.
+
+You are in a sales roleplay practice session. A Capital Group salesperson is practicing their pitch with you.
+Rules:
+- Stay firmly in character as this advisor. Never break character.
+- Ask realistic, challenging questions. Be appropriately skeptical.
+- Push back on vague or unsubstantiated claims.
+- Keep responses concise: 2–4 sentences maximum.
+- React authentically to what the salesperson says — reward good answers, press on weak ones.
+- Do NOT mention you are an AI or that this is a simulation.`;
+
+    const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
+      { role: "system", content: systemPrompt },
+    ];
+
+    for (const turn of history) {
+      messages.push({ role: turn.role === "user" ? "user" : "assistant", content: turn.content });
+    }
+
+    if (userTranscript) {
+      messages.push({ role: "user", content: userTranscript });
+    }
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5.2",
+      max_completion_tokens: 256,
+      messages,
+    });
+
+    const advisorResponse = response.choices[0]?.message?.content ?? "";
+    const audioBase64Out = await textToSpeech(advisorResponse, "nova");
+
+    res.json({ userTranscript, advisorResponse, audioBase64: audioBase64Out });
+  } catch (err) {
+    req.log.error({ err }, "Persona chat failed");
+    res.status(500).json({ error: "Failed to process persona chat" });
+  }
+});
+
+router.post("/agents/coach-me/scorecard", async (req: Request, res: Response) => {
+  const { persona, meetingContext, transcript } = req.body as {
+    persona: { name: string; role: string; company: string; firmType: string; personality: string; concerns: string[] };
+    meetingContext: { leadName: string; leadCompany: string; purpose: string };
+    transcript: { role: "user" | "advisor"; content: string }[];
+  };
+
+  try {
+    const transcriptText = transcript
+      .map(t => `${t.role === "user" ? "SALESPERSON" : `ADVISOR (${persona.name})`}: ${t.content}`)
+      .join("\n\n");
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5.2",
+      max_completion_tokens: 4096,
+      messages: [
+        {
+          role: "system",
+          content: `You are an elite sales coach evaluating financial services sales conversations against the Capital Group "VG Way" Professional Engagement Framework. Be rigorous and specific. Always respond with valid JSON only.`,
+        },
+        {
+          role: "user",
+          content: `Evaluate this sales roleplay conversation against the 6-stage VG Way framework.
+
+Advisor Persona: ${persona.name}, ${persona.role} at ${persona.company} (${persona.firmType})
+Meeting Purpose: ${meetingContext.purpose}
+Advisor Key Concerns: ${persona.concerns.join(", ")}
+
+TRANSCRIPT:
+${transcriptText}
+
+Return a JSON scorecard with these exact fields:
+- overallScore: number 0–100
+- overallVerdict: string (e.g. "Strong Start", "Needs Work", "Mixed Performance", "Excellent", "Below Standard")
+- summary: string (2–3 sentences on overall performance — be specific, cite what happened)
+- topPriorityFix: string (the single most important change for next time — 1–2 sentences, specific and actionable)
+- stages: array of exactly 6 objects for the VG Way stages, each with:
+  - name: string (MUST be one of: "Agenda", "Discovery", "Insights", "Practice Management", "Summarize & Prioritize", "Close")
+  - score: number 0–5 (be rigorous — if skipped or weak, score 0–2)
+  - assessment: string (1–2 sentences, specific to what happened in this conversation)
+  - evidence: string (direct quote or specific observation from the transcript)
+  - betterExample: string (concrete alternative phrasing the salesperson could use — start with a direct quote)
+- focusAreas: array of exactly 3 objects ranked by priority, each with:
+  - rank: number (1, 2, or 3)
+  - title: string (short descriptive label for this gap)
+  - issue: string (1–2 sentences describing the gap)
+  - youSaid: string (short example of what was actually said — use a direct quote if possible)
+  - betterExample: string (how to say it better — be specific, not generic)
+- strengths: string[] (exactly 2–3 things the salesperson did well — be specific)
+
+Score rigorously. If a stage was skipped or poorly done, score it 0–1.`,
+        },
+      ],
+    });
+
+    const content = response.choices[0]?.message?.content ?? "{}";
+    res.json(parseAIJson(content));
+  } catch (err) {
+    req.log.error({ err }, "Scorecard generation failed");
+    res.status(500).json({ error: "Failed to generate scorecard" });
+  }
+});
+
 router.post("/agents/engage-me", async (req: Request, res: Response) => {
   const parsed = GenerateEngagementIntelligenceBody.safeParse(req.body);
   if (!parsed.success) {
