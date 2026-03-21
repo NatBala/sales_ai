@@ -80,6 +80,39 @@ Make the data realistic and varied. High scores (85+) for top matches, 70-84 for
   }
 });
 
+router.post("/agents/lead-me/transcribe", async (req: Request, res: Response) => {
+  const { audioBase64, mimeType } = req.body as { audioBase64: string; mimeType?: string };
+
+  if (!audioBase64) {
+    res.status(400).json({ error: "No audio provided" });
+    return;
+  }
+
+  const format: "webm" | "mp3" | "wav" =
+    mimeType?.includes("mp4") || mimeType?.includes("aac") ? "mp3" : "webm";
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  try {
+    const buf = Buffer.from(audioBase64, "base64");
+    const stream = await speechToTextStream(buf, format);
+
+    for await (const delta of stream) {
+      res.write(`data: ${JSON.stringify({ delta })}\n\n`);
+    }
+
+    res.write("data: [DONE]\n\n");
+    res.end();
+  } catch (err) {
+    req.log.error({ err }, "Lead Me transcription failed");
+    res.write(`data: ${JSON.stringify({ error: "Transcription failed" })}\n\n`);
+    res.end();
+  }
+});
+
 router.post("/agents/schedule-me", async (req: Request, res: Response) => {
   const parsed = GenerateEmailBody.safeParse(req.body);
   if (!parsed.success) {
