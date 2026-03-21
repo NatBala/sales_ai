@@ -1,4 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { speechToText, textToSpeech, ensureCompatibleFormat } from "@workspace/integrations-openai-ai-server/audio";
 import {
@@ -9,6 +11,60 @@ import {
   GenerateEngagementIntelligenceBody,
   GenerateFollowUpTasksBody,
 } from "@workspace/api-zod";
+
+// ─── Advisor CSV dataset ──────────────────────────────────────────────────────
+interface AdvisorRow {
+  name: string; firm: string; segment: string; ratings: number | null;
+  aumM: number; salesAmt: number; redemption: number; competitors: string[];
+  buyingUnit: string; territory: string; fiOpportunities: number;
+  etfOpportunities: number; alpha: number;
+}
+
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let cur = ""; let inQ = false;
+  for (const c of line) {
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur); cur = ""; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+const ADVISORS: AdvisorRow[] = (() => {
+  try {
+    const csvPath = join(__dirname, "../src/data/advisors.csv");
+    const csv = readFileSync(csvPath, "utf-8");
+    const lines = csv.trim().split("\n");
+    const headers = parseCSVLine(lines[0]).map(h => h.trim());
+    return lines.slice(1).map(line => {
+      const vals = parseCSVLine(line);
+      const o: Record<string, string> = {};
+      headers.forEach((h, i) => { o[h] = (vals[i] ?? "").trim(); });
+      return {
+        name: o["Advisor Name"] ?? "",
+        firm: o["Firm"] ?? "",
+        segment: o["Segment"] ?? "",
+        ratings: o["Ratings"] ? Number(o["Ratings"]) : null,
+        aumM: Number(o["AUM (Millions)"]) || 0,
+        salesAmt: Number(o["Sales"]) || 0,
+        redemption: Number(o["Redemption"]) || 0,
+        competitors: o["Competitor Mentions"]
+          ? o["Competitor Mentions"].split(",").map((s: string) => s.trim()).filter(Boolean)
+          : [],
+        buyingUnit: o["Buying Units"] ?? "",
+        territory: o["Territory"] ?? "",
+        fiOpportunities: Number(o["FI Opportunities ($)"]) || 0,
+        etfOpportunities: Number(o["ETF Opportunities ($)"]) || 0,
+        alpha: Number(o["Alpha ($)"]) || 0,
+      };
+    });
+  } catch (err) {
+    console.error("Failed to load advisors CSV:", err);
+    return [];
+  }
+})();
 
 const router: IRouter = Router();
 
@@ -36,44 +92,73 @@ router.post("/agents/lead-me", async (req: Request, res: Response) => {
   const { query } = parsed.data;
 
   try {
+    const dataset = ADVISORS.map((a, i) =>
+      `${i}|${a.name}|${a.firm}|seg:${a.segment}|AUM:$${a.aumM.toFixed(1)}M|${a.territory}|comps:${a.competitors.slice(0, 2).join(";")}|FI:$${(a.fiOpportunities / 1e6).toFixed(1)}M|ETF:$${(a.etfOpportunities / 1e6).toFixed(1)}M|alpha:$${(a.alpha / 1000).toFixed(0)}K`
+    ).join("\n");
+
     const response = await openai.chat.completions.create({
       model: "gpt-5.2",
-      max_completion_tokens: 8192,
+      max_completion_tokens: 4096,
       messages: [
         {
           role: "system",
-          content: `You are a sales intelligence AI that generates realistic, high-quality leads for financial services sales professionals. 
-Generate leads that match the query with realistic data. Each lead should have a fit score (0-100) and detailed information.
-Always respond with valid JSON only.`,
+          content: `You are a sales intelligence AI for Capital Group financial services salespeople. Given a real dataset of financial advisors and a natural language query, select the 8 best-matching advisors and score their fit 0-100. Segments: A=top tier, B=high value, C=mid-market, D=developing, E=emerging. Territory prefix: XC=exclusive channel, FC=flexible channel. Return valid JSON only.`,
         },
         {
           role: "user",
-          content: `Generate 8 high-quality leads matching this query: "${query}"
-          
-Return a JSON object with a "leads" array. Each lead must have:
-- name: Full name (string)
-- company: Company name (string)
-- title: Job title (string)
-- score: Fit score 0-100 (number)
-- reason: Brief reason why this lead is a good fit (string, 1-2 sentences)
-- assets: Financial assets/portfolio overview (string, 2-3 sentences about their portfolio, AUM, investment style)
-- sales: Sales history/relationship info (string, 2-3 sentences about past interactions, deals, or relationship potential)
-- reasoning: Detailed AI reasoning for fit (string, 3-4 sentences about why this lead matches the query and potential value)
-- email: Professional email (string or null)
-- phone: Phone number (string or null)
-- linkedIn: LinkedIn URL (string or null)
-- location: City, State (string or null)
-- industry: Industry sector (string or null)
-- aum: Assets Under Management if applicable (string or null)
+          content: `Query: "${query}"
 
-Make the data realistic and varied. High scores (85+) for top matches, 70-84 for good matches.`,
+Advisor dataset (idx|name|firm|segment|AUM|territory|top-competitors|FI-opportunity|ETF-opportunity|alpha-generated):
+${dataset}
+
+Return JSON: {"leads": [{"idx": 0, "score": 85, "reason": "1-2 sentence fit reason", "reasoning": "3-4 sentence deep analysis of this advisor's opportunity and why they match the query"}]}
+Select exactly 8 advisors. Sort by score descending.`,
         },
       ],
     });
 
     const content = response.choices[0]?.message?.content ?? "{}";
-    const data = parseAIJson(content);
-    res.json(data);
+    const aiData = parseAIJson(content);
+    const aiLeads = Array.isArray(aiData.leads)
+      ? (aiData.leads as Array<{ idx: number; score: number; reason: string; reasoning: string }>)
+      : [];
+
+    const leads = aiLeads.map(l => {
+      const a = ADVISORS[l.idx];
+      if (!a) return null;
+      return {
+        name: a.name,
+        company: a.firm,
+        title: "Financial Advisor",
+        score: Math.round(Number(l.score) || 0),
+        reason: l.reason ?? "",
+        reasoning: l.reasoning ?? "",
+        assets: JSON.stringify({
+          __advisorData: {
+            aumM: a.aumM,
+            salesAmt: a.salesAmt,
+            redemption: a.redemption,
+            fiOpportunities: a.fiOpportunities,
+            etfOpportunities: a.etfOpportunities,
+            alpha: a.alpha,
+            competitors: a.competitors,
+            buyingUnit: a.buyingUnit,
+            territory: a.territory,
+            segment: a.segment,
+            ratings: a.ratings,
+          },
+        }),
+        sales: `Sales: $${a.salesAmt.toLocaleString()} | Redemption: $${a.redemption.toLocaleString()}`,
+        email: null,
+        phone: null,
+        linkedIn: null,
+        location: a.territory.replace(/^(XC|FC)\s*-\s*/i, ""),
+        industry: "Financial Services",
+        aum: `$${a.aumM.toFixed(1)}M`,
+      };
+    }).filter(Boolean);
+
+    res.json({ leads });
   } catch (err) {
     req.log.error({ err }, "Lead generation failed");
     res.status(500).json({ error: "Failed to generate leads" });

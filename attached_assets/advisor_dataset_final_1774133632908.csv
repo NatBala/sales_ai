@@ -1,0 +1,201 @@
+Advisor Name,Firm,Segment,Ratings,AUM (Millions),Sales,Redemption,Segments,Competitor Mentions,Buying Units,Territory,FI Opportunities ($),ETF Opportunities ($),Alpha ($)
+William White,UBS,A,,76.74,1013575,968106,A,CapitalGroup:AWSHX,BU_1,XC - Maricopa County,32705835.03,34057471.91,72524.53
+Susan Davis,UBS,E,,47.97,562489,696493,E,"CapitalGroup:AWSHX, BlackRock:LQD, CapitalGroup:AMRMX",BU_1,FC - Orange County,23490436.52,7408956.36,89222.51
+Margaret Hernandez,Merrill Lynch,D,,63.03,513628,834829,D,"BlackRock:TIP, BlackRock:IVV",BU_1,XC - San Diego County,14387609.9,30185796.18,83897.52
+Thomas Sanchez,Wells Fargo,A,,42.31,1221327,1766105,A,CapitalGroup:AWSHX,BU_1,XC - Alameda County,7630210.59,9548237.85,246962.21
+Michelle Lewis,UBS,D,,17.09,1114839,1818353,D,"CapitalGroup:ABALX, BlackRock:LQD",BU_2,XC - Los Angeles County,8302832.12,8331205.62,141944.11
+Matthew Rodriguez,Merrill Lynch,C,,98.67,988197,711815,C,"CapitalGroup:AIVSX, BlackRock:IWM",BU_2,FC - Clark County,21369875.65,37295593.17,232644.68
+Robert Martin,Merrill Lynch,C,,73.16,1933503,1859028,C,"BlackRock:LQD, BlackRock:EFA, BlackRock:LQD",BU_2,XC - Maricopa County,21684838.0,24168531.3,454691.35
+John Sanchez,Edward Jones,B,6,85.86,617310,980348,B,"BlackRock:IVV, BlackRock:IEFA",BU_3,XC - Cook County,16911820.05,21501243.3,49298.84
+Sandra Jones,Morgan Stanley,B,,68.99,1329700,1848158,B,"BlackRock:LQD, CapitalGroup:AIVSX",BU_4,XC - Clark County,29430982.65,17742437.84,301808.86
+Steven Thomas,Edward Jones,D,10,45.95,959948,790102,D,CapitalGroup:ANCFX,BU_4,XC - Dallas County,6688258.2,14958572.35,216348.19
+Robert Gonzalez,Merrill Lynch,B,,81.29,1385333,1750760,B,"CapitalGroup:AMRMX, CapitalGroup:AWSHX",BU_4,XC - Maricopa County,27385854.25,25870675.34,126007.34
+Nancy Brown,UBS,A,,71.35,1626108,1059572,A,"BlackRock:EFA, BlackRock:LQD",BU_5,XC - Miami-Dade County,26591078.55,22834829.94,468732.22
+Karen Clark,Morgan Stanley,E,,78.58,1564685,723159,E,"CapitalGroup:AGTHX, BlackRock:TIP, BlackRock:TIP",BU_5,FC - Maricopa County,37812840.95,22367709.71,282818.91
+Lisa Lewis,Edward Jones,A,10,39.17,540845,734603,A,"BlackRock:AGG, CapitalGroup:ANCFX",BU_5,XC - Santa Clara County,15015694.96,10786712.22,132910.91
+William Perez,UBS,D,,83.44,1617165,763738,D,"CapitalGroup:AGTHX, BlackRock:TIP",BU_6,XC - Harris County,18067470.4,31468070.28,372257.44
+Karen Gonzalez,Edward Jones,D,4,93.6,1946757,921844,D,"CapitalGroup:AMRMX, CapitalGroup:AMRMX, BlackRock:AGG",BU_6,FC - Maricopa County,40022070.87,39149391.94,178596.92
+Donna Davis,UBS,C,,11.89,1661657,982585,C,BlackRock:LQD,BU_7,FC - Clark County,3134877.4,3563686.09,135811.63
+Robert Taylor,UBS,B,,16.07,565877,1192958,B,BlackRock:EFA,BU_7,FC - Maricopa County,5678084.06,3162712.07,138798.87
+Donald Davis,Merrill Lynch,E,,21.91,1697564,1708403,E,"CapitalGroup:AGTHX, BlackRock:LQD",BU_8,FC - Alameda County,7963522.26,8459331.73,198939.43
+Michael Johnson,Wells Fargo,C,,48.12,1479421,613605,C,"CapitalGroup:ANCFX, BlackRock:AGG",BU_8,XC - Tarrant County,20000149.54,6235680.93,401816.2
+Jessica Ramirez,Edward Jones,D,3,47.97,1084151,1470201,D,BlackRock:TIP,BU_9,XC - Miami-Dade County,23806563.39,13992555.42,263294.28
+Jennifer Robinson,Edward Jones,A,1,68.69,1633695,530949,A,BlackRock:EFA,BU_9,FC - San Diego County,17881520.85,20788688.98,93674.54
+Matthew Smith,Wells Fargo,B,,87.82,622967,845269,B,"BlackRock:TIP, CapitalGroup:AIVSX",BU_9,XC - King County,41113536.66,33080349.04,156848.74
+Richard Martinez,Wells Fargo,E,,69.57,1520623,824632,E,CapitalGroup:AWSHX,BU_9,XC - Tarrant County,22085558.72,28961181.68,179426.14
+Steven Robinson,Edward Jones,A,6,15.14,1725109,1499897,A,"BlackRock:IEFA, BlackRock:AGG, BlackRock:IVV",BU_10,FC - King County,3691310.61,6937157.18,113801.99
+Donna Martin,Merrill Lynch,D,,20.79,1694695,1016351,D,CapitalGroup:AMRMX,BU_10,FC - Los Angeles County,6543910.18,7386107.93,386527.41
+Christopher Davis,Edward Jones,E,9,38.47,1046865,928362,E,"BlackRock:LQD, CapitalGroup:AMRMX",BU_11,FC - Tarrant County,5154702.0,15679664.89,203262.36
+Michael Williams,Morgan Stanley,A,,10.84,1802665,1680683,A,"BlackRock:IWM, BlackRock:IWM, CapitalGroup:AGTHX",BU_11,FC - Santa Clara County,3935360.73,2623318.24,124866.11
+Karen Martin,Morgan Stanley,C,,24.2,1639210,1975430,C,"CapitalGroup:ABALX, CapitalGroup:AIVSX, CapitalGroup:ANCFX",BU_11,FC - Broward County,8682958.53,2848791.99,268501.69
+Elizabeth Rodriguez,Merrill Lynch,C,,20.39,724470,1660194,C,"CapitalGroup:ABALX, BlackRock:LQD",BU_11,FC - Miami-Dade County,10061308.53,7564460.78,101448.24
+Margaret Clark,Morgan Stanley,E,,53.97,606533,693563,E,"BlackRock:IWM, CapitalGroup:ABALX",BU_12,XC - San Diego County,14023947.91,21645915.81,106084.14
+Margaret Moore,Morgan Stanley,B,,76.71,1656957,1979891,B,BlackRock:LQD,BU_12,FC - Harris County,37303053.61,20879097.91,317674.33
+Emily Jones,Merrill Lynch,E,,13.24,1274302,1721611,E,"BlackRock:IWM, BlackRock:TIP",BU_12,FC - Maricopa County,1379861.0,2694278.41,180851.42
+Michael Lopez,UBS,C,,28.91,1023301,1898660,C,"CapitalGroup:AMRMX, CapitalGroup:ABALX, BlackRock:AGG",BU_13,XC - San Diego County,8796460.05,8890377.38,116430.19
+Nancy Sanchez,Merrill Lynch,B,,89.33,551980,876146,B,"CapitalGroup:ABALX, CapitalGroup:AIVSX",BU_13,XC - Santa Clara County,29676079.74,29487311.25,41799.36
+Joseph Miller,Merrill Lynch,A,,44.43,581211,1487108,A,"BlackRock:TIP, CapitalGroup:AGTHX",BU_13,FC - Alameda County,12365376.42,11394236.45,112451.59
+Sarah Ramirez,Merrill Lynch,A,,69.4,1335643,1188415,A,CapitalGroup:AIVSX,BU_13,XC - King County,28380220.37,23279257.19,308125.62
+Mary Brown,Morgan Stanley,E,,45.97,1624525,1194471,E,"BlackRock:IWM, BlackRock:IEFA",BU_14,FC - Miami-Dade County,13799564.79,10940260.32,173988.42
+Joshua Taylor,Wells Fargo,C,,75.57,1157829,1415184,C,BlackRock:IEFA,BU_14,XC - Miami-Dade County,8299479.88,10717317.99,205174.5
+Kimberly Robinson,Merrill Lynch,C,,13.99,1414478,503546,C,"CapitalGroup:ABALX, CapitalGroup:AGTHX, BlackRock:IVV",BU_14,XC - San Diego County,3726798.5,6780829.14,86296.56
+Steven Martinez,Morgan Stanley,E,,38.25,761358,1129821,E,"BlackRock:EFA, CapitalGroup:AWSHX, BlackRock:EFA",BU_14,XC - Orange County,5600860.87,18217345.22,202317.28
+Emily Clark,Wells Fargo,B,,65.4,1131137,1351601,B,BlackRock:AGG,BU_15,XC - Alameda County,10246222.63,14699051.4,125712.15
+Mark Anderson,Wells Fargo,E,,64.6,1175805,1475150,E,"BlackRock:EFA, CapitalGroup:ABALX, BlackRock:IVV",BU_15,FC - Wayne County,18225795.29,11805451.71,197466.04
+Jennifer Clark,Morgan Stanley,E,,69.75,1798684,1202940,E,CapitalGroup:AGTHX,BU_16,FC - Cook County,20448635.37,20259934.62,262148.96
+Michelle Ramirez,Merrill Lynch,B,,12.2,1013472,1496433,B,BlackRock:LQD,BU_16,XC - Los Angeles County,3358249.78,4620204.74,88700.25
+James Lewis,Edward Jones,B,7,54.49,1011672,809479,B,CapitalGroup:AGTHX,BU_17,FC - Miami-Dade County,12399950.9,11993555.96,286090.74
+Linda Anderson,Merrill Lynch,E,,51.81,1668964,1022606,E,CapitalGroup:ABALX,BU_18,XC - Wayne County,21971293.36,7566027.07,441226.18
+Steven Wilson,Edward Jones,E,10,38.56,1428143,1784825,E,"BlackRock:AGG, CapitalGroup:AMRMX, BlackRock:TIP",BU_18,XC - Maricopa County,16953752.44,13850288.0,268799.64
+Jessica Rodriguez,Merrill Lynch,C,,78.92,1593244,1516273,C,"BlackRock:IWM, BlackRock:IWM",BU_18,XC - Dallas County,29267934.46,13080330.0,443697.61
+Matthew Thompson,Morgan Stanley,E,,17.25,816314,984990,E,CapitalGroup:ANCFX,BU_18,XC - Wayne County,8513913.25,3407999.33,191969.67
+Patricia Miller,Wells Fargo,D,,39.78,1477114,1371941,D,"BlackRock:TIP, CapitalGroup:ABALX",BU_19,FC - San Diego County,6753899.84,6526079.44,228719.77
+Karen Harris,UBS,E,,44.23,512364,1237691,E,"CapitalGroup:AMRMX, CapitalGroup:ABALX",BU_19,XC - Maricopa County,14327847.67,21380120.7,66838.14
+Ashley Smith,Edward Jones,E,4,53.94,1072386,1414014,E,"BlackRock:LQD, CapitalGroup:ABALX",BU_19,XC - Broward County,10396515.29,14133303.49,165216.24
+Mary Robinson,Merrill Lynch,D,,92.76,1804967,1620138,D,"CapitalGroup:ABALX, BlackRock:LQD",BU_20,XC - Broward County,16119898.67,33040328.24,415272.33
+Thomas Gonzalez,Wells Fargo,B,,88.02,881113,605454,B,"BlackRock:IWM, BlackRock:EFA",BU_21,FC - Alameda County,24016589.8,9829801.6,103807.88
+Mary White,Morgan Stanley,D,,32.7,671769,1486304,D,"BlackRock:IWM, BlackRock:IVV, CapitalGroup:ABALX",BU_22,XC - Broward County,11302518.74,5851003.62,46668.98
+Michelle Jones,UBS,A,,95.47,918089,542739,A,BlackRock:LQD,BU_23,XC - Miami-Dade County,32162054.21,24395860.78,131472.22
+Thomas Harris,UBS,E,,95.3,1475246,1966884,E,"BlackRock:IEFA, CapitalGroup:ABALX",BU_23,XC - King County,36394521.68,17374504.35,258920.77
+Mary Robinson,UBS,B,,96.82,726699,1713589,B,"CapitalGroup:AMRMX, BlackRock:LQD",BU_24,FC - Santa Clara County,38818061.78,41002487.25,200194.86
+Michael Thompson,Merrill Lynch,A,,63.29,1815422,1009292,A,"CapitalGroup:AWSHX, CapitalGroup:AWSHX",BU_24,FC - Miami-Dade County,7912863.93,8904954.87,172167.52
+Robert Taylor,UBS,C,,57.95,1887310,1277143,C,"BlackRock:TIP, BlackRock:EFA, BlackRock:IWM",BU_25,FC - King County,26007480.87,10128728.99,473874.3
+Sarah Martin,Wells Fargo,B,,49.19,1594182,1864108,B,"CapitalGroup:AMRMX, BlackRock:LQD, CapitalGroup:AIVSX",BU_25,FC - San Diego County,11333079.12,13921762.11,470847.18
+Sandra Jackson,Merrill Lynch,A,,35.1,1445400,1011418,A,"CapitalGroup:AIVSX, BlackRock:TIP, BlackRock:EFA",BU_26,FC - Orange County,7193441.67,15621417.13,417026.59
+Joshua Thompson,Merrill Lynch,C,,81.8,1213742,1086486,C,"CapitalGroup:AWSHX, CapitalGroup:ANCFX",BU_26,FC - Dallas County,25446835.44,29091632.92,81601.83
+Donald Lee,Merrill Lynch,D,,53.97,1003995,1948312,D,"BlackRock:TIP, BlackRock:IWM, BlackRock:LQD",BU_26,XC - Santa Clara County,18284406.26,18593926.2,166937.81
+Emily Taylor,Merrill Lynch,C,,69.76,1273891,1492499,C,"BlackRock:LQD, CapitalGroup:AIVSX",BU_27,FC - Santa Clara County,23355779.56,16684489.08,153601.6
+Richard Hernandez,Wells Fargo,C,,37.6,983473,753033,C,CapitalGroup:ABALX,BU_27,FC - Alameda County,16476587.75,13045134.7,256894.58
+Donna Harris,Merrill Lynch,B,,29.47,1515438,1079861,B,"CapitalGroup:ANCFX, CapitalGroup:AIVSX, BlackRock:AGG",BU_27,XC - Orange County,12539346.54,11269190.8,199772.96
+John Johnson,Morgan Stanley,A,,73.72,765463,1075272,A,"BlackRock:AGG, CapitalGroup:AMRMX, BlackRock:IVV",BU_27,FC - Miami-Dade County,16143053.29,25491919.4,144115.9
+Patricia Rodriguez,Edward Jones,C,8,53.08,1214512,886638,C,"BlackRock:IVV, BlackRock:IVV",BU_28,XC - Clark County,7107453.8,8151979.05,63145.26
+Jennifer Davis,Edward Jones,A,3,23.43,1680360,1137189,A,CapitalGroup:AMRMX,BU_29,XC - Broward County,3447599.41,5205021.38,168317.94
+Mark Robinson,Edward Jones,E,10,30.31,1595914,1297710,E,"BlackRock:IEFA, CapitalGroup:AIVSX",BU_29,XC - Los Angeles County,5250231.74,11438224.63,304742.47
+Susan Rodriguez,Edward Jones,E,1,64.87,708107,935762,E,"BlackRock:AGG, BlackRock:IVV, BlackRock:EFA",BU_30,FC - King County,19741883.71,17339468.33,89205.43
+Charles Thompson,Wells Fargo,E,,52.29,568450,985440,E,"CapitalGroup:AMRMX, BlackRock:AGG",BU_30,FC - San Diego County,8112632.42,13254677.58,116918.44
+Linda Moore,Morgan Stanley,E,,69.51,914856,1391581,E,CapitalGroup:AIVSX,BU_30,XC - Maricopa County,12115695.86,24620487.66,151849.33
+Andrew Robinson,Merrill Lynch,A,,15.37,1145108,1747897,A,"BlackRock:EFA, CapitalGroup:ABALX",BU_30,FC - Maricopa County,5800225.63,5504059.06,226642.91
+Jennifer Martin,Wells Fargo,C,,55.04,1535563,1418046,C,CapitalGroup:ABALX,BU_31,FC - Clark County,27517788.55,17720955.27,266174.75
+Andrew Jackson,Morgan Stanley,E,,32.53,691526,980089,E,CapitalGroup:ABALX,BU_32,XC - Dallas County,9624222.04,5078538.51,168146.84
+Kimberly Lee,Morgan Stanley,E,,13.62,867401,1486711,E,"CapitalGroup:AGTHX, CapitalGroup:AMRMX",BU_32,FC - San Diego County,3075831.92,3819053.29,85747.45
+Christopher Perez,Wells Fargo,A,,52.3,1356368,1198998,A,CapitalGroup:AIVSX,BU_32,FC - Broward County,6351547.61,12741099.48,373151.52
+John Anderson,Wells Fargo,D,,35.94,1339809,1653636,D,BlackRock:IWM,BU_32,FC - Dallas County,3731771.53,5556823.06,321715.68
+Paul Anderson,UBS,D,,87.84,502413,1879213,D,"BlackRock:IEFA, BlackRock:TIP",BU_33,XC - Broward County,37427427.29,42649098.89,55909.38
+Emily Jones,Wells Fargo,D,,78.4,926892,1060057,D,"BlackRock:LQD, BlackRock:IVV",BU_34,FC - Harris County,23690536.3,23362254.43,47822.5
+Anthony Williams,Edward Jones,B,3,37.97,528677,1658155,B,CapitalGroup:ANCFX,BU_34,XC - Broward County,14196173.03,10109595.05,80628.02
+Charles Taylor,Wells Fargo,A,,68.29,822900,1545169,A,"BlackRock:TIP, BlackRock:EFA, BlackRock:IEFA",BU_34,FC - Harris County,29771484.47,20178315.87,89078.46
+William Ramirez,Merrill Lynch,D,,27.15,1756985,1565858,D,BlackRock:TIP,BU_34,XC - King County,3612803.0,3050147.26,240014.56
+James Martinez,Wells Fargo,C,,94.08,1564803,1060301,C,"BlackRock:IEFA, CapitalGroup:ABALX, BlackRock:AGG",BU_35,XC - Wayne County,38048082.67,20399927.48,406682.13
+Paul Gonzalez,Wells Fargo,E,,53.59,1197177,1657454,E,"CapitalGroup:AGTHX, CapitalGroup:AGTHX",BU_35,XC - Wayne County,11250747.16,16883178.34,322399.35
+Christopher White,Edward Jones,D,4,87.04,1361457,591535,D,"CapitalGroup:AMRMX, BlackRock:LQD",BU_36,XC - Santa Clara County,14560363.76,24626101.42,391755.94
+Donna Hernandez,Merrill Lynch,D,,96.83,764757,1553380,D,CapitalGroup:AMRMX,BU_36,XC - Miami-Dade County,38442216.93,39348596.2,38517.38
+Anthony Ramirez,UBS,E,,91.94,532186,802315,E,"CapitalGroup:ANCFX, BlackRock:IWM, BlackRock:LQD",BU_36,XC - Wayne County,29410730.16,13357447.56,114061.28
+Matthew Hernandez,Wells Fargo,A,,86.66,1914230,1619087,A,"CapitalGroup:AMRMX, CapitalGroup:ANCFX, CapitalGroup:AGTHX",BU_36,XC - Cook County,12624859.36,35534518.0,502009.68
+Michael Anderson,Morgan Stanley,B,,77.21,1410104,706450,B,CapitalGroup:ANCFX,BU_37,XC - Los Angeles County,33147266.24,19051158.97,326867.41
+Lisa Wilson,UBS,C,,81.65,1115236,1251752,C,BlackRock:EFA,BU_37,XC - King County,35031472.9,9523999.66,84743.72
+Michelle Perez,Edward Jones,B,3,25.76,1778196,1302253,B,BlackRock:IEFA,BU_37,FC - Orange County,9984372.4,8205624.14,324438.3
+Thomas Perez,Merrill Lynch,B,,51.5,1032629,1463789,B,CapitalGroup:AMRMX,BU_37,XC - Clark County,25539379.99,7259778.64,113116.14
+Donna Martinez,Morgan Stanley,E,,24.22,1426374,1224703,E,"CapitalGroup:ABALX, BlackRock:TIP, BlackRock:EFA",BU_38,FC - Tarrant County,10463725.1,9701035.15,246773.0
+Andrew Martinez,Wells Fargo,A,,31.35,1699408,1252791,A,"BlackRock:TIP, CapitalGroup:AIVSX, BlackRock:TIP",BU_39,FC - Los Angeles County,6868270.05,15666380.87,110416.94
+Joshua Sanchez,UBS,E,,77.07,1100192,982593,E,"BlackRock:AGG, CapitalGroup:ABALX",BU_39,XC - King County,21571348.66,18452931.04,329221.25
+Karen Sanchez,Merrill Lynch,A,,91.31,1855474,582675,A,"BlackRock:IWM, CapitalGroup:ANCFX",BU_39,FC - Los Angeles County,38961194.84,25167589.15,422886.87
+William Sanchez,Morgan Stanley,C,,77.27,868343,921097,C,"CapitalGroup:AIVSX, CapitalGroup:AIVSX, CapitalGroup:AIVSX",BU_39,XC - King County,38448244.11,31700223.03,63611.91
+Sandra Williams,Wells Fargo,C,,77.19,1210337,741528,C,CapitalGroup:AGTHX,BU_40,FC - King County,15034946.41,32750257.09,339279.97
+Thomas Moore,Wells Fargo,E,,42.92,1327482,529189,E,BlackRock:LQD,BU_40,FC - Los Angeles County,14385477.46,10311630.28,364157.34
+Michael Perez,Morgan Stanley,E,,44.29,1839134,1279036,E,BlackRock:IEFA,BU_40,FC - Santa Clara County,17020717.15,15639164.5,330933.41
+Sandra Robinson,Edward Jones,C,10,29.92,632575,1832538,C,"BlackRock:EFA, BlackRock:IVV, CapitalGroup:AIVSX",BU_41,XC - Cook County,4978468.0,4658364.07,142463.31
+Matthew Anderson,Wells Fargo,A,,18.75,1627316,784508,A,"CapitalGroup:ABALX, CapitalGroup:AWSHX",BU_42,XC - King County,3424647.42,3427070.41,232906.34
+Michael Clark,Wells Fargo,E,,76.8,824058,1370075,E,"CapitalGroup:AIVSX, BlackRock:IWM",BU_42,XC - Maricopa County,9503472.65,18457051.51,241975.32
+Michael Perez,Merrill Lynch,D,,50.02,995164,1260607,D,"CapitalGroup:ABALX, BlackRock:EFA",BU_42,XC - Clark County,10625949.06,15781681.07,70881.16
+Susan Lee,Morgan Stanley,B,,97.14,1453611,692253,B,"CapitalGroup:ANCFX, BlackRock:IWM, BlackRock:AGG",BU_42,FC - Wayne County,22289884.9,37070712.97,107413.5
+Donna Miller,Edward Jones,B,2,84.68,1662257,934440,B,BlackRock:AGG,BU_43,FC - San Diego County,18268295.62,17523444.34,138596.43
+Paul Rodriguez,Edward Jones,A,5,87.26,803432,772613,A,BlackRock:TIP,BU_43,FC - Cook County,38674219.96,43123483.7,204867.71
+Christopher Smith,UBS,B,,11.34,998978,1734914,B,BlackRock:AGG,BU_43,FC - Miami-Dade County,4215301.7,1565941.34,68637.4
+Mark Harris,Wells Fargo,E,,20.23,633290,1498760,E,"CapitalGroup:ANCFX, BlackRock:AGG",BU_44,FC - Clark County,9813750.98,8380811.96,121563.3
+Patricia Thomas,Edward Jones,A,9,37.15,1849183,565327,A,"BlackRock:IVV, BlackRock:EFA",BU_45,XC - Broward County,17367903.06,18463345.31,293549.89
+William Rodriguez,UBS,A,,38.99,811078,637745,A,"CapitalGroup:AWSHX, CapitalGroup:AMRMX, CapitalGroup:AWSHX",BU_45,XC - San Diego County,17421474.22,5877947.88,236067.96
+Linda Ramirez,Morgan Stanley,D,,55.5,1402193,707992,D,"CapitalGroup:AWSHX, CapitalGroup:AGTHX, BlackRock:AGG",BU_46,XC - Tarrant County,24776949.25,11092834.77,153109.57
+Michael Hernandez,Wells Fargo,C,,84.47,1336197,1372393,C,"BlackRock:IWM, BlackRock:AGG",BU_47,XC - Cook County,32483609.15,36439743.15,153993.68
+Margaret Brown,Wells Fargo,A,,18.21,679022,695517,A,"CapitalGroup:AGTHX, CapitalGroup:AWSHX, CapitalGroup:AWSHX",BU_48,FC - Miami-Dade County,7367573.61,6746692.49,87425.6
+Patricia Martinez,Morgan Stanley,A,,46.97,1895320,1386962,A,"BlackRock:IVV, CapitalGroup:AGTHX, BlackRock:EFA",BU_48,FC - King County,13892950.54,15545670.84,474217.03
+Linda Harris,Merrill Lynch,A,,41.51,1666573,1270831,A,"CapitalGroup:AMRMX, CapitalGroup:AWSHX",BU_48,FC - Los Angeles County,8612779.59,11028793.38,375281.24
+Sarah Smith,Edward Jones,E,1,64.81,1879572,1954314,E,BlackRock:TIP,BU_48,XC - Broward County,18198433.42,22907166.14,439515.77
+Andrew Perez,Morgan Stanley,C,,41.59,880435,800420,C,"BlackRock:LQD, CapitalGroup:ANCFX",BU_49,XC - Cook County,18800760.85,5707724.83,114029.04
+Nancy Garcia,UBS,E,,29.36,1380452,1451364,E,"BlackRock:IWM, CapitalGroup:AWSHX",BU_49,FC - Wayne County,8991364.62,6203482.48,162878.11
+Jennifer Rodriguez,Edward Jones,A,1,24.0,1795700,604359,A,"CapitalGroup:AMRMX, CapitalGroup:AMRMX",BU_49,FC - Tarrant County,11388826.7,5943083.27,123314.06
+Margaret Brown,Morgan Stanley,B,,77.94,738692,1223879,B,"CapitalGroup:AWSHX, BlackRock:LQD",BU_50,FC - Clark County,37419121.16,17997570.6,74370.15
+James Miller,Morgan Stanley,A,,29.85,1756875,614886,A,"CapitalGroup:AGTHX, CapitalGroup:AIVSX",BU_51,XC - Alameda County,3014528.64,12228175.37,430406.7
+William Gonzalez,Morgan Stanley,A,,10.7,1403149,868458,A,"CapitalGroup:AWSHX, CapitalGroup:ABALX, CapitalGroup:ANCFX",BU_52,XC - Maricopa County,4206058.83,4198388.69,275265.57
+Christopher Jackson,Wells Fargo,A,,49.26,1464174,663289,A,"CapitalGroup:ABALX, CapitalGroup:AIVSX",BU_53,XC - Alameda County,13959284.15,18012289.85,130095.72
+Michelle Anderson,UBS,D,,11.88,1181088,860444,D,"CapitalGroup:ANCFX, BlackRock:IVV, BlackRock:IEFA",BU_53,FC - San Diego County,2890274.41,1488947.42,107589.73
+Joseph Hernandez,Wells Fargo,E,,17.08,1150692,1212010,E,BlackRock:LQD,BU_53,XC - Alameda County,5359187.94,3196214.12,191606.07
+Elizabeth Davis,UBS,E,,55.9,1232693,1236309,E,BlackRock:AGG,BU_53,XC - Tarrant County,15196819.73,10326998.79,186910.94
+Barbara Harris,Merrill Lynch,E,,23.76,1874702,658027,E,"BlackRock:TIP, CapitalGroup:AWSHX, BlackRock:IEFA",BU_54,FC - Alameda County,4928174.11,10248577.74,344909.81
+Mark Lee,Edward Jones,C,6,23.59,643206,1483398,C,"CapitalGroup:AWSHX, BlackRock:IEFA",BU_55,XC - Harris County,5546057.64,7812381.83,187275.01
+Lisa Clark,UBS,C,,51.56,578868,619307,C,"BlackRock:TIP, CapitalGroup:ANCFX",BU_55,FC - Los Angeles County,16832114.9,15165608.93,58991.89
+John Anderson,Edward Jones,E,9,44.6,1717038,1662485,E,"CapitalGroup:AIVSX, CapitalGroup:AWSHX, BlackRock:IVV",BU_55,XC - Clark County,10592314.83,16636726.36,218195.92
+Jennifer Taylor,Wells Fargo,A,,82.99,1220241,1998028,A,"BlackRock:AGG, CapitalGroup:AMRMX, CapitalGroup:AWSHX",BU_56,XC - Santa Clara County,9905993.83,11604483.13,141855.43
+Anthony Harris,Merrill Lynch,C,,43.56,1093270,1312471,C,"CapitalGroup:ANCFX, CapitalGroup:ABALX",BU_56,FC - Alameda County,18014495.21,12363752.63,87437.97
+Matthew Martinez,Morgan Stanley,A,,39.67,1670133,1922664,A,"CapitalGroup:ABALX, CapitalGroup:AWSHX",BU_56,XC - San Diego County,5938395.56,17576215.59,149316.31
+Daniel Martinez,Merrill Lynch,C,,17.34,1891695,796596,C,"CapitalGroup:AMRMX, BlackRock:LQD, CapitalGroup:AIVSX",BU_56,XC - Clark County,4794759.34,1738688.26,419036.38
+Kimberly Williams,Edward Jones,D,6,83.19,1905335,1973943,D,"CapitalGroup:AWSHX, BlackRock:IWM, BlackRock:AGG",BU_57,XC - Clark County,40198465.16,15051340.64,488902.62
+Robert Martinez,Morgan Stanley,D,,27.28,788495,824943,D,CapitalGroup:AWSHX,BU_57,FC - Tarrant County,10241914.62,4167435.61,176795.95
+Joshua Gonzalez,Edward Jones,A,6,88.88,1796105,774829,A,BlackRock:TIP,BU_58,FC - Miami-Dade County,31996700.43,14539966.76,107914.39
+Jessica Anderson,Edward Jones,B,8,13.93,1263991,1918435,B,"BlackRock:LQD, CapitalGroup:AGTHX, CapitalGroup:AIVSX",BU_58,XC - Santa Clara County,6590146.84,2919836.42,327349.89
+Sandra Harris,Wells Fargo,B,,43.11,1696256,1423999,B,"CapitalGroup:AWSHX, CapitalGroup:AGTHX",BU_59,XC - King County,15598714.86,8628712.72,223818.29
+Donald Ramirez,Merrill Lynch,E,,22.46,1024294,609428,E,"CapitalGroup:ANCFX, CapitalGroup:AWSHX",BU_59,FC - Los Angeles County,5586644.41,10365741.62,74571.91
+Mark Lewis,UBS,C,,17.55,836199,1072084,C,"BlackRock:EFA, BlackRock:AGG, CapitalGroup:AIVSX",BU_59,XC - Miami-Dade County,2916986.06,4537317.8,93700.03
+Jessica Gonzalez,UBS,D,,14.79,1552785,1284254,D,BlackRock:IVV,BU_59,XC - Wayne County,3286392.69,5616895.15,215737.25
+Elizabeth Jones,Morgan Stanley,A,,85.53,1863066,1203154,A,BlackRock:TIP,BU_60,XC - Orange County,16563529.1,30978460.63,332305.62
+Michelle Smith,Wells Fargo,B,,78.3,1483795,1440785,B,BlackRock:AGG,BU_60,FC - Santa Clara County,29869822.61,7864023.03,325390.08
+Margaret Brown,Merrill Lynch,E,,94.62,1776914,1606817,E,"BlackRock:IVV, BlackRock:EFA",BU_60,FC - Los Angeles County,27508180.29,14484421.73,204419.2
+Paul Smith,Edward Jones,D,2,19.98,1548217,1751452,D,"CapitalGroup:AGTHX, CapitalGroup:AIVSX, BlackRock:IEFA",BU_61,FC - Santa Clara County,3805717.36,7432421.94,460856.45
+Jennifer Taylor,Morgan Stanley,B,,61.36,892825,1893287,B,"BlackRock:IEFA, CapitalGroup:AWSHX",BU_61,FC - Dallas County,6363938.84,23208735.4,51578.97
+Matthew Lopez,Edward Jones,A,7,88.6,591298,1833098,A,"CapitalGroup:AIVSX, CapitalGroup:AIVSX",BU_61,XC - Orange County,37818343.91,43880209.99,89343.98
+John Lopez,Merrill Lynch,A,,79.44,1197342,779780,A,"BlackRock:LQD, BlackRock:TIP, CapitalGroup:ABALX",BU_61,FC - Miami-Dade County,21363447.56,12143997.6,195226.96
+John Martinez,Wells Fargo,B,,83.03,632331,1459823,B,BlackRock:AGG,BU_62,XC - Tarrant County,10655349.68,21025518.37,149874.85
+Paul Thomas,UBS,C,,94.0,1580837,1335136,C,"BlackRock:LQD, BlackRock:IWM",BU_62,FC - Cook County,36876703.15,13251261.61,177785.92
+Betty White,UBS,C,,34.59,1271792,1416353,C,"CapitalGroup:AMRMX, BlackRock:AGG",BU_62,FC - Santa Clara County,7794531.04,15648363.73,210495.33
+Jennifer White,Wells Fargo,D,,43.06,1589000,1059353,D,"BlackRock:IEFA, CapitalGroup:AGTHX",BU_62,XC - Broward County,6667914.97,17628083.37,398797.99
+Charles Martinez,Edward Jones,C,6,19.23,1187697,1886048,C,"CapitalGroup:AMRMX, BlackRock:EFA",BU_63,XC - Cook County,7716289.81,2947160.81,100892.79
+Margaret Rodriguez,Morgan Stanley,D,,13.81,1239370,1789437,D,"CapitalGroup:ANCFX, BlackRock:LQD, BlackRock:IEFA",BU_63,FC - Harris County,6866001.42,2170120.34,65673.26
+Mark Johnson,Merrill Lynch,A,,22.85,1774172,1922055,A,BlackRock:TIP,BU_63,FC - Broward County,7133845.65,2362459.14,457014.44
+Joshua Jones,Morgan Stanley,C,,44.46,1689598,567916,C,"BlackRock:IWM, BlackRock:TIP, BlackRock:AGG",BU_63,XC - Broward County,16005959.47,12272728.1,499515.81
+Linda Smith,Edward Jones,C,7,38.29,1084454,1023473,C,"BlackRock:IEFA, BlackRock:IEFA, BlackRock:TIP",BU_64,FC - Orange County,14893768.92,13448673.87,89661.37
+Ashley Miller,Morgan Stanley,D,,29.31,1783199,1098898,D,BlackRock:IVV,BU_64,FC - Cook County,4705710.31,7757886.8,456353.35
+Christopher Perez,Wells Fargo,B,,90.88,1433465,684110,B,"CapitalGroup:AWSHX, CapitalGroup:AIVSX",BU_64,XC - Los Angeles County,34046053.41,40349357.69,205071.41
+Linda Miller,Merrill Lynch,B,,81.43,1566938,970268,B,BlackRock:EFA,BU_64,FC - Dallas County,10966602.63,11415349.64,325256.2
+Emily Jones,UBS,C,,59.86,1273662,1480221,C,"CapitalGroup:ANCFX, BlackRock:LQD, CapitalGroup:AWSHX",BU_65,FC - Santa Clara County,24002558.56,20102757.89,268960.8
+Christopher Lee,Wells Fargo,D,,84.1,654666,762829,D,BlackRock:LQD,BU_66,FC - Cook County,21328833.43,40813686.62,128040.2
+Donna Garcia,Edward Jones,C,3,89.02,1656167,1841745,C,BlackRock:TIP,BU_66,XC - Cook County,20100846.62,13881073.36,189970.91
+David Hernandez,UBS,A,,56.63,1137795,845310,A,"BlackRock:IEFA, CapitalGroup:ANCFX, BlackRock:LQD",BU_67,XC - Miami-Dade County,11936871.37,7571401.91,288074.64
+Jennifer Taylor,Edward Jones,C,3,66.25,1788549,1618784,C,"BlackRock:IEFA, BlackRock:LQD, CapitalGroup:AWSHX",BU_67,FC - King County,21290010.74,22525208.48,99175.12
+John Lee,Morgan Stanley,E,,13.71,559503,670336,E,"BlackRock:AGG, CapitalGroup:AMRMX, CapitalGroup:ANCFX",BU_67,FC - Cook County,4703040.55,5642869.57,36993.22
+Jessica Sanchez,Wells Fargo,E,,36.07,1133537,1512808,E,"BlackRock:EFA, BlackRock:IVV, BlackRock:EFA",BU_68,XC - Cook County,13569188.81,15840387.28,312430.03
+Christopher Ramirez,Wells Fargo,D,,28.36,1772258,801295,D,"BlackRock:TIP, BlackRock:EFA, BlackRock:IWM",BU_69,FC - King County,10304950.52,6257910.04,285081.58
+Sarah Anderson,Edward Jones,E,2,38.72,1478263,756947,E,BlackRock:IVV,BU_69,XC - Clark County,11890898.49,11763485.5,121510.1
+David Clark,Morgan Stanley,D,,87.77,1376892,1020660,D,"CapitalGroup:ABALX, BlackRock:TIP",BU_70,FC - Wayne County,35032294.55,19152890.34,380393.25
+Karen Thomas,Merrill Lynch,D,,99.64,1478982,1545974,D,BlackRock:EFA,BU_70,FC - Los Angeles County,12138907.29,45751203.01,380599.81
+Patricia Martinez,Edward Jones,D,4,29.36,1240074,602043,D,"CapitalGroup:ABALX, CapitalGroup:AIVSX",BU_70,FC - Miami-Dade County,14147662.23,8747961.38,164790.3
+Betty Lopez,Edward Jones,A,2,48.78,1054639,1267091,A,BlackRock:IEFA,BU_70,FC - Santa Clara County,7077854.34,14625854.55,63989.25
+Steven Anderson,Edward Jones,B,6,59.79,654207,1310232,B,"BlackRock:IEFA, CapitalGroup:ANCFX, BlackRock:IVV",BU_71,XC - Broward County,20183424.33,18613499.96,108106.88
+Lisa Harris,Wells Fargo,C,,81.54,1211113,1669858,C,BlackRock:IEFA,BU_71,XC - Clark County,40042563.65,40342160.69,111419.13
+Nancy Sanchez,Wells Fargo,E,,13.62,581608,787386,E,"CapitalGroup:AGTHX, CapitalGroup:AWSHX",BU_72,XC - Tarrant County,6450020.14,2081042.73,112524.31
+Betty Martin,Merrill Lynch,C,,93.82,1168005,840791,C,"CapitalGroup:AWSHX, BlackRock:TIP, CapitalGroup:AMRMX",BU_72,FC - Harris County,41686627.94,30712179.23,298333.41
+Linda Wilson,Edward Jones,C,8,83.42,1272502,1194659,C,"BlackRock:LQD, CapitalGroup:ABALX, BlackRock:EFA",BU_73,XC - San Diego County,20535083.06,31130410.29,189284.26
+Donald Garcia,Morgan Stanley,E,,61.99,607699,1723737,E,"CapitalGroup:AWSHX, CapitalGroup:AMRMX, BlackRock:LQD",BU_74,FC - San Diego County,25111552.36,29865616.19,34864.04
+Richard Smith,Merrill Lynch,A,,61.53,1969098,730467,A,"BlackRock:AGG, BlackRock:AGG",BU_75,FC - Harris County,25113273.82,6563759.56,434783.2
+William Taylor,Wells Fargo,E,,79.75,1489028,630613,E,CapitalGroup:ABALX,BU_75,XC - Harris County,10129288.96,16338710.34,138780.09
+Paul Hernandez,Wells Fargo,E,,43.91,863189,1463984,E,"BlackRock:TIP, CapitalGroup:ABALX, CapitalGroup:ABALX",BU_75,FC - San Diego County,5090519.0,5453075.05,89494.6
+Emily Martinez,Morgan Stanley,E,,53.58,1016988,1085118,E,CapitalGroup:AIVSX,BU_76,FC - San Diego County,22274063.26,16215678.47,98432.01
+Donald Lopez,Morgan Stanley,B,,72.12,1525513,1164882,B,"CapitalGroup:ABALX, BlackRock:IVV, CapitalGroup:AWSHX",BU_76,FC - Santa Clara County,25345007.44,21666260.56,183006.09
+John Martinez,Wells Fargo,D,,83.65,807182,1109123,D,"BlackRock:EFA, CapitalGroup:ABALX, BlackRock:AGG",BU_76,XC - Orange County,22265354.53,31847583.97,218630.05
+Michelle White,Edward Jones,C,9,72.66,787882,729064,C,"BlackRock:IVV, CapitalGroup:AWSHX, BlackRock:AGG",BU_76,FC - Maricopa County,9661681.93,22860719.81,46219.02
+William Smith,UBS,A,,47.2,1490702,710857,A,"CapitalGroup:AGTHX, BlackRock:EFA, BlackRock:AGG",BU_77,FC - Clark County,16350968.41,9958590.85,305287.03
+Andrew Davis,Morgan Stanley,C,,35.69,624072,687612,C,"CapitalGroup:ANCFX, CapitalGroup:AGTHX, BlackRock:TIP",BU_77,XC - Dallas County,7993230.7,10868385.87,69550.45
+Barbara Robinson,Merrill Lynch,A,,99.75,1332557,1538895,A,"CapitalGroup:AIVSX, CapitalGroup:ANCFX, BlackRock:IEFA",BU_77,XC - Harris County,18082580.01,42216597.23,164938.96
+Kimberly Thomas,UBS,C,,35.61,1844929,1639383,C,CapitalGroup:AMRMX,BU_77,FC - Los Angeles County,11201341.62,9126579.53,282270.54
+Sandra Lee,Morgan Stanley,B,,82.79,1193494,840775,B,"CapitalGroup:ANCFX, CapitalGroup:AIVSX",BU_78,FC - Orange County,29284288.3,35915178.55,223985.6
+Margaret Taylor,Edward Jones,B,3,64.99,1839505,1350374,B,"BlackRock:LQD, BlackRock:AGG",BU_78,FC - Santa Clara County,24203723.58,8217727.71,120018.08
+Matthew Davis,Wells Fargo,C,,94.22,514323,1046906,C,"CapitalGroup:AIVSX, BlackRock:LQD",BU_78,FC - Dallas County,35753696.63,36932671.33,61689.96
+Patricia Perez,Edward Jones,A,5,68.83,1952841,995562,A,BlackRock:AGG,BU_78,FC - Miami-Dade County,30187960.15,8477266.45,164642.08
