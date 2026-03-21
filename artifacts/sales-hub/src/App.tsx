@@ -4,8 +4,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 
-// Page Imports
-import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import LeadMe from "@/pages/lead-me";
 import LeadsList from "@/pages/leads";
@@ -27,7 +25,6 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <Switch>
-      <Route path="/login" component={Login} />
       <Route path="/" component={Dashboard} />
       <Route path="/lead-me" component={LeadMe} />
       <Route path="/leads" component={LeadsList} />
