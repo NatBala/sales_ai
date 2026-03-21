@@ -82,83 +82,187 @@ function parseAIJson(content: string): Record<string, unknown> {
   }
 }
 
+// ─── Parsed filter schema ─────────────────────────────────────────────────────
+interface ParsedFilters {
+  firms: string[];          // ["Edward Jones", "UBS"]
+  segments: string[];       // ["A", "B"]
+  counties: string[];       // ["Cook County", "Los Angeles County"]
+  channels: string[];       // ["XC"] or ["FC"]
+  aumMin: number | null;    // in millions
+  aumMax: number | null;    // in millions
+  netFlow: "positive" | "negative" | null;
+  fiOppMin: number | null;  // in dollars
+  etfOppMin: number | null; // in dollars
+  alphaMin: number | null;  // in dollars
+  ratingsMin: number | null;
+  competitors: string[];    // brand names like "BlackRock", "Vanguard"
+  totalOppMin: number | null;
+}
+
+const emptyFilters = (): ParsedFilters => ({
+  firms: [], segments: [], counties: [], channels: [],
+  aumMin: null, aumMax: null, netFlow: null,
+  fiOppMin: null, etfOppMin: null, alphaMin: null,
+  ratingsMin: null, competitors: [], totalOppMin: null,
+});
+
+async function parseQueryFilters(query: string): Promise<ParsedFilters> {
+  try {
+    const resp = await openai.chat.completions.create({
+      model: "gpt-5.2",
+      max_completion_tokens: 400,
+      messages: [
+        {
+          role: "system",
+          content: `You parse natural language queries about financial advisors into structured filters.
+
+Dataset schema:
+- Firms: Edward Jones, Merrill Lynch, Morgan Stanley, UBS, Wells Fargo
+- Segments: A (Top Tier), B (High Value), C (Mid-Market), D (Developing), E (Emerging)
+- Channels: XC (Exclusive Channel), FC (Flexible Channel)
+- Counties: Cook County, Los Angeles County, Maricopa County, Harris County, Dallas County, Miami-Dade County, Orange County, San Diego County, Clark County, King County, Broward County, Alameda County, Tarrant County, Santa Clara County, Wayne County
+- AUM in millions (typical range: $10M–$100M)
+- FI/ETF Opportunities and Alpha in dollars
+- Competitors: BlackRock, Vanguard, State Street, Invesco, Fidelity, PIMCO, CapitalGroup
+
+Return ONLY a JSON object with these exact keys. Use empty arrays [] and null for fields not mentioned:
+{"firms":[],"segments":[],"counties":[],"channels":[],"aumMin":null,"aumMax":null,"netFlow":null,"fiOppMin":null,"etfOppMin":null,"alphaMin":null,"ratingsMin":null,"competitors":[],"totalOppMin":null}`,
+        },
+        { role: "user", content: query },
+      ],
+    });
+    const raw = resp.choices[0]?.message?.content ?? "{}";
+    const obj = parseAIJson(raw);
+    return {
+      firms: Array.isArray(obj.firms) ? (obj.firms as string[]) : [],
+      segments: Array.isArray(obj.segments) ? (obj.segments as string[]) : [],
+      counties: Array.isArray(obj.counties) ? (obj.counties as string[]) : [],
+      channels: Array.isArray(obj.channels) ? (obj.channels as string[]) : [],
+      aumMin: typeof obj.aumMin === "number" ? obj.aumMin : null,
+      aumMax: typeof obj.aumMax === "number" ? obj.aumMax : null,
+      netFlow: obj.netFlow === "positive" || obj.netFlow === "negative" ? obj.netFlow : null,
+      fiOppMin: typeof obj.fiOppMin === "number" ? obj.fiOppMin : null,
+      etfOppMin: typeof obj.etfOppMin === "number" ? obj.etfOppMin : null,
+      alphaMin: typeof obj.alphaMin === "number" ? obj.alphaMin : null,
+      ratingsMin: typeof obj.ratingsMin === "number" ? obj.ratingsMin : null,
+      competitors: Array.isArray(obj.competitors) ? (obj.competitors as string[]) : [],
+      totalOppMin: typeof obj.totalOppMin === "number" ? obj.totalOppMin : null,
+    };
+  } catch {
+    return emptyFilters();
+  }
+}
+
+function applyFilters(advisors: AdvisorRow[], f: ParsedFilters): AdvisorRow[] {
+  return advisors.filter(a => {
+    if (f.firms.length && !f.firms.some(firm => a.firm.toLowerCase().includes(firm.toLowerCase()))) return false;
+    if (f.segments.length && !f.segments.includes(a.segment)) return false;
+
+    const parts = a.territory.split(" - ");
+    const channel = (parts[0] ?? "").trim();
+    const county = (parts[1] ?? "").trim().toLowerCase();
+
+    if (f.channels.length && !f.channels.includes(channel)) return false;
+    if (f.counties.length && !f.counties.some(c => county.includes(c.toLowerCase().replace(" county", "")))) return false;
+
+    if (f.aumMin !== null && a.aumM < f.aumMin) return false;
+    if (f.aumMax !== null && a.aumM > f.aumMax) return false;
+    if (f.netFlow === "positive" && a.salesAmt <= a.redemption) return false;
+    if (f.netFlow === "negative" && a.salesAmt > a.redemption) return false;
+    if (f.fiOppMin !== null && a.fiOpportunities < f.fiOppMin) return false;
+    if (f.etfOppMin !== null && a.etfOpportunities < f.etfOppMin) return false;
+    if (f.alphaMin !== null && a.alpha < f.alphaMin) return false;
+    if (f.ratingsMin !== null && (a.ratings === null || a.ratings < f.ratingsMin)) return false;
+    if (f.competitors.length) {
+      const comps = a.competitors.join(",").toLowerCase();
+      if (!f.competitors.some(c => comps.includes(c.toLowerCase()))) return false;
+    }
+    if (f.totalOppMin !== null && (a.fiOpportunities + a.etfOpportunities) < f.totalOppMin) return false;
+    return true;
+  });
+}
+
+function buildAdvisorLead(a: AdvisorRow, l: { score: number; reason: string; reasoning: string }) {
+  return {
+    name: a.name,
+    company: a.firm,
+    title: "Financial Advisor",
+    score: Math.round(Number(l.score) || 0),
+    reason: l.reason ?? "",
+    reasoning: l.reasoning ?? "",
+    assets: JSON.stringify({
+      __advisorData: {
+        aumM: a.aumM, salesAmt: a.salesAmt, redemption: a.redemption,
+        fiOpportunities: a.fiOpportunities, etfOpportunities: a.etfOpportunities,
+        alpha: a.alpha, competitors: a.competitors, buyingUnit: a.buyingUnit,
+        territory: a.territory, segment: a.segment, ratings: a.ratings,
+      },
+    }),
+    sales: `Sales: $${a.salesAmt.toLocaleString()} | Redemption: $${a.redemption.toLocaleString()}`,
+    email: null, phone: null, linkedIn: null,
+    location: a.territory.replace(/^(XC|FC)\s*-\s*/i, ""),
+    industry: "Financial Services",
+    aum: `$${a.aumM.toFixed(1)}M`,
+  };
+}
+
 router.post("/agents/lead-me", async (req: Request, res: Response) => {
   const parsed = GenerateLeadsBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Invalid request" });
-    return;
-  }
-
+  if (!parsed.success) { res.status(400).json({ error: "Invalid request" }); return; }
   const { query } = parsed.data;
 
   try {
-    const dataset = ADVISORS.map((a, i) =>
+    // ── Step 1: Parse query into structured filters (fast call) ──
+    const parsedFilters = await parseQueryFilters(query);
+
+    // ── Step 2: Programmatic pre-filtering ──
+    const filtered = applyFilters(ADVISORS, parsedFilters);
+    const workingSet = filtered.length >= 8 ? filtered : ADVISORS; // fallback to all if too few
+
+    // ── Step 3: AI scoring of the filtered set ──
+    const dataset = workingSet.map((a, i) =>
       `${i}|${a.name}|${a.firm}|seg:${a.segment}|AUM:$${a.aumM.toFixed(1)}M|${a.territory}|comps:${a.competitors.slice(0, 2).join(";")}|FI:$${(a.fiOpportunities / 1e6).toFixed(1)}M|ETF:$${(a.etfOpportunities / 1e6).toFixed(1)}M|alpha:$${(a.alpha / 1000).toFixed(0)}K`
     ).join("\n");
 
-    const response = await openai.chat.completions.create({
+    const scoreResp = await openai.chat.completions.create({
       model: "gpt-5.2",
       max_completion_tokens: 4096,
       messages: [
         {
           role: "system",
-          content: `You are a sales intelligence AI for Capital Group financial services salespeople. Given a real dataset of financial advisors and a natural language query, select the 8 best-matching advisors and score their fit 0-100. Segments: A=top tier, B=high value, C=mid-market, D=developing, E=emerging. Territory prefix: XC=exclusive channel, FC=flexible channel. Return valid JSON only.`,
+          content: `You are a sales intelligence AI for Capital Group financial services salespeople. Select the 8 best-matching advisors from the dataset and score their fit 0-100. Segments: A=top tier, B=high value, C=mid-market, D=developing, E=emerging. XC=exclusive channel, FC=flexible channel. Return valid JSON only.`,
         },
         {
           role: "user",
           content: `Query: "${query}"
 
-Advisor dataset (idx|name|firm|segment|AUM|territory|top-competitors|FI-opportunity|ETF-opportunity|alpha-generated):
+Pre-filtered advisor dataset (idx|name|firm|segment|AUM|territory|competitors|FI-opp|ETF-opp|alpha):
 ${dataset}
 
-Return JSON: {"leads": [{"idx": 0, "score": 85, "reason": "1-2 sentence fit reason", "reasoning": "3-4 sentence deep analysis of this advisor's opportunity and why they match the query"}]}
-Select exactly 8 advisors. Sort by score descending.`,
+Return JSON: {"leads":[{"idx":0,"score":85,"reason":"1-2 sentence fit reason","reasoning":"3-4 sentence deep analysis of opportunity and why this advisor matches"}]}
+Select exactly 8 (or all if fewer). Sort by score descending.`,
         },
       ],
     });
 
-    const content = response.choices[0]?.message?.content ?? "{}";
+    const content = scoreResp.choices[0]?.message?.content ?? "{}";
     const aiData = parseAIJson(content);
     const aiLeads = Array.isArray(aiData.leads)
       ? (aiData.leads as Array<{ idx: number; score: number; reason: string; reasoning: string }>)
       : [];
 
     const leads = aiLeads.map(l => {
-      const a = ADVISORS[l.idx];
-      if (!a) return null;
-      return {
-        name: a.name,
-        company: a.firm,
-        title: "Financial Advisor",
-        score: Math.round(Number(l.score) || 0),
-        reason: l.reason ?? "",
-        reasoning: l.reasoning ?? "",
-        assets: JSON.stringify({
-          __advisorData: {
-            aumM: a.aumM,
-            salesAmt: a.salesAmt,
-            redemption: a.redemption,
-            fiOpportunities: a.fiOpportunities,
-            etfOpportunities: a.etfOpportunities,
-            alpha: a.alpha,
-            competitors: a.competitors,
-            buyingUnit: a.buyingUnit,
-            territory: a.territory,
-            segment: a.segment,
-            ratings: a.ratings,
-          },
-        }),
-        sales: `Sales: $${a.salesAmt.toLocaleString()} | Redemption: $${a.redemption.toLocaleString()}`,
-        email: null,
-        phone: null,
-        linkedIn: null,
-        location: a.territory.replace(/^(XC|FC)\s*-\s*/i, ""),
-        industry: "Financial Services",
-        aum: `$${a.aumM.toFixed(1)}M`,
-      };
+      const a = workingSet[l.idx];
+      return a ? buildAdvisorLead(a, l) : null;
     }).filter(Boolean);
 
-    res.json({ leads });
+    res.json({
+      leads,
+      parsedFilters,
+      filteredCount: filtered.length,
+      totalCount: ADVISORS.length,
+      usedFallback: filtered.length < 8,
+    });
   } catch (err) {
     req.log.error({ err }, "Lead generation failed");
     res.status(500).json({ error: "Failed to generate leads" });

@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Loader2, Search, Building2, TrendingUp,
   Save, Check, ArrowRight, Calendar, Mic, MicOff,
-  ChevronDown, ChevronUp, MapPin, Zap, Users, ExternalLink
+  ChevronDown, ChevronUp, MapPin, Zap, Users, ExternalLink,
+  SlidersHorizontal
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,6 +19,142 @@ import { Link } from "wouter";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
 } from "recharts";
+
+interface ParsedFilters {
+  firms: string[];
+  segments: string[];
+  counties: string[];
+  channels: string[];
+  aumMin: number | null;
+  aumMax: number | null;
+  netFlow: "positive" | "negative" | null;
+  fiOppMin: number | null;
+  etfOppMin: number | null;
+  alphaMin: number | null;
+  ratingsMin: number | null;
+  competitors: string[];
+  totalOppMin: number | null;
+}
+
+interface FilterChip {
+  label: string;
+  value: string;
+  color: string;
+  bg: string;
+  border: string;
+}
+
+function buildFilterChips(f: ParsedFilters): FilterChip[] {
+  const chips: FilterChip[] = [];
+  const add = (label: string, value: string, color: string, bg: string, border: string) =>
+    chips.push({ label, value, color, bg, border });
+
+  const fmtM = (n: number) => `$${n}M`;
+  const fmtD = (n: number) => n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : n >= 1e3 ? `$${(n / 1e3).toFixed(0)}K` : `$${n}`;
+  const SEGMENT_NAMES: Record<string, string> = { A: "Top Tier", B: "High Value", C: "Mid-Market", D: "Developing", E: "Emerging" };
+  const CHANNEL_NAMES: Record<string, string> = { XC: "Exclusive Channel", FC: "Flexible Channel" };
+
+  f.firms.forEach(v => add("Firm", v, "text-blue-300", "bg-blue-500/10", "border-blue-500/25"));
+  f.segments.forEach(v => add("Segment", `${v} · ${SEGMENT_NAMES[v] ?? v}`, "text-emerald-300", "bg-emerald-500/10", "border-emerald-500/25"));
+  f.counties.forEach(v => add("Territory", v, "text-sky-300", "bg-sky-500/10", "border-sky-500/25"));
+  f.channels.forEach(v => add("Channel", CHANNEL_NAMES[v] ?? v, "text-violet-300", "bg-violet-500/10", "border-violet-500/25"));
+  f.competitors.forEach(v => add("Competitor", v, "text-orange-300", "bg-orange-500/10", "border-orange-500/25"));
+  if (f.aumMin !== null && f.aumMax !== null) add("AUM", `${fmtM(f.aumMin)} – ${fmtM(f.aumMax)}`, "text-cyan-300", "bg-cyan-500/10", "border-cyan-500/25");
+  else if (f.aumMin !== null) add("AUM", `≥ ${fmtM(f.aumMin)}`, "text-cyan-300", "bg-cyan-500/10", "border-cyan-500/25");
+  else if (f.aumMax !== null) add("AUM", `≤ ${fmtM(f.aumMax)}`, "text-cyan-300", "bg-cyan-500/10", "border-cyan-500/25");
+  if (f.netFlow) add("Net Flow", f.netFlow === "positive" ? "Net Buyer" : "Net Seller", f.netFlow === "positive" ? "text-emerald-300" : "text-red-300", f.netFlow === "positive" ? "bg-emerald-500/10" : "bg-red-500/10", f.netFlow === "positive" ? "border-emerald-500/25" : "border-red-500/25");
+  if (f.fiOppMin !== null) add("FI Opportunity", `≥ ${fmtD(f.fiOppMin)}`, "text-teal-300", "bg-teal-500/10", "border-teal-500/25");
+  if (f.etfOppMin !== null) add("ETF Opportunity", `≥ ${fmtD(f.etfOppMin)}`, "text-purple-300", "bg-purple-500/10", "border-purple-500/25");
+  if (f.totalOppMin !== null) add("Total Opportunity", `≥ ${fmtD(f.totalOppMin)}`, "text-indigo-300", "bg-indigo-500/10", "border-indigo-500/25");
+  if (f.alphaMin !== null) add("Alpha", `≥ ${fmtD(f.alphaMin)}`, "text-yellow-300", "bg-yellow-500/10", "border-yellow-500/25");
+  if (f.ratingsMin !== null) add("Rating", `≥ ${f.ratingsMin}/10`, "text-amber-300", "bg-amber-500/10", "border-amber-500/25");
+
+  return chips;
+}
+
+function QueryIntelligencePanel({
+  parsedFilters, filteredCount, totalCount, usedFallback
+}: {
+  parsedFilters: ParsedFilters;
+  filteredCount: number;
+  totalCount: number;
+  usedFallback: boolean;
+}) {
+  const chips = buildFilterChips(parsedFilters);
+  const hasFilters = chips.length > 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border overflow-hidden"
+      style={{ borderColor: "rgba(59,130,246,0.2)", background: "rgba(59,130,246,0.04)" }}
+    >
+      <div className="flex items-center justify-between px-5 py-3 border-b border-white/5">
+        <div className="flex items-center gap-2.5">
+          <SlidersHorizontal className="w-4 h-4 text-primary" />
+          <span className="text-sm font-semibold text-white">Query Intelligence</span>
+          <span className="text-xs text-muted-foreground">— {hasFilters ? `${chips.length} filter${chips.length !== 1 ? "s" : ""} detected` : "no specific filters detected"}</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          {usedFallback ? (
+            <span className="text-amber-400/80">⚠ Too few matches, searching all {totalCount}</span>
+          ) : (
+            <>
+              <span className="font-bold text-primary">{filteredCount}</span>
+              <span className="text-muted-foreground">of {totalCount} advisors matched pre-filters</span>
+              <div className="w-20 h-1.5 bg-white/5 rounded-full overflow-hidden ml-1">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${(filteredCount / totalCount) * 100}%`, boxShadow: "0 0 4px #3b82f6" }}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="px-5 py-4">
+        {hasFilters ? (
+          <div className="flex flex-wrap gap-2">
+            {chips.map((chip, i) => (
+              <motion.span
+                key={i}
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.05 }}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${chip.bg} ${chip.border} ${chip.color}`}
+              >
+                <span className="opacity-50 font-normal">{chip.label}:</span>
+                {chip.value}
+              </motion.span>
+            ))}
+          </div>
+        ) : (
+          <div className="text-xs text-muted-foreground">
+            <span className="text-white/60">No explicit filters detected.</span> Showing AI-selected top matches across all {totalCount} advisors based on semantic similarity.
+          </div>
+        )}
+
+        <div className="mt-4 pt-3 border-t border-white/5 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-muted-foreground">
+          {[
+            { label: "Filterable fields", value: "13", icon: "⚙" },
+            { label: "Dataset advisors", value: String(totalCount), icon: "👥" },
+            { label: "Pre-filter matches", value: usedFallback ? "All" : String(filteredCount), icon: "🎯" },
+            { label: "AI scored top", value: "8", icon: "✨" },
+          ].map((s, i) => (
+            <div key={i} className="flex items-center gap-2 bg-white/3 rounded-lg px-3 py-2">
+              <span>{s.icon}</span>
+              <div>
+                <p className="text-white font-bold">{s.value}</p>
+                <p className="text-[10px]">{s.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 interface AdvisorData {
   aumM: number;
@@ -371,6 +508,17 @@ export default function LeadMe() {
         <AnimatePresence mode="wait">
           {data?.leads && data.leads.length > 0 && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+
+              {/* Query Intelligence Panel */}
+              {(data as any).parsedFilters && (
+                <QueryIntelligencePanel
+                  parsedFilters={(data as any).parsedFilters as ParsedFilters}
+                  filteredCount={(data as any).filteredCount as number ?? data.leads.length}
+                  totalCount={(data as any).totalCount as number ?? 200}
+                  usedFallback={(data as any).usedFallback as boolean ?? false}
+                />
+              )}
+
               <div className="flex items-center justify-between pl-1">
                 <h3 className="text-xl font-display font-semibold text-white">
                   Matched Advisors <span className="text-muted-foreground font-normal text-base">({data.leads.length})</span>
