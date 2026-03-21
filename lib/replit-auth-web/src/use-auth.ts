@@ -11,6 +11,12 @@ interface AuthState {
   logout: () => void;
 }
 
+declare global {
+  interface ImportMeta {
+    env?: Record<string, string>;
+  }
+}
+
 export function useAuth(): AuthState {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,8 +48,10 @@ export function useAuth(): AuthState {
   }, []);
 
   const login = useCallback(() => {
-    const base = import.meta.env.BASE_URL.replace(/\/+$/, "") || "/";
-    window.location.href = `/api/login?returnTo=${encodeURIComponent(base)}`;
+    const base = (typeof import.meta !== "undefined" && import.meta.env?.BASE_URL)
+      ? import.meta.env.BASE_URL.replace(/\/+$/, "")
+      : "";
+    window.location.href = `/api/login?returnTo=${encodeURIComponent(base || "/")}`;
   }, []);
 
   const logout = useCallback(() => {

@@ -68,7 +68,7 @@ const container = {
 
 const item = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
 };
 
 export default function Dashboard() {
@@ -78,11 +78,7 @@ export default function Dashboard() {
         
         {/* Hero Section */}
         <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-          <img 
-            src={`${import.meta.env.BASE_URL}images/dashboard-hero.png`} 
-            alt="Dashboard abstract background" 
-            className="absolute inset-0 w-full h-full object-cover opacity-60"
-          />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/10 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
           
           <div className="relative z-10 p-8 md:p-12 lg:p-16">

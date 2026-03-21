@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Layout } from "@/components/layout";
 import { useAgentLeadMe } from "@/hooks/use-agents";
 import { useCreateLead } from "@/hooks/use-leads";
+import type { GeneratedLead } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,7 @@ export default function LeadMe() {
     generateLeads({ data: { query } });
   };
 
-  const handleSave = (lead: any, index: number) => {
+  const handleSave = (lead: GeneratedLead, index: number) => {
     saveLead(
       { data: lead },
       {

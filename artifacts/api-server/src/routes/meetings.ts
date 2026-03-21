@@ -77,12 +77,13 @@ router.get("/meetings/:id/tasks", async (req: Request, res: Response) => {
     return;
   }
 
+  const meetingId = req.params.id as string;
   const tasks = await db
     .select()
     .from(tasksTable)
     .where(
       and(
-        eq(tasksTable.meetingId, req.params.id),
+        eq(tasksTable.meetingId, meetingId),
         eq(tasksTable.userId, req.user.id),
       ),
     )
@@ -103,11 +104,12 @@ router.post("/meetings/:id/tasks", async (req: Request, res: Response) => {
     return;
   }
 
+  const taskMeetingId = req.params.id as string;
   const [task] = await db
     .insert(tasksTable)
     .values({
       ...parsed.data,
-      meetingId: req.params.id,
+      meetingId: taskMeetingId,
       userId: req.user.id,
     })
     .returning();
@@ -121,12 +123,13 @@ router.patch("/tasks/:id/complete", async (req: Request, res: Response) => {
     return;
   }
 
+  const taskId = req.params.id as string;
   const [task] = await db
     .update(tasksTable)
     .set({ completed: true })
     .where(
       and(
-        eq(tasksTable.id, req.params.id),
+        eq(tasksTable.id, taskId),
         eq(tasksTable.userId, req.user.id),
       ),
     )

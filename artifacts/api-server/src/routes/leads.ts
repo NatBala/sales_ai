@@ -82,10 +82,11 @@ router.get("/leads/:id", async (req: Request, res: Response) => {
     return;
   }
 
+  const leadId = req.params.id as string;
   const [lead] = await db
     .select()
     .from(leadsTable)
-    .where(and(eq(leadsTable.id, req.params.id), eq(leadsTable.userId, req.user.id)));
+    .where(and(eq(leadsTable.id, leadId), eq(leadsTable.userId, req.user.id)));
 
   if (!lead) {
     res.status(404).json({ error: "Lead not found" });

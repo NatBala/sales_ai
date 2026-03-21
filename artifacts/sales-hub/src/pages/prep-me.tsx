@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Layout } from "@/components/layout";
 import { useMeetings } from "@/hooks/use-meetings";
 import { useAgentPrepMe } from "@/hooks/use-agents";
+import type { Meeting } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, FileText, Calendar as CalendarIcon, Users, ListChecks, MessageSquare, AlertCircle } from "lucide-react";
@@ -16,7 +17,7 @@ export default function PrepMe() {
   const meetings = meetingsData?.meetings?.filter(m => m.status === 'scheduled') || [];
   const selectedMeeting = meetings.find(m => m.id === selectedMeetingId);
 
-  const handleGenerate = (meeting: any) => {
+  const handleGenerate = (meeting: Meeting) => {
     setSelectedMeetingId(meeting.id);
     generatePrep({
       data: {
