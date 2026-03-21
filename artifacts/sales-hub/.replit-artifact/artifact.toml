@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Sales AI Hub"
+version = "1.0.0"
+id = "artifacts/sales-hub"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25164
+
+[services.development]
+run = "pnpm --filter @workspace/sales-hub run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/sales-hub", "run", "build" ]
+publicDir = "artifacts/sales-hub/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25164"
+BASE_PATH = "/"

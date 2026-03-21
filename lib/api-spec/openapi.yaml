@@ -1,6 +1,5 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
   description: API specification
@@ -10,6 +9,15 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: Auth
+    description: Browser and mobile authentication endpoints.
+  - name: leads
+    description: Lead generation and management
+  - name: meetings
+    description: Meeting scheduling and management
+  - name: agents
+    description: AI agent endpoints
+
 paths:
   /healthz:
     get:
@@ -24,7 +32,410 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/user:
+    get:
+      tags: [Auth]
+      operationId: getCurrentAuthUser
+      summary: Get the currently authenticated user
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        '200':
+          description: Auth status resolved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserEnvelope'
+
+  /login:
+    get:
+      tags: [Auth]
+      operationId: beginBrowserLogin
+      summary: Start the browser OIDC login flow
+      parameters:
+        - name: returnTo
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to the OIDC authorization endpoint.
+
+  /callback:
+    get:
+      tags: [Auth]
+      operationId: handleBrowserLoginCallback
+      summary: Complete the browser OIDC login flow
+      parameters:
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: iss
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uri
+      responses:
+        '302':
+          description: Redirect to the returnTo path on success or /api/login on failure.
+
+  /logout:
+    get:
+      tags: [Auth]
+      operationId: logoutBrowserSession
+      summary: Clear the session and begin OIDC logout
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        '302':
+          description: Redirect to the OIDC provider logout URL.
+
+  /mobile-auth/token-exchange:
+    post:
+      tags: [Auth]
+      operationId: exchangeMobileAuthorizationCode
+      summary: Exchange a mobile OIDC code for a session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileTokenExchangeRequest'
+      responses:
+        '200':
+          description: Session created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileTokenExchangeSuccess'
+        '400':
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Token did not contain usable claims.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Token exchange failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /mobile-auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logoutMobileSession
+      summary: Delete a mobile session token
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+      responses:
+        '200':
+          description: Logout processed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutSuccess'
+
+  /leads:
+    get:
+      operationId: getLeads
+      tags: [leads]
+      summary: Get all leads for the current user
+      responses:
+        "200":
+          description: List of leads
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [leads]
+                properties:
+                  leads:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Lead"
+    post:
+      operationId: createLead
+      tags: [leads]
+      summary: Save a lead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLeadBody"
+      responses:
+        "201":
+          description: Lead created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+
+  /leads/{id}:
+    get:
+      operationId: getLead
+      tags: [leads]
+      summary: Get a specific lead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lead details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /agents/lead-me:
+    post:
+      operationId: generateLeads
+      tags: [agents]
+      summary: Generate leads using AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateLeadsBody"
+      responses:
+        "200":
+          description: Generated leads
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [leads]
+                properties:
+                  leads:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GeneratedLead"
+
+  /agents/schedule-me:
+    post:
+      operationId: generateEmail
+      tags: [agents]
+      summary: Generate personalized outreach email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateEmailBody"
+      responses:
+        "200":
+          description: Generated email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedEmail"
+
+  /agents/prep-me:
+    post:
+      operationId: generateMeetingPrep
+      tags: [agents]
+      summary: Generate meeting preparation materials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GeneratePrepBody"
+      responses:
+        "200":
+          description: Generated prep materials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedPrep"
+
+  /agents/engage-me:
+    post:
+      operationId: generateEngagementIntelligence
+      tags: [agents]
+      summary: Generate real-time meeting intelligence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateEngageBody"
+      responses:
+        "200":
+          description: Generated engagement intelligence
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedEngagement"
+
+  /agents/follow-me:
+    post:
+      operationId: generateFollowUpTasks
+      tags: [agents]
+      summary: Generate follow-up tasks from meeting notes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateFollowUpBody"
+      responses:
+        "200":
+          description: Generated follow-up tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedFollowUp"
+
+  /meetings:
+    get:
+      operationId: getMeetings
+      tags: [meetings]
+      summary: Get all meetings for the current user
+      responses:
+        "200":
+          description: List of meetings
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [meetings]
+                properties:
+                  meetings:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Meeting"
+    post:
+      operationId: createMeeting
+      tags: [meetings]
+      summary: Create a meeting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMeetingBody"
+      responses:
+        "201":
+          description: Meeting created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meeting"
+
+  /meetings/{id}/tasks:
+    get:
+      operationId: getMeetingTasks
+      tags: [meetings]
+      summary: Get follow-up tasks for a meeting
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [tasks]
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [meetings]
+      summary: Create a follow-up task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTaskBody"
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /tasks/{id}/complete:
+    patch:
+      operationId: completeTask
+      tags: [meetings]
+      summary: Mark a task as complete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
 components:
+  parameters:
+    AuthorizationSessionHeader:
+      name: Authorization
+      in: header
+      required: false
+      description: Opaque session token — `Bearer <sid>`.
+      schema:
+        type: string
+    SessionCookie:
+      name: sid
+      in: cookie
+      required: false
+      description: Browser session cookie.
+      schema:
+        type: string
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +445,367 @@ components:
       required:
         - status
 
+    AuthUser:
+      type: object
+      required: [id, email, firstName, lastName, profileImageUrl]
+      properties:
+        id:
+          type: string
+        email:
+          type: [string, 'null']
+          format: email
+        firstName:
+          type: [string, 'null']
+        lastName:
+          type: [string, 'null']
+        profileImageUrl:
+          type: [string, 'null']
+
+    AuthUserEnvelope:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: '#/components/schemas/AuthUser'
+            - type: 'null'
+
+    MobileTokenExchangeRequest:
+      type: object
+      required: [code, code_verifier, redirect_uri, state]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        code_verifier:
+          type: string
+          minLength: 1
+        redirect_uri:
+          type: string
+          minLength: 1
+          format: uri
+        state:
+          type: string
+          minLength: 1
+        nonce:
+          type: string
+          minLength: 1
+
+    MobileTokenExchangeSuccess:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    LogoutSuccess:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+          const: true
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    Lead:
+      type: object
+      required: [id, name, company, title, score, reason, assets, sales, reasoning, createdAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        company:
+          type: string
+        title:
+          type: string
+        score:
+          type: number
+        reason:
+          type: string
+        assets:
+          type: string
+        sales:
+          type: string
+        reasoning:
+          type: string
+        email:
+          type: [string, 'null']
+        phone:
+          type: [string, 'null']
+        linkedIn:
+          type: [string, 'null']
+        location:
+          type: [string, 'null']
+        industry:
+          type: [string, 'null']
+        aum:
+          type: [string, 'null']
+        createdAt:
+          type: string
+
+    CreateLeadBody:
+      type: object
+      required: [name, company, title, score, reason, assets, sales, reasoning]
+      properties:
+        name:
+          type: string
+        company:
+          type: string
+        title:
+          type: string
+        score:
+          type: number
+        reason:
+          type: string
+        assets:
+          type: string
+        sales:
+          type: string
+        reasoning:
+          type: string
+        email:
+          type: [string, 'null']
+        phone:
+          type: [string, 'null']
+        linkedIn:
+          type: [string, 'null']
+        location:
+          type: [string, 'null']
+        industry:
+          type: [string, 'null']
+        aum:
+          type: [string, 'null']
+
+    GeneratedLead:
+      type: object
+      required: [name, company, title, score, reason, assets, sales, reasoning]
+      properties:
+        name:
+          type: string
+        company:
+          type: string
+        title:
+          type: string
+        score:
+          type: number
+        reason:
+          type: string
+        assets:
+          type: string
+        sales:
+          type: string
+        reasoning:
+          type: string
+        email:
+          type: [string, 'null']
+        phone:
+          type: [string, 'null']
+        linkedIn:
+          type: [string, 'null']
+        location:
+          type: [string, 'null']
+        industry:
+          type: [string, 'null']
+        aum:
+          type: [string, 'null']
+
+    GenerateLeadsBody:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+
+    GenerateEmailBody:
+      type: object
+      required: [leadId, leadName, leadCompany, leadTitle]
+      properties:
+        leadId:
+          type: string
+        leadName:
+          type: string
+        leadCompany:
+          type: string
+        leadTitle:
+          type: string
+        context:
+          type: string
+
+    GeneratedEmail:
+      type: object
+      required: [subject, body, scheduledTime]
+      properties:
+        subject:
+          type: string
+        body:
+          type: string
+        scheduledTime:
+          type: [string, 'null']
+
+    GeneratePrepBody:
+      type: object
+      required: [meetingId, leadName, leadCompany, meetingDate, meetingPurpose]
+      properties:
+        meetingId:
+          type: string
+        leadName:
+          type: string
+        leadCompany:
+          type: string
+        meetingDate:
+          type: string
+        meetingPurpose:
+          type: string
+        additionalContext:
+          type: string
+
+    GeneratedPrep:
+      type: object
+      required: [agenda, talkingPoints, clientBackground, keyObjections]
+      properties:
+        agenda:
+          type: array
+          items:
+            type: string
+        talkingPoints:
+          type: array
+          items:
+            type: string
+        clientBackground:
+          type: string
+        keyObjections:
+          type: array
+          items:
+            type: string
+
+    GenerateEngageBody:
+      type: object
+      required: [leadName, leadCompany, currentTopic]
+      properties:
+        leadName:
+          type: string
+        leadCompany:
+          type: string
+        currentTopic:
+          type: string
+        conversationContext:
+          type: string
+
+    GeneratedEngagement:
+      type: object
+      required: [suggestions, quickFacts, nextSteps]
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: string
+        quickFacts:
+          type: array
+          items:
+            type: string
+        nextSteps:
+          type: array
+          items:
+            type: string
+
+    GenerateFollowUpBody:
+      type: object
+      required: [meetingId, leadName, leadCompany, meetingNotes]
+      properties:
+        meetingId:
+          type: string
+        leadName:
+          type: string
+        leadCompany:
+          type: string
+        meetingNotes:
+          type: string
+
+    GeneratedFollowUp:
+      type: object
+      required: [tasks, summary]
+      properties:
+        tasks:
+          type: array
+          items:
+            type: string
+        summary:
+          type: string
+
+    Meeting:
+      type: object
+      required: [id, leadId, leadName, leadCompany, scheduledAt, purpose, status, createdAt]
+      properties:
+        id:
+          type: string
+        leadId:
+          type: string
+        leadName:
+          type: string
+        leadCompany:
+          type: string
+        scheduledAt:
+          type: string
+        purpose:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, completed, cancelled]
+        emailSubject:
+          type: [string, 'null']
+        emailBody:
+          type: [string, 'null']
+        prepNotes:
+          type: [string, 'null']
+        meetingNotes:
+          type: [string, 'null']
+        createdAt:
+          type: string
+
+    CreateMeetingBody:
+      type: object
+      required: [leadId, leadName, leadCompany, scheduledAt, purpose]
+      properties:
+        leadId:
+          type: string
+        leadName:
+          type: string
+        leadCompany:
+          type: string
+        scheduledAt:
+          type: string
+        purpose:
+          type: string
+        emailSubject:
+          type: [string, 'null']
+        emailBody:
+          type: [string, 'null']
+
+    Task:
+      type: object
+      required: [id, meetingId, description, completed, createdAt]
+      properties:
+        id:
+          type: string
+        meetingId:
+          type: string
+        description:
+          type: string
+        completed:
+          type: boolean
+        createdAt:
+          type: string
+
+    CreateTaskBody:
+      type: object
+      required: [description]
+      properties:
+        description:
+          type: string
