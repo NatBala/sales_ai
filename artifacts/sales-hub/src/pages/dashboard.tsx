@@ -13,7 +13,7 @@ const agents = [
     icon: Search,
     color: "text-blue-400",
     bg: "bg-blue-400/10",
-    border: "border-blue-400/20",
+    border: "border-blue-400/25",
     path: "/lead-me"
   },
   {
@@ -21,19 +21,19 @@ const agents = [
     title: "Schedule Me",
     desc: "Craft highly personalized outreach emails and seamlessly book meetings.",
     icon: Calendar,
-    color: "text-teal-400",
-    bg: "bg-teal-400/10",
-    border: "border-teal-400/20",
-    path: "/leads" // Goes to leads to select one to schedule
+    color: "text-cyan-400",
+    bg: "bg-cyan-400/10",
+    border: "border-cyan-400/25",
+    path: "/leads"
   },
   {
     id: "prep-me",
     title: "Prep Me",
     desc: "Synthesize client background, agendas, and talking points before the call.",
     icon: FileText,
-    color: "text-indigo-400",
-    bg: "bg-indigo-400/10",
-    border: "border-indigo-400/20",
+    color: "text-sky-400",
+    bg: "bg-sky-400/10",
+    border: "border-sky-400/25",
     path: "/prep-me"
   },
   {
@@ -41,9 +41,9 @@ const agents = [
     title: "Engage Me",
     desc: "Real-time conversation intelligence, objection handling, and quick facts.",
     icon: Activity,
-    color: "text-rose-400",
-    bg: "bg-rose-400/10",
-    border: "border-rose-400/20",
+    color: "text-blue-300",
+    bg: "bg-blue-300/10",
+    border: "border-blue-300/25",
     path: "/engage-me"
   },
   {
@@ -51,9 +51,9 @@ const agents = [
     title: "Follow Me",
     desc: "Automate post-meeting summaries and generate actionable task lists.",
     icon: CheckSquare,
-    color: "text-amber-400",
-    bg: "bg-amber-400/10",
-    border: "border-amber-400/20",
+    color: "text-teal-400",
+    bg: "bg-teal-400/10",
+    border: "border-teal-400/25",
     path: "/follow-me"
   }
 ];

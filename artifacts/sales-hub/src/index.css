@@ -67,9 +67,9 @@
 }
 
 :root {
-  /* Force dark mode colors for this specific application style */
+  /* Capital Group dark theme */
   color-scheme: dark;
-  
+
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
 
@@ -78,67 +78,68 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  /* Deep Navy Background */
-  --background: 222 47% 6%;
-  --foreground: 210 40% 98%;
+  /* Capital Group deep blue-navy background */
+  --background: 216 62% 7%;
+  --foreground: 210 30% 96%;
 
-  --border: 215 28% 17%;
-  
-  /* Slightly lighter navy for cards */
-  --card: 222 47% 9%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 215 28% 17%;
+  --border: 216 45% 18%;
 
-  --sidebar: 222 47% 7%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-border: 215 28% 17%;
-  --sidebar-primary: 173 80% 40%;
+  /* Card: slightly lighter blue-navy */
+  --card: 216 58% 10%;
+  --card-foreground: 210 30% 96%;
+  --card-border: 216 45% 18%;
+
+  --sidebar: 216 62% 8%;
+  --sidebar-foreground: 210 30% 96%;
+  --sidebar-border: 216 45% 16%;
+  /* Capital Group cobalt blue as sidebar primary */
+  --sidebar-primary: 207 74% 44%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 215 28% 17%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 173 80% 40%;
+  --sidebar-accent: 216 48% 16%;
+  --sidebar-accent-foreground: 210 30% 96%;
+  --sidebar-ring: 207 74% 44%;
 
-  --popover: 222 47% 9%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 215 28% 17%;
+  --popover: 216 58% 10%;
+  --popover-foreground: 210 30% 96%;
+  --popover-border: 216 45% 18%;
 
-  /* Vibrant Teal for primary actions */
-  --primary: 173 80% 40%;
+  /* Capital Group cobalt blue — primary action color */
+  --primary: 207 74% 44%;
   --primary-foreground: 0 0% 100%;
 
-  /* Soft blue for secondary */
-  --secondary: 215 28% 17%;
-  --secondary-foreground: 210 40% 98%;
+  /* Blue-navy for secondary surfaces */
+  --secondary: 216 48% 16%;
+  --secondary-foreground: 210 30% 96%;
 
-  --muted: 215 28% 14%;
-  --muted-foreground: 215 20% 65%;
+  --muted: 216 45% 13%;
+  --muted-foreground: 215 20% 60%;
 
-  /* Cyan accent */
-  --accent: 193 83% 41%;
+  /* Capital Group aqua/teal accent */
+  --accent: 186 62% 46%;
   --accent-foreground: 0 0% 100%;
 
   --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive-foreground: 210 30% 96%;
 
-  --input: 215 28% 17%;
-  --ring: 173 80% 40%;
-  
-  --chart-1: 173 80% 40%;
-  --chart-2: 193 83% 41%;
-  --chart-3: 215 80% 50%;
+  --input: 216 45% 16%;
+  --ring: 207 74% 44%;
+
+  --chart-1: 207 74% 44%;
+  --chart-2: 186 62% 46%;
+  --chart-3: 220 70% 55%;
   --chart-4: 280 65% 60%;
   --chart-5: 340 75% 55%;
 
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 
-  --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.2);
-  --shadow-xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.2);
-  --shadow-sm: 0px 2px 0px 0px hsl(0 0% 0% / 0.2), 0px 1px 2px -1px hsl(0 0% 0% / 0.2);
-  --shadow: 0px 4px 12px -2px hsl(0 0% 0% / 0.4), 0px 1px 2px -1px hsl(0 0% 0% / 0.2);
-  --shadow-md: 0px 8px 16px -4px hsl(0 0% 0% / 0.5), 0px 4px 8px -2px hsl(0 0% 0% / 0.3);
-  --shadow-lg: 0px 12px 24px -6px hsl(0 0% 0% / 0.6), 0px 8px 12px -3px hsl(0 0% 0% / 0.4);
-  --shadow-xl: 0px 20px 32px -8px hsl(0 0% 0% / 0.7), 0px 12px 16px -4px hsl(0 0% 0% / 0.5);
-  --shadow-2xl: 0px 32px 48px -12px hsl(0 0% 0% / 0.8);
+  --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.25);
+  --shadow-xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.25);
+  --shadow-sm: 0px 2px 0px 0px hsl(0 0% 0% / 0.25), 0px 1px 2px -1px hsl(0 0% 0% / 0.25);
+  --shadow: 0px 4px 12px -2px hsl(0 0% 0% / 0.45), 0px 1px 2px -1px hsl(0 0% 0% / 0.25);
+  --shadow-md: 0px 8px 16px -4px hsl(0 0% 0% / 0.55), 0px 4px 8px -2px hsl(0 0% 0% / 0.3);
+  --shadow-lg: 0px 12px 24px -6px hsl(0 0% 0% / 0.65), 0px 8px 12px -3px hsl(0 0% 0% / 0.4);
+  --shadow-xl: 0px 20px 32px -8px hsl(0 0% 0% / 0.75), 0px 12px 16px -4px hsl(0 0% 0% / 0.5);
+  --shadow-2xl: 0px 32px 48px -12px hsl(0 0% 0% / 0.85);
 
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
@@ -231,16 +232,16 @@
     inset: -1px;
   }
 
-  /* Glassmorphism utilities */
+  /* Glassmorphism utilities — Capital Group blue-tinted */
   .glass-panel {
-    @apply bg-background/60 backdrop-blur-xl border border-white/10 shadow-xl;
-  }
-  
-  .glass-card {
-    @apply bg-card/50 backdrop-blur-md border border-white/5 shadow-lg;
+    @apply bg-background/60 backdrop-blur-xl border border-white/8 shadow-xl;
   }
 
-  /* Text gradients */
+  .glass-card {
+    @apply bg-card/50 backdrop-blur-md border border-white/6 shadow-lg;
+  }
+
+  /* Text gradient — Capital Group blue to aqua */
   .text-gradient-primary {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary/80;
   }
