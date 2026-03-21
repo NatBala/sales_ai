@@ -1,5 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { speechToText, textToSpeech, ensureCompatibleFormat } from "@workspace/integrations-openai-ai-server/audio";
 import {
   GenerateLeadsBody,
   GenerateEmailBody,
@@ -309,6 +310,157 @@ Tasks should be prioritized (most urgent first) and specific to what was discuss
   } catch (err) {
     req.log.error({ err }, "Follow-up task generation failed");
     res.status(500).json({ error: "Failed to generate follow-up tasks" });
+  }
+});
+
+router.post("/agents/schedule-me/voice", async (req: Request, res: Response) => {
+  const { audio, leadName, leadCompany, leadTitle } = req.body as {
+    audio: string;
+    leadName: string;
+    leadCompany: string;
+    leadTitle: string;
+  };
+
+  if (!audio || !leadName || !leadCompany) {
+    res.status(400).json({ error: "Missing required fields" });
+    return;
+  }
+
+  try {
+    const audioBuffer = Buffer.from(audio, "base64");
+    const { buffer, format } = await ensureCompatibleFormat(audioBuffer);
+    const transcript = await speechToText(buffer, format);
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5.2",
+      max_completion_tokens: 8192,
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert sales communication AI that crafts highly personalized, professional outreach emails for financial services sales professionals.
+Your emails are concise, value-focused, and avoid generic language. Always respond with valid JSON only.`,
+        },
+        {
+          role: "user",
+          content: `Generate a personalized outreach email for:
+Name: ${leadName}
+Company: ${leadCompany}
+Title: ${leadTitle || "Executive"}
+Salesperson's voice instructions: "${transcript}"
+
+Return a JSON object with:
+- subject: Email subject line (compelling, personalized)
+- body: Full email body (professional, 150-200 words, personalized to their role/company, clear value proposition, specific call to action for a 30-minute call)
+- scheduledTime: null
+
+Incorporate the voice instructions naturally. The email should feel hand-written, not templated.`,
+        },
+      ],
+    });
+
+    const content = response.choices[0]?.message?.content ?? "{}";
+    const emailData = parseAIJson(content);
+
+    const ttsText = `Draft ready. Subject: ${emailData.subject || "your outreach email"}. The email has been filled in below — review and edit before sending.`;
+    const ttsBuffer = await textToSpeech(ttsText, "nova", "mp3");
+
+    res.json({
+      transcript,
+      subject: emailData.subject,
+      body: emailData.body,
+      scheduledTime: emailData.scheduledTime ?? null,
+      audioBase64: ttsBuffer.toString("base64"),
+    });
+  } catch (err) {
+    req.log.error({ err }, "Voice schedule-me generation failed");
+    res.status(500).json({ error: "Failed to generate email from voice" });
+  }
+});
+
+router.post("/agents/prep-me/voice", async (req: Request, res: Response) => {
+  const { audio, meetings } = req.body as {
+    audio: string;
+    meetings: Array<{ id: string; leadName: string; leadCompany: string; scheduledAt: string; purpose: string }>;
+  };
+
+  if (!audio) {
+    res.status(400).json({ error: "No audio provided" });
+    return;
+  }
+
+  try {
+    const audioBuffer = Buffer.from(audio, "base64");
+    const { buffer, format } = await ensureCompatibleFormat(audioBuffer);
+    const transcript = await speechToText(buffer, format);
+
+    const meetingList = meetings ?? [];
+    let matchedMeeting = meetingList[0];
+
+    if (meetingList.length > 0 && transcript) {
+      const lower = transcript.toLowerCase();
+      const found = meetingList.find((m) => {
+        const nameParts = m.leadName.toLowerCase().split(" ");
+        return (
+          nameParts.some((part) => lower.includes(part)) ||
+          lower.includes(m.leadCompany.toLowerCase())
+        );
+      });
+      if (found) matchedMeeting = found;
+    }
+
+    if (!matchedMeeting) {
+      res.json({ transcript, matchedMeetingId: null });
+      return;
+    }
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5.2",
+      max_completion_tokens: 8192,
+      messages: [
+        {
+          role: "system",
+          content: `You are a meeting preparation AI for financial services sales professionals.
+You create comprehensive, actionable meeting prep materials. Always respond with valid JSON only.`,
+        },
+        {
+          role: "user",
+          content: `Create meeting preparation materials for:
+Client: ${matchedMeeting.leadName} at ${matchedMeeting.leadCompany}
+Meeting Date: ${matchedMeeting.scheduledAt}
+Purpose: ${matchedMeeting.purpose}
+Voice Request: "${transcript}"
+
+Return a JSON object with:
+- agenda: Array of 4-6 agenda items (strings) in order
+- talkingPoints: Array of 5-7 key talking points (strings) specific to this client
+- clientBackground: Paragraph about the client/company (2-3 sentences)
+- keyObjections: Array of 3-5 likely objections the client might raise (strings)
+
+Incorporate any focus areas from the voice request. Make everything specific and actionable for a financial services sales context.`,
+        },
+      ],
+    });
+
+    const content = response.choices[0]?.message?.content ?? "{}";
+    const prepData = parseAIJson(content);
+
+    const agendaCount = Array.isArray(prepData.agenda) ? (prepData.agenda as unknown[]).length : 0;
+    const pointsCount = Array.isArray(prepData.talkingPoints) ? (prepData.talkingPoints as unknown[]).length : 0;
+    const firstPoint = Array.isArray(prepData.talkingPoints) && prepData.talkingPoints.length > 0
+      ? String(prepData.talkingPoints[0])
+      : "";
+    const ttsText = `Brief ready for ${matchedMeeting.leadName}. ${agendaCount} agenda items and ${pointsCount} talking points prepared.${firstPoint ? ` Leading with: ${firstPoint}` : ""}`;
+    const ttsBuffer = await textToSpeech(ttsText, "nova", "mp3");
+
+    res.json({
+      transcript,
+      matchedMeetingId: matchedMeeting.id,
+      ...prepData,
+      audioBase64: ttsBuffer.toString("base64"),
+    });
+  } catch (err) {
+    req.log.error({ err }, "Voice prep-me generation failed");
+    res.status(500).json({ error: "Failed to generate prep from voice" });
   }
 });
 

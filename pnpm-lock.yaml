@@ -524,6 +524,9 @@ importers:
       '@workspace/api-client-react':
         specifier: workspace:*
         version: link:../../lib/api-client-react
+      '@workspace/integrations-openai-ai-react':
+        specifier: workspace:*
+        version: link:../../lib/integrations-openai-ai-react
       '@workspace/replit-auth-web':
         specifier: workspace:*
         version: link:../../lib/replit-auth-web
