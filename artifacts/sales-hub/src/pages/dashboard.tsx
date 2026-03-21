@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Layout } from "@/components/layout";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  TrendingUp, Target, Award, Sparkles, ChevronDown, Plane, Users, Coffee, BarChart2, Phone, FileText, Mail
+  TrendingUp, Target, Award, Sparkles, ChevronDown, Plane, Users, Coffee, BarChart2, Phone, FileText, Mail, CalendarCheck
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from "recharts";
+import { useMeetings } from "@/hooks/use-meetings";
 
 const metrics = [
   {
@@ -190,7 +191,42 @@ function fmtHour(h: number) {
   return `${h}a`;
 }
 
-function WeekCalendar() {
+interface AvailSlot { day: number; start: number; label: string; }
+const AVAILABLE_SLOTS_CAL: AvailSlot[] = [
+  { day: 0, start: 8,    label: "8:00 AM" },
+  { day: 0, start: 14,   label: "2:00 PM" },
+  { day: 1, start: 9.5,  label: "9:30 AM" },
+  { day: 1, start: 15,   label: "3:00 PM" },
+  { day: 2, start: 9,    label: "9:00 AM" },
+  { day: 2, start: 12,   label: "12:00 PM" },
+  { day: 3, start: 10,   label: "10:00 AM" },
+  { day: 3, start: 16.5, label: "4:30 PM" },
+  { day: 4, start: 12,   label: "12:00 PM" },
+  { day: 4, start: 15.5, label: "3:30 PM" },
+];
+
+const WEEK_START = new Date(2026, 2, 23); // Mon Mar 23
+
+function meetingsToEvents(meetings: { scheduledAt: string; leadName: string; leadCompany: string }[]): CalEvent[] {
+  return meetings.flatMap(m => {
+    const d = new Date(m.scheduledAt);
+    const dayIdx = Math.round((d.getTime() - WEEK_START.getTime()) / 86400000);
+    if (dayIdx < 0 || dayIdx > 4) return [];
+    const hour = d.getHours() + d.getMinutes() / 60;
+    return [{
+      day: dayIdx,
+      title: m.leadName,
+      detail: m.leadCompany,
+      start: hour,
+      end: hour + 1,
+      color: "emerald" as EventColor,
+      Icon: CalendarCheck,
+    }];
+  });
+}
+
+function WeekCalendar({ scheduledMeetings }: { scheduledMeetings?: CalEvent[] }) {
+  const allEvents = [...EVENTS, ...(scheduledMeetings ?? [])];
   const totalH = HOURS.length * HOUR_H;
 
   return (
@@ -232,7 +268,7 @@ function WeekCalendar() {
 
           {/* Day columns */}
           {DAYS.map((d, dayIdx) => {
-            const dayEvents = EVENTS.filter(e => e.day === dayIdx);
+            const dayEvents = allEvents.filter(e => e.day === dayIdx);
             return (
               <div
                 key={d.label}
@@ -248,20 +284,27 @@ function WeekCalendar() {
                   />
                 ))}
 
-                {/* Free block — Wed 8:30–10:30 AM */}
-                {dayIdx === 2 && (
-                  <div
-                    className="absolute left-1 right-1 rounded-lg border border-dashed border-emerald-500/30 flex flex-col items-center justify-center gap-0.5 z-10"
-                    style={{
-                      top: (8.5 - START_H) * HOUR_H + 2,
-                      height: 2 * HOUR_H - 4,
-                    }}
-                  >
-                    <Sparkles className="w-3 h-3 text-emerald-400/40" />
-                    <p className="text-[11px] font-semibold text-emerald-400/60">Free</p>
-                    <p className="text-[9px] text-emerald-400/40">8:30 – 10:30 AM</p>
-                  </div>
-                )}
+                {/* Available slots */}
+                {AVAILABLE_SLOTS_CAL.filter(s => s.day === dayIdx).map((slot, si) => {
+                  const isBooked = allEvents.some(
+                    e => e.day === dayIdx && e.color === "emerald" && Math.abs(e.start - slot.start) < 0.5
+                  );
+                  return (
+                    <div
+                      key={si}
+                      className={`absolute left-1 right-1 rounded-md border border-dashed flex flex-col items-center justify-center gap-0.5 z-10 transition-opacity ${
+                        isBooked
+                          ? "border-emerald-400/15 opacity-30 pointer-events-none"
+                          : "border-teal-500/30 hover:border-teal-400/50 cursor-pointer"
+                      }`}
+                      style={{ top: (slot.start - START_H) * HOUR_H + 2, height: HOUR_H - 4 }}
+                    >
+                      {!isBooked && <Sparkles className="w-2.5 h-2.5 text-teal-400/50" />}
+                      <p className="text-[10px] font-semibold text-teal-400/70">{isBooked ? "Booked" : "Open"}</p>
+                      <p className="text-[9px] text-teal-400/45">{slot.label}</p>
+                    </div>
+                  );
+                })}
 
                 {/* Events */}
                 {dayEvents.map((evt, i) => {
@@ -302,6 +345,11 @@ function WeekCalendar() {
 
 export default function Dashboard() {
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+  const { data: meetingsData } = useMeetings();
+  const scheduledEvents = useMemo(() => {
+    const list = (meetingsData as any)?.meetings ?? meetingsData ?? [];
+    return meetingsToEvents(Array.isArray(list) ? list : []);
+  }, [meetingsData]);
 
   const today = new Date();
   const qEnd = new Date(2026, 2, 31);
@@ -489,11 +537,12 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
               {[
-                { color: "bg-blue-400", label: "Client" },
-                { color: "bg-violet-400", label: "Strategy" },
-                { color: "bg-cyan-400", label: "Prospecting" },
-                { color: "bg-amber-400", label: "Travel" },
-                { color: "bg-emerald-400", label: "Priority" },
+                { color: "bg-blue-400",    label: "Client" },
+                { color: "bg-violet-400",  label: "Strategy" },
+                { color: "bg-cyan-400",    label: "Prospecting" },
+                { color: "bg-amber-400",   label: "Travel" },
+                { color: "bg-emerald-400", label: scheduledEvents.length > 0 ? `Scheduled (${scheduledEvents.length})` : "Priority" },
+                { color: "bg-teal-400",    label: "Open Slots" },
               ].map(l => (
                 <div key={l.label} className="hidden sm:flex items-center gap-1.5">
                   <span className={`w-2 h-2 rounded-full ${l.color}`} />
@@ -505,7 +554,7 @@ export default function Dashboard() {
 
           <Card className="bg-card/40 border-white/8 overflow-hidden">
             <CardContent className="p-0">
-              <WeekCalendar />
+              <WeekCalendar scheduledMeetings={scheduledEvents} />
             </CardContent>
           </Card>
         </motion.div>

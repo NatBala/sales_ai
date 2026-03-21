@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Calendar, Mail, Send, User, Sparkles, Mic, Square, Volume2, Building2, MapPin, TrendingUp, Zap, ArrowLeft, ExternalLink } from "lucide-react";
+import { Loader2, Calendar, Mail, Send, User, Sparkles, Mic, Square, Volume2, Building2, MapPin, TrendingUp, Zap, ArrowLeft, ExternalLink, Clock, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -42,6 +42,21 @@ const SEGMENT_CONFIG: Record<string, { label: string; color: string; bg: string;
   E: { label: "Emerging",   color: "text-violet-300",  bg: "bg-violet-500/10",  border: "border-violet-500/25" },
 };
 
+interface Slot { label: string; day: string; time: string; dateStr: string; timeStr: string; }
+
+const AVAILABLE_SLOTS: Slot[] = [
+  { label: "Mon", day: "Mar 23", time: "8:00 AM",  dateStr: "2026-03-23", timeStr: "08:00" },
+  { label: "Mon", day: "Mar 23", time: "2:00 PM",  dateStr: "2026-03-23", timeStr: "14:00" },
+  { label: "Tue", day: "Mar 24", time: "9:30 AM",  dateStr: "2026-03-24", timeStr: "09:30" },
+  { label: "Tue", day: "Mar 24", time: "3:00 PM",  dateStr: "2026-03-24", timeStr: "15:00" },
+  { label: "Wed", day: "Mar 25", time: "9:00 AM",  dateStr: "2026-03-25", timeStr: "09:00" },
+  { label: "Wed", day: "Mar 25", time: "12:00 PM", dateStr: "2026-03-25", timeStr: "12:00" },
+  { label: "Thu", day: "Mar 26", time: "10:00 AM", dateStr: "2026-03-26", timeStr: "10:00" },
+  { label: "Thu", day: "Mar 26", time: "4:30 PM",  dateStr: "2026-03-26", timeStr: "16:30" },
+  { label: "Fri", day: "Mar 27", time: "12:00 PM", dateStr: "2026-03-27", timeStr: "12:00" },
+  { label: "Fri", day: "Mar 27", time: "3:30 PM",  dateStr: "2026-03-27", timeStr: "15:30" },
+];
+
 type VoicePhase = "idle" | "recording" | "processing" | "done" | "error";
 
 export default function ScheduleMe() {
@@ -58,6 +73,8 @@ export default function ScheduleMe() {
   const [time, setTime] = useState("10:00");
   const [context, setContext] = useState("");
   const [hasGenerated, setHasGenerated] = useState(false);
+
+  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
 
   const [voiceMode, setVoiceMode] = useState(false);
   const [voicePhase, setVoicePhase] = useState<VoicePhase>("idle");
@@ -443,17 +460,68 @@ export default function ScheduleMe() {
           {/* Sidebar Scheduling */}
           <div className="space-y-6">
             <Card className="bg-card/40 border-white/5 sticky top-24">
-              <CardHeader>
-                <CardTitle className="text-lg text-white">Meeting Details</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg text-white flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-teal-400" /> Meeting Details
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
+              <CardContent className="space-y-5">
+
+                {/* ── Available Slots ── */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className="w-3.5 h-3.5 text-teal-400" />
+                    <p className="text-xs font-semibold uppercase tracking-wider text-teal-400">Available Slots</p>
+                    <span className="ml-auto text-[10px] text-muted-foreground">Mar 23–27</span>
+                  </div>
+
+                  {/* Group by day */}
+                  {(["Mon", "Tue", "Wed", "Thu", "Fri"] as const).map(day => {
+                    const daySlots = AVAILABLE_SLOTS.filter(s => s.label === day);
+                    const dayLabel = daySlots[0];
+                    return (
+                      <div key={day} className="mb-3 last:mb-0">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1.5">
+                          {day} · {dayLabel?.day}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {daySlots.map(slot => {
+                            const isSelected = selectedSlot?.dateStr === slot.dateStr && selectedSlot?.timeStr === slot.timeStr;
+                            return (
+                              <button
+                                key={`${slot.dateStr}-${slot.timeStr}`}
+                                onClick={() => {
+                                  setSelectedSlot(slot);
+                                  setDate(slot.dateStr);
+                                  setTime(slot.timeStr);
+                                }}
+                                className={cn(
+                                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all",
+                                  isSelected
+                                    ? "bg-teal-500/20 border-teal-400/50 text-teal-300"
+                                    : "bg-white/4 border-white/10 text-white/70 hover:bg-white/8 hover:border-white/20 hover:text-white"
+                                )}
+                              >
+                                {isSelected && <CheckCircle2 className="w-3 h-3 text-teal-400" />}
+                                <Clock className={cn("w-3 h-3", isSelected ? "text-teal-400" : "text-muted-foreground")} />
+                                {slot.time}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="border-t border-white/5 pt-4 space-y-4">
+                  <p className="text-[11px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Or pick manually</p>
                   <div className="space-y-2">
                     <label className="text-sm text-muted-foreground">Date</label>
                     <Input
                       type="date"
                       value={date}
-                      onChange={e => setDate(e.target.value)}
+                      onChange={e => { setDate(e.target.value); setSelectedSlot(null); }}
                       className="bg-background/50 border-white/10 text-white [color-scheme:dark]"
                     />
                   </div>
@@ -462,13 +530,23 @@ export default function ScheduleMe() {
                     <Input
                       type="time"
                       value={time}
-                      onChange={e => setTime(e.target.value)}
+                      onChange={e => { setTime(e.target.value); setSelectedSlot(null); }}
                       className="bg-background/50 border-white/10 text-white [color-scheme:dark]"
                     />
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-white/5">
+                {/* Selected slot summary */}
+                {selectedSlot && (
+                  <div className="flex items-center gap-2 bg-teal-500/8 border border-teal-500/20 rounded-xl px-3 py-2">
+                    <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
+                    <p className="text-xs text-teal-300 font-medium">
+                      {selectedSlot.label} {selectedSlot.day} at {selectedSlot.time} selected
+                    </p>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-white/5">
                   <Button
                     onClick={handleSchedule}
                     disabled={isCreating || !subject || !body}
