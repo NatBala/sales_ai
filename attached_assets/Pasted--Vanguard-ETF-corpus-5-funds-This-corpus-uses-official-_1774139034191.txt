@@ -1,0 +1,374 @@
+# Vanguard ETF corpus (5 funds)
+
+This corpus uses official Vanguard fact sheets for the core fund data and indexed Vanguard ETF profile-page snippets for point-in-time price, NAV, expense ratio, and SEC-yield fields.
+
+Tickers: BND, VTI, VOO, VXUS, VNQ
+
+## Vanguard Total Bond Market ETF (BND)
+
+- Category: U.S. taxable investment-grade bond ETF
+- Factsheet as of: 2025-12-31
+- Profile URL: https://investor.vanguard.com/investment-products/etfs/profile/bnd
+- Factsheet URL: https://fund-docs.vanguard.com/F0928.pdf
+
+### Profile snapshot
+- Expense ratio: 0.03% (as of 2025-04-29)
+- 30 day SEC yield: 4.21% (as of 2026-03-17)
+- Market price: $73.76 (as of 2026-03-19)
+- NAV price: $73.75 (as of 2026-03-19)
+
+### Investment strategy
+- Seeks to track the performance of the Bloomberg U.S. Aggregate Float Adjusted Index.
+- Passively managed using index sampling.
+- Broad exposure to the taxable investment-grade U.S. dollar-denominated bond market, excluding inflation-protected and tax-exempt bonds.
+- Intermediate-duration portfolio.
+- Provides moderate current income with high credit quality.
+
+### Benchmark and quick facts
+- Benchmark: Bloomberg U.S. Aggregate Float Adjusted Index
+- Expense Ratio Pct: 0.03
+- Dividend Schedule: Monthly
+- Etf Total Net Assets Million Usd: 146392
+- Fund Total Net Assets Million Usd: 384844
+- Inception Date: 2007-04-03
+- Ticker Symbol: BND
+- Cusip: 921937835
+- Iiv: BND.IV
+- Index Ticker Bloomberg: I20984US
+- Exchange: NASDAQ
+
+### Performance history
+- Benchmark series: Spliced Bloomberg U.S. Aggregate Float Adjusted Index
+- NAV return (%): quarter 0.95, year_to_date 7.11, 1_year 7.11, 3_year 4.69, 5_year -0.4, 10_year 2.0, since_inception 3.13
+- Market price return (%): quarter 0.9, year_to_date 7.08, 1_year 7.08, 3_year 4.68, 5_year -0.44, 10_year 1.98, since_inception 3.12
+- Benchmark return (%): quarter 1.07, year_to_date 7.21, 1_year 7.21, 3_year 4.68, 5_year -0.37, 10_year 2.05, since_inception 3.19
+
+### Top holdings
+- Unavailable: The indexed Vanguard profile snippet reported 'Holding details. This information is temporarily unavailable.' I did not infer or fabricate top holdings.
+
+### Portfolio attributes / statistics
+- Number Of Bonds: fund 11444; benchmark 13940
+- Average Duration Years: fund 5.7; benchmark 5.9
+- Average Effective Maturity Years: fund 8.0; benchmark 8.2
+- Turnover Rate Pct: 36.4
+- Short Term Reserves Pct: 0.0
+
+### Portfolio composition / exposure
+- Distribution By Effective Maturity Pct: Under 1 Year 0.7%; 1 - 5 Years 46.9%; 5 - 10 Years 32.5%; 10 - 15 Years 3.3%; 15 - 20 Years 5.6%; 20 - 25 Years 4.2%; Over 25 Years 6.8%
+- Distribution By Issuer Pct: Asset-Backed 0.5%; Commercial Mortgage-Backed 1.6%; Finance 8.2%; Foreign 3.4%; Government Mortgage-Backed 19.5%; Industrial 14.5%; Treasury/Agency 49.2%; Utilities 2.5%; Other 0.6%
+- Distribution By Credit Quality Pct: U.S. Government 69.3%; AAA 3.1%; AA 3.3%; A 11.9%; BBB 12.4%; BB 0.0%; B 0.0%; CCC or Lower 0.0%; Not rated 0.0%
+
+### Distribution
+- Schedule: Monthly
+- Sec Yield Pct: 4.21
+- Sec Yield As Of: 2026-03-17
+
+### Missing / unavailable fields
+- Individual top holdings not provided in the official 2-page fact sheet and reported as temporarily unavailable in the indexed Vanguard profile snippet.
+
+### QA text
+Vanguard Total Bond Market ETF (BND) is a U.S. taxable investment-grade bond ETF. Profile snapshot: expense ratio 0.03% as of 2025-04-29; market price $73.76 as of 2026-03-19; NAV price $73.75 as of 2026-03-19; 30 day SEC yield 4.21% as of 2026-03-17 Investment strategy: Seeks to track the performance of the Bloomberg U.S. Aggregate Float Adjusted Index. Passively managed using index sampling. Broad exposure to the taxable investment-grade U.S. dollar-denominated bond market, excluding inflation-protected and tax-exempt bonds. Intermediate-duration portfolio. Provides moderate current income with high credit quality. Quick facts: benchmark Bloomberg U.S. Aggregate Float Adjusted Index; dividend schedule Monthly; ETF total net assets $146,392 million; fund total net assets $384,844 million; inception date 2007-04-03; exchange NASDAQ. Performance history for period ended 2025-12-31: NAV returns - quarter 0.95%, year-to-date 7.11%, 1 year 7.11%, 3 years 4.69%, 5 years -0.4%, 10 years 2.0%, since inception 3.13%. Market price returns - quarter 0.9%, year-to-date 7.08%, 1 year 7.08%, 3 years 4.68%, 5 years -0.44%, 10 years 1.98%, since inception 3.12%. Benchmark (Spliced Bloomberg U.S. Aggregate Float Adjusted Index) returns - quarter 1.07%, year-to-date 7.21%, 1 year 7.21%, 3 years 4.68%, 5 years -0.37%, 10 years 2.05%, since inception 3.19%. Top holdings: unavailable. The indexed Vanguard profile snippet reported 'Holding details. This information is temporarily unavailable.' I did not infer or fabricate top holdings. Portfolio attributes/statistics: number of bonds: fund 11444, benchmark 13940; average duration years: fund 5.7, benchmark 5.9; average effective maturity years: fund 8.0, benchmark 8.2; turnover rate pct: 36.4; short term reserves pct: 0.0. Portfolio composition/exposure: distribution by effective maturity pct: Under 1 Year 0.7%; 1 - 5 Years 46.9%; 5 - 10 Years 32.5%; 10 - 15 Years 3.3%; 15 - 20 Years 5.6%; 20 - 25 Years 4.2%; Over 25 Years 6.8%. distribution by issuer pct: Asset-Backed 0.5%; Commercial Mortgage-Backed 1.6%; Finance 8.2%; Foreign 3.4%; Government Mortgage-Backed 19.5%; Industrial 14.5%; Treasury/Agency 49.2%; Utilities 2.5%; Other 0.6%. distribution by credit quality pct: U.S. Government 69.3%; AAA 3.1%; AA 3.3%; A 11.9%; BBB 12.4%; BB 0.0%; B 0.0%; CCC or Lower 0.0%; Not rated 0.0%. Unavailable or noted fields: Individual top holdings not provided in the official 2-page fact sheet and reported as temporarily unavailable in the indexed Vanguard profile snippet.
+
+## Vanguard Total Stock Market ETF (VTI)
+
+- Category: U.S. total stock market ETF
+- Factsheet as of: 2025-12-31
+- Profile URL: https://investor.vanguard.com/investment-products/etfs/profile/vti
+- Factsheet URL: https://fund-docs.vanguard.com/F0970.pdf
+
+### Profile snapshot
+- Expense ratio: 0.03% (as of 2025-04-29)
+- 30 day SEC yield: 1.10% (as of 2026-02-28)
+- Market price: $320.34 (as of 2026-03-20)
+- NAV price: $320.22 (as of 2026-03-20)
+
+### Investment strategy
+- Seeks to track the performance of the CRSP US Total Market Index.
+- Large-, mid-, and small-cap equity diversified across growth and value styles.
+- Employs a passively managed, index-sampling strategy.
+- The fund remains fully invested.
+- Low expenses minimize net tracking error.
+
+### Benchmark and quick facts
+- Benchmark: CRSP US Total Market Index
+- Expense Ratio Pct: 0.03
+- Dividend Schedule: Quarterly
+- Etf Total Net Assets Million Usd: 570914
+- Fund Total Net Assets Million Usd: 2056590
+- Inception Date: 2001-05-24
+- Ticker Symbol: VTI
+- Cusip: 922908769
+- Iiv: VTI.IV
+- Index Ticker Bloomberg: CRSPTMT
+- Exchange: NYSE Arca
+
+### Performance history
+- Benchmark series: Spliced Total Stock Market Index
+- NAV return (%): quarter 2.44, year_to_date 17.14, 1_year 17.14, 3_year 22.25, 5_year 13.08, 10_year 14.25, since_inception 9.21
+- Market price return (%): quarter 2.45, year_to_date 17.1, 1_year 17.1, 3_year 22.25, 5_year 13.06, 10_year 14.25, since_inception 9.21
+- Benchmark return (%): quarter 2.45, year_to_date 17.15, 1_year 17.15, 3_year 22.24, 5_year 13.08, 10_year 14.25, since_inception 9.23
+
+### Top holdings
+- NVIDIA Corp.: 6.6%
+- Apple Inc.: 6.1%
+- Microsoft Corp.: 5.5%
+- Alphabet Inc.: 5.0%
+- Amazon.com Inc.: 3.4%
+- Broadcom Inc.: 2.5%
+- Meta Platforms Inc.: 2.2%
+- Tesla Inc.: 1.9%
+- Berkshire Hathaway Inc.: 1.4%
+- Eli Lilly & Co.: 1.4%
+- Top ten as % of total net assets: 36.0%
+
+### Portfolio attributes / statistics
+- Number Of Stocks: fund 3512; benchmark 3494
+- Median Market Cap Billion Usd: fund 276.9; benchmark 276.9
+- Price Earnings Ratio: fund 27.4; benchmark 27.3
+- Price Book Ratio: fund 4.6; benchmark 4.6
+- Return On Equity Pct: fund 24.0; benchmark 24.0
+- Earnings Growth Rate Pct: fund 22.0; benchmark 21.9
+- Foreign Holdings Pct: fund 0.2; benchmark 0.0
+- Turnover Rate Pct: 2.1
+- Standard Deviation Pct: fund 12.56; benchmark 12.55
+
+### Portfolio composition / exposure
+- Sector Diversification Pct: Technology 38.5%; Consumer Discretionary 13.9%; Industrials 12.1%; Financials 11.2%; Health Care 9.8%; Consumer Staples 3.4%; Energy 3.0%; Utilities 2.5%; Real Estate 2.3%; Telecommunications 1.8%; Basic Materials 1.5%; Other 0.0%
+- Style And Size Focus: Large-, mid-, and small-cap equity across growth and value styles.
+
+### Distribution
+- Schedule: Quarterly
+- Sec Yield Pct: 1.1
+- Sec Yield As Of: 2026-02-28
+
+### QA text
+Vanguard Total Stock Market ETF (VTI) is a U.S. total stock market ETF. Profile snapshot: expense ratio 0.03% as of 2025-04-29; market price $320.34 as of 2026-03-20; NAV price $320.22 as of 2026-03-20; 30 day SEC yield 1.10% as of 2026-02-28 Investment strategy: Seeks to track the performance of the CRSP US Total Market Index. Large-, mid-, and small-cap equity diversified across growth and value styles. Employs a passively managed, index-sampling strategy. The fund remains fully invested. Low expenses minimize net tracking error. Quick facts: benchmark CRSP US Total Market Index; dividend schedule Quarterly; ETF total net assets $570,914 million; fund total net assets $2,056,590 million; inception date 2001-05-24; exchange NYSE Arca. Performance history for period ended 2025-12-31: NAV returns - quarter 2.44%, year-to-date 17.14%, 1 year 17.14%, 3 years 22.25%, 5 years 13.08%, 10 years 14.25%, since inception 9.21%. Market price returns - quarter 2.45%, year-to-date 17.1%, 1 year 17.1%, 3 years 22.25%, 5 years 13.06%, 10 years 14.25%, since inception 9.21%. Benchmark (Spliced Total Stock Market Index) returns - quarter 2.45%, year-to-date 17.15%, 1 year 17.15%, 3 years 22.24%, 5 years 13.08%, 10 years 14.25%, since inception 9.23%. Top holdings: NVIDIA Corp. (6.6%); Apple Inc. (6.1%); Microsoft Corp. (5.5%); Alphabet Inc. (5.0%); Amazon.com Inc. (3.4%); Broadcom Inc. (2.5%); Meta Platforms Inc. (2.2%); Tesla Inc. (1.9%); Berkshire Hathaway Inc. (1.4%); Eli Lilly & Co. (1.4%). Top ten account for 36.0% of total net assets. Portfolio attributes/statistics: number of stocks: fund 3512, benchmark 3494; median market cap billion usd: fund 276.9, benchmark 276.9; price earnings ratio: fund 27.4, benchmark 27.3; price book ratio: fund 4.6, benchmark 4.6; return on equity pct: fund 24.0, benchmark 24.0; earnings growth rate pct: fund 22.0, benchmark 21.9; foreign holdings pct: fund 0.2, benchmark 0.0; turnover rate pct: 2.1; standard deviation pct: fund 12.56, benchmark 12.55. Portfolio composition/exposure: sector diversification pct: Technology 38.5%; Consumer Discretionary 13.9%; Industrials 12.1%; Financials 11.2%; Health Care 9.8%; Consumer Staples 3.4%; Energy 3.0%; Utilities 2.5%; Real Estate 2.3%; Telecommunications 1.8%; Basic Materials 1.5%; Other 0.0%. style and size focus: Large-, mid-, and small-cap equity across growth and value styles..
+
+## Vanguard S&P 500 ETF (VOO)
+
+- Category: U.S. large-cap equity ETF
+- Factsheet as of: 2025-12-31
+- Profile URL: https://investor.vanguard.com/investment-products/etfs/profile/voo
+- Factsheet URL: https://fund-docs.vanguard.com/F0968.pdf
+
+### Profile snapshot
+- Expense ratio: 0.03% (as of 2025-04-29)
+- 30 day SEC yield: 1.09% (as of 2026-02-28)
+- Market price: $608.38 (as of 2026-03-18)
+- NAV price: $608.44 (as of 2026-03-18)
+
+### Investment strategy
+- Seeks to track the performance of the S&P 500 Index.
+- Large-cap equity.
+- Employs a passively managed, full-replication strategy.
+- Fund remains fully invested.
+- Low expenses minimize net tracking error.
+
+### Benchmark and quick facts
+- Benchmark: S&P 500 Index
+- Expense Ratio Pct: 0.03
+- Dividend Schedule: Quarterly
+- Etf Total Net Assets Million Usd: 839088
+- Fund Total Net Assets Million Usd: 1480375
+- Inception Date: 2010-09-07
+- Ticker Symbol: VOO
+- Cusip: 922908363
+- Iiv: VOO.IV
+- Index Ticker Bloomberg: SPTR
+- Exchange: NYSE Arca
+
+### Performance history
+- Benchmark series: S&P 500 Index
+- NAV return (%): quarter 2.65, year_to_date 17.84, 1_year 17.84, 3_year 22.97, 5_year 14.38, 10_year 14.78, since_inception 14.82
+- Market price return (%): quarter 2.7, year_to_date 17.82, 1_year 17.82, 3_year 22.97, 5_year 14.38, 10_year 14.78, since_inception 14.82
+- Benchmark return (%): quarter 2.66, year_to_date 17.88, 1_year 17.88, 3_year 23.01, 5_year 14.42, 10_year 14.82, since_inception 14.86
+
+### Top holdings
+- NVIDIA Corp.: 7.8%
+- Apple Inc.: 6.9%
+- Microsoft Corp.: 6.1%
+- Alphabet Inc.: 5.6%
+- Amazon.com Inc.: 3.8%
+- Broadcom Inc.: 2.8%
+- Meta Platforms Inc.: 2.5%
+- Tesla Inc.: 2.2%
+- Berkshire Hathaway Inc.: 1.6%
+- Eli Lilly & Co.: 1.5%
+- Top ten as % of total net assets: 40.7%
+
+### Portfolio attributes / statistics
+- Number Of Stocks: fund 504; benchmark 503
+- Median Market Cap Billion Usd: fund 382.8; benchmark 382.8
+- Price Earnings Ratio: fund 28.4; benchmark 28.3
+- Price Book Ratio: fund 5.2; benchmark 5.2
+- Return On Equity Pct: fund 27.0; benchmark 27.0
+- Earnings Growth Rate Pct: fund 22.8; benchmark 22.8
+- Foreign Holdings Pct: fund 0.0; benchmark 0.0
+- Turnover Rate Pct: 2.3
+- Standard Deviation Pct: fund 11.96; benchmark 11.95
+
+### Portfolio composition / exposure
+- Sector Diversification Pct: Information Technology 34.4%; Financials 13.4%; Communication Services 10.6%; Consumer Discretionary 10.4%; Health Care 9.6%; Industrials 8.2%; Consumer Staples 4.7%; Energy 2.8%; Utilities 2.2%; Materials 1.8%; Real Estate 1.8%; Other 0.0%
+- Style And Size Focus: Large-cap equity.
+
+### Distribution
+- Schedule: Quarterly
+- Sec Yield Pct: 1.09
+- Sec Yield As Of: 2026-02-28
+
+### QA text
+Vanguard S&P 500 ETF (VOO) is a U.S. large-cap equity ETF. Profile snapshot: expense ratio 0.03% as of 2025-04-29; market price $608.38 as of 2026-03-18; NAV price $608.44 as of 2026-03-18; 30 day SEC yield 1.09% as of 2026-02-28 Investment strategy: Seeks to track the performance of the S&P 500 Index. Large-cap equity. Employs a passively managed, full-replication strategy. Fund remains fully invested. Low expenses minimize net tracking error. Quick facts: benchmark S&P 500 Index; dividend schedule Quarterly; ETF total net assets $839,088 million; fund total net assets $1,480,375 million; inception date 2010-09-07; exchange NYSE Arca. Performance history for period ended 2025-12-31: NAV returns - quarter 2.65%, year-to-date 17.84%, 1 year 17.84%, 3 years 22.97%, 5 years 14.38%, 10 years 14.78%, since inception 14.82%. Market price returns - quarter 2.7%, year-to-date 17.82%, 1 year 17.82%, 3 years 22.97%, 5 years 14.38%, 10 years 14.78%, since inception 14.82%. Benchmark (S&P 500 Index) returns - quarter 2.66%, year-to-date 17.88%, 1 year 17.88%, 3 years 23.01%, 5 years 14.42%, 10 years 14.82%, since inception 14.86%. Top holdings: NVIDIA Corp. (7.8%); Apple Inc. (6.9%); Microsoft Corp. (6.1%); Alphabet Inc. (5.6%); Amazon.com Inc. (3.8%); Broadcom Inc. (2.8%); Meta Platforms Inc. (2.5%); Tesla Inc. (2.2%); Berkshire Hathaway Inc. (1.6%); Eli Lilly & Co. (1.5%). Top ten account for 40.7% of total net assets. Portfolio attributes/statistics: number of stocks: fund 504, benchmark 503; median market cap billion usd: fund 382.8, benchmark 382.8; price earnings ratio: fund 28.4, benchmark 28.3; price book ratio: fund 5.2, benchmark 5.2; return on equity pct: fund 27.0, benchmark 27.0; earnings growth rate pct: fund 22.8, benchmark 22.8; foreign holdings pct: fund 0.0, benchmark 0.0; turnover rate pct: 2.3; standard deviation pct: fund 11.96, benchmark 11.95. Portfolio composition/exposure: sector diversification pct: Information Technology 34.4%; Financials 13.4%; Communication Services 10.6%; Consumer Discretionary 10.4%; Health Care 9.6%; Industrials 8.2%; Consumer Staples 4.7%; Energy 2.8%; Utilities 2.2%; Materials 1.8%; Real Estate 1.8%; Other 0.0%. style and size focus: Large-cap equity..
+
+## Vanguard Total International Stock ETF (VXUS)
+
+- Category: International ex-U.S. total stock market ETF
+- Factsheet as of: 2025-12-31
+- Profile URL: https://investor.vanguard.com/investment-products/etfs/profile/vxus
+- Factsheet URL: https://fund-docs.vanguard.com/F3369.pdf
+
+### Profile snapshot
+- Expense ratio: 0.05% (as of 2026-02-27)
+- SEC yield: —
+- Market price: $77.25 (as of 2026-03-18)
+- NAV price: $77.30 (as of 2026-03-18)
+
+### Investment strategy
+- Seeks to track the performance of the FTSE Global All Cap ex US Index.
+- Broad exposure across developed and emerging non-U.S. equity markets.
+- Passively managed.
+- Fund remains fully invested.
+- Low expenses minimize net tracking error.
+
+### Benchmark and quick facts
+- Benchmark: FTSE Global All Cap ex US Index
+- Expense Ratio Pct: 0.05
+- Dividend Schedule: Quarterly
+- Etf Total Net Assets Million Usd: 120664
+- Fund Total Net Assets Million Usd: 573737
+- Inception Date: 2011-01-26
+- Ticker Symbol: VXUS
+- Cusip: 921909768
+- Iiv: VXUS.IV
+- Index Ticker Bloomberg: TGPVAN17
+- Exchange: NASDAQ
+
+### Performance history
+- Benchmark series: Spliced Total International Stock Index
+- NAV return (%): quarter 4.51, year_to_date 32.23, 1_year 32.23, 3_year 17.14, 5_year 7.98, 10_year 8.55, since_inception 5.97
+- Market price return (%): quarter 4.57, year_to_date 32.35, 1_year 32.35, 3_year 17.26, 5_year 8.07, 10_year 8.54, since_inception 5.97
+- Benchmark return (%): quarter 4.85, year_to_date 31.95, 1_year 31.95, 3_year 17.26, 5_year 8.04, 10_year 8.56, since_inception 6.03
+
+### Top holdings
+- Taiwan Semiconductor Manufacturing Co. Ltd.: 3.0%
+- Tencent Holdings Ltd.: 1.2%
+- Samsung Electronics Co. Ltd.: 1.1%
+- ASML Holding NV: 1.1%
+- Alibaba Group Holding Ltd.: 0.8%
+- Roche Holding AG: 0.8%
+- AstraZeneca plc: 0.7%
+- HSBC Holdings plc: 0.7%
+- Novartis AG: 0.7%
+- Nestle SA: 0.6%
+- Top ten as % of total net assets: 10.8%
+
+### Portfolio attributes / statistics
+- Number Of Stocks: fund 8646; benchmark 8486
+- Median Market Cap Billion Usd: fund 48.2; benchmark 48.2
+- Price Earnings Ratio: fund 17.1; benchmark 17.1
+- Price Book Ratio: fund 2.1; benchmark 2.1
+- Return On Equity Pct: fund 12.3; benchmark 12.3
+- Earnings Growth Rate Pct: fund 15.2; benchmark 15.2
+- Turnover Rate Pct: 4.4
+- Standard Deviation Pct: fund 11.87; benchmark 11.58
+
+### Portfolio composition / exposure
+- Ten Largest Market Allocations Pct Of Common Stock: Japan 15.0%; United Kingdom 9.0%; China 8.6%; Canada 8.1%; Taiwan 6.2%; Switzerland 5.5%; France 5.3%; Germany 5.3%; India 5.3%; Australia 4.2%
+- Sector Diversification Pct: Financials 23.4%; Industrials 15.6%; Technology 14.6%; Consumer Discretionary 11.1%; Health Care 7.7%; Basic Materials 7.0%; Consumer Staples 5.5%; Energy 4.8%; Telecommunications 4.1%; Utilities 3.4%; Real Estate 2.7%; Other 0.0%
+- Geographic Focus: Developed and emerging non-U.S. equity markets.
+
+### Distribution
+- Schedule: Quarterly
+- Sec Yield Pct: None
+- Sec Yield Note: Indexed Vanguard profile snippet shows SEC yield as unavailable (—).
+
+### Missing / unavailable fields
+- Indexed Vanguard profile snippet shows SEC yield as unavailable (—).
+
+### QA text
+Vanguard Total International Stock ETF (VXUS) is a International ex-U.S. total stock market ETF. Profile snapshot: expense ratio 0.05% as of 2026-02-27; market price $77.25 as of 2026-03-18; NAV price $77.30 as of 2026-03-18; SEC yield — Investment strategy: Seeks to track the performance of the FTSE Global All Cap ex US Index. Broad exposure across developed and emerging non-U.S. equity markets. Passively managed. Fund remains fully invested. Low expenses minimize net tracking error. Quick facts: benchmark FTSE Global All Cap ex US Index; dividend schedule Quarterly; ETF total net assets $120,664 million; fund total net assets $573,737 million; inception date 2011-01-26; exchange NASDAQ. Performance history for period ended 2025-12-31: NAV returns - quarter 4.51%, year-to-date 32.23%, 1 year 32.23%, 3 years 17.14%, 5 years 7.98%, 10 years 8.55%, since inception 5.97%. Market price returns - quarter 4.57%, year-to-date 32.35%, 1 year 32.35%, 3 years 17.26%, 5 years 8.07%, 10 years 8.54%, since inception 5.97%. Benchmark (Spliced Total International Stock Index) returns - quarter 4.85%, year-to-date 31.95%, 1 year 31.95%, 3 years 17.26%, 5 years 8.04%, 10 years 8.56%, since inception 6.03%. Top holdings: Taiwan Semiconductor Manufacturing Co. Ltd. (3.0%); Tencent Holdings Ltd. (1.2%); Samsung Electronics Co. Ltd. (1.1%); ASML Holding NV (1.1%); Alibaba Group Holding Ltd. (0.8%); Roche Holding AG (0.8%); AstraZeneca plc (0.7%); HSBC Holdings plc (0.7%); Novartis AG (0.7%); Nestle SA (0.6%). Top ten account for 10.8% of total net assets. Portfolio attributes/statistics: number of stocks: fund 8646, benchmark 8486; median market cap billion usd: fund 48.2, benchmark 48.2; price earnings ratio: fund 17.1, benchmark 17.1; price book ratio: fund 2.1, benchmark 2.1; return on equity pct: fund 12.3, benchmark 12.3; earnings growth rate pct: fund 15.2, benchmark 15.2; turnover rate pct: 4.4; standard deviation pct: fund 11.87, benchmark 11.58. Portfolio composition/exposure: ten largest market allocations pct of common stock: Japan 15.0%; United Kingdom 9.0%; China 8.6%; Canada 8.1%; Taiwan 6.2%; Switzerland 5.5%; France 5.3%; Germany 5.3%; India 5.3%; Australia 4.2%. sector diversification pct: Financials 23.4%; Industrials 15.6%; Technology 14.6%; Consumer Discretionary 11.1%; Health Care 7.7%; Basic Materials 7.0%; Consumer Staples 5.5%; Energy 4.8%; Telecommunications 4.1%; Utilities 3.4%; Real Estate 2.7%; Other 0.0%. geographic focus: Developed and emerging non-U.S. equity markets.. Unavailable or noted fields: Indexed Vanguard profile snippet shows SEC yield as unavailable (—).
+
+## Vanguard Real Estate ETF (VNQ)
+
+- Category: U.S. real estate sector ETF
+- Factsheet as of: 2025-12-31
+- Profile URL: https://investor.vanguard.com/investment-products/etfs/profile/vnq
+- Factsheet URL: https://fund-docs.vanguard.com/F0986.pdf
+
+### Profile snapshot
+- Expense ratio: 0.13% (as of 2025-05-29)
+- SEC yield: Note
+- Market price: $88.75 (as of 2026-03-20)
+- NAV price: $88.76 (as of 2026-03-20)
+
+### Investment strategy
+- Seeks to track the performance of the MSCI US Investable Market Real Estate 25/50 Index.
+- Equity real estate investment trusts.
+- Passively managed, full-replication approach.
+- Low expenses minimize net tracking error.
+
+### Benchmark and quick facts
+- Benchmark: MSCI US Investable Market Real Estate 25/50 Index
+- Expense Ratio Pct: 0.13
+- Dividend Schedule: Quarterly
+- Etf Total Net Assets Million Usd: 33878
+- Fund Total Net Assets Million Usd: 64036
+- Inception Date: 2004-09-23
+- Ticker Symbol: VNQ
+- Cusip: 922908553
+- Iiv: VNQ.IV
+- Index Ticker Bloomberg: M2CXVGD
+- Exchange: NYSE Arca
+
+### Performance history
+- Benchmark series: Real Estate Spliced Index
+- NAV return (%): quarter -2.41, year_to_date 3.18, 1_year 3.18, 3_year 6.56, 5_year 4.62, 10_year 5.13, since_inception 7.31
+- Market price return (%): quarter -2.33, year_to_date 3.26, 1_year 3.26, 3_year 6.56, 5_year 4.61, 10_year 5.13, since_inception 7.31
+- Benchmark return (%): quarter -2.39, year_to_date 3.31, 1_year 3.31, 3_year 6.71, 5_year 4.76, 10_year 5.25, since_inception 7.35
+
+### Top holdings
+- Vanguard Real Estate II Index Fund: 14.5%
+- Welltower Inc.: 7.1%
+- Prologis Inc.: 6.9%
+- American Tower Corp.: 4.8%
+- Equinix Inc.: 4.4%
+- Simon Property Group Inc.: 3.5%
+- Digital Realty Trust Inc.: 3.1%
+- Realty Income Corp.: 3.0%
+- CBRE Group Inc.: 2.8%
+- Public Storage: 2.4%
+- Top ten as % of total net assets: 52.4%
+
+### Portfolio attributes / statistics
+- Number Of Stocks: fund 152; benchmark 150
+- Median Market Cap Billion Usd: fund 30.1; benchmark 30.1
+- Price Earnings Ratio: fund 33.1; benchmark 33.1
+- Price Book Ratio: fund 2.4; benchmark 2.4
+- Return On Equity Pct: fund 6.2; benchmark 6.6
+- Earnings Growth Rate Pct: fund 9.1; benchmark 9.1
+- Turnover Rate Pct: 6.7
+- Standard Deviation Pct: fund 17.25; benchmark 17.25
+
+### Portfolio composition / exposure
+- Market Capitalization Breakdown Pct: Large Cap 16.5%; Medium/Large Cap 10.7%; Medium Cap 31.5%; Medium/Small Cap 20.5%; Small Cap 20.8%
+- Subindustry Diversification Pct Of Common Stock: Health Care REITs 15.5%; Retail REITs 13.8%; Industrial REITs 11.5%; Telecom Tower REITs 9.6%; Data Center REITs 8.7%; Real Estate Services 8.6%; Multi-Family Residential REITs 7.8%; Other Specialized REITs 6.3%; Self-Storage REITs 5.4%; Single-Family Residential REITs 3.7%; Office REITs 2.8%; Other 6.3%
+
+### Distribution
+- Schedule: Quarterly
+- Sec Yield Pct: None
+- Sec Yield Note: Indexed Vanguard profile snippet displays 'SEC yield. Note.'
+
+### Missing / unavailable fields
+- Indexed Vanguard profile snippet displays 'SEC yield. Note.' rather than a numeric yield.
+
+### QA text
+Vanguard Real Estate ETF (VNQ) is a U.S. real estate sector ETF. Profile snapshot: expense ratio 0.13% as of 2025-05-29; market price $88.75 as of 2026-03-20; NAV price $88.76 as of 2026-03-20; SEC yield Note Investment strategy: Seeks to track the performance of the MSCI US Investable Market Real Estate 25/50 Index. Equity real estate investment trusts. Passively managed, full-replication approach. Low expenses minimize net tracking error. Quick facts: benchmark MSCI US Investable Market Real Estate 25/50 Index; dividend schedule Quarterly; ETF total net assets $33,878 million; fund total net assets $64,036 million; inception date 2004-09-23; exchange NYSE Arca. Performance history for period ended 2025-12-31: NAV returns - quarter -2.41%, year-to-date 3.18%, 1 year 3.18%, 3 years 6.56%, 5 years 4.62%, 10 years 5.13%, since inception 7.31%. Market price returns - quarter -2.33%, year-to-date 3.26%, 1 year 3.26%, 3 years 6.56%, 5 years 4.61%, 10 years 5.13%, since inception 7.31%. Benchmark (Real Estate Spliced Index) returns - quarter -2.39%, year-to-date 3.31%, 1 year 3.31%, 3 years 6.71%, 5 years 4.76%, 10 years 5.25%, since inception 7.35%. Top holdings: Vanguard Real Estate II Index Fund (14.5%); Welltower Inc. (7.1%); Prologis Inc. (6.9%); American Tower Corp. (4.8%); Equinix Inc. (4.4%); Simon Property Group Inc. (3.5%); Digital Realty Trust Inc. (3.1%); Realty Income Corp. (3.0%); CBRE Group Inc. (2.8%); Public Storage (2.4%). Top ten account for 52.4% of total net assets. Portfolio attributes/statistics: number of stocks: fund 152, benchmark 150; median market cap billion usd: fund 30.1, benchmark 30.1; price earnings ratio: fund 33.1, benchmark 33.1; price book ratio: fund 2.4, benchmark 2.4; return on equity pct: fund 6.2, benchmark 6.6; earnings growth rate pct: fund 9.1, benchmark 9.1; turnover rate pct: 6.7; standard deviation pct: fund 17.25, benchmark 17.25. Portfolio composition/exposure: market capitalization breakdown pct: Large Cap 16.5%; Medium/Large Cap 10.7%; Medium Cap 31.5%; Medium/Small Cap 20.5%; Small Cap 20.8%. subindustry diversification pct of common stock: Health Care REITs 15.5%; Retail REITs 13.8%; Industrial REITs 11.5%; Telecom Tower REITs 9.6%; Data Center REITs 8.7%; Real Estate Services 8.6%; Multi-Family Residential REITs 7.8%; Other Specialized REITs 6.3%; Self-Storage REITs 5.4%; Single-Family Residential REITs 3.7%; Office REITs 2.8%; Other 6.3%. Unavailable or noted fields: Indexed Vanguard profile snippet displays 'SEC yield. Note.' rather than a numeric yield.
