@@ -17,6 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useVoiceRecorder, useAudioPlayback } from "@workspace/integrations-openai-ai-react";
 
 interface AdvisorData {
   aumM: number; salesAmt: number; redemption: number;
@@ -46,7 +47,7 @@ const SEGMENT_CONFIG: Record<string, { label: string; color: string; bg: string;
   E: { label: "Emerging",   color: "text-violet-300",  bg: "bg-violet-500/10",  border: "border-violet-500/25" },
 };
 
-type CallStatus = "idle" | "connecting" | "live" | "ended";
+type CallStatus = "idle" | "connecting" | "maya-speaking" | "user-turn" | "processing" | "ended";
 type Speaker = "agent" | "user";
 
 interface TranscriptLine {
@@ -146,20 +147,18 @@ export default function ScheduleMe() {
 
   // Voice state
   const [callStatus, setCallStatus] = useState<CallStatus>("idle");
-  const [isMuted, setIsMuted] = useState(false);
   const [agentSpeaking, setAgentSpeaking] = useState(false);
-  const [userSpeaking, setUserSpeaking] = useState(false);
   const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
+  const [voiceHistory, setVoiceHistory] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
   const [booking, setBooking] = useState<BookingProposal | null>(null);
   const [callStartTime, setCallStartTime] = useState<Date | null>(null);
-  const [statusText, setStatusText] = useState("Ready to connect");
+  const [isRecording, setIsRecording] = useState(false);
 
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const dcRef = useRef<RTCDataChannel | null>(null);
-  const audioElRef = useRef<HTMLAudioElement | null>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
-  const agentItemIdRef = useRef<string | null>(null);
+  const workletPath = `${import.meta.env.BASE_URL}audio-playback-worklet.js`;
+
+  const { startRecording, stopRecording } = useVoiceRecorder();
+  const audioPlayback = useAudioPlayback(workletPath);
 
   const advisor = lead ? parseAdvisorData(lead.assets ?? "") : null;
   const seg = advisor ? (SEGMENT_CONFIG[advisor.segment] ?? SEGMENT_CONFIG.C) : null;
@@ -225,139 +224,106 @@ export default function ScheduleMe() {
     transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [transcript]);
 
-  const addTranscriptLine = useCallback((speaker: Speaker, text: string, partial = false, itemId?: string) => {
-    setTranscript(prev => {
-      if (partial && itemId) {
-        const existingIdx = prev.findIndex(l => l.id === itemId);
-        if (existingIdx >= 0) {
-          const updated = [...prev];
-          updated[existingIdx] = { ...updated[existingIdx], text, partial };
-          return updated;
-        }
-        return [...prev, { id: itemId ?? crypto.randomUUID(), speaker, text, partial }];
-      }
-      if (itemId) {
-        const existingIdx = prev.findIndex(l => l.id === itemId);
-        if (existingIdx >= 0) {
-          const updated = [...prev];
-          updated[existingIdx] = { id: itemId, speaker, text, partial: false };
-          return updated;
-        }
-      }
-      return [...prev, { id: itemId ?? crypto.randomUUID(), speaker, text, partial }];
-    });
-  }, []);
+  const blobToBase64 = useCallback((blob: Blob): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.slice(result.indexOf(",") + 1));
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  }), []);
 
-  const handleRealtimeEvent = useCallback((event: Record<string, unknown>) => {
-    const type = event.type as string;
+  const processMayaSSE = useCallback(async (
+    res: Response,
+    onHistory: (text: string) => void,
+  ) => {
+    if (!res.body) throw new Error("No response body");
 
-    if (type === "session.created" || type === "session.updated") {
-      setCallStatus("live");
-      setCallStartTime(new Date());
-      setStatusText("Live call");
-    }
+    await audioPlayback.init();
+    audioPlayback.clear();
 
-    if (type === "response.audio.delta") {
-      setAgentSpeaking(true);
-    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let mayaText = "";
+    const mayaId = crypto.randomUUID();
 
-    if (type === "response.audio.done" || type === "response.done") {
-      setAgentSpeaking(false);
-    }
-
-    if (type === "input_audio_buffer.speech_started") {
-      setUserSpeaking(true);
-    }
-
-    if (type === "input_audio_buffer.speech_stopped") {
-      setUserSpeaking(false);
-    }
-
-    if (type === "response.audio_transcript.delta") {
-      const itemId = event.item_id as string;
-      const delta = event.delta as string;
-      agentItemIdRef.current = itemId;
-      setTranscript(prev => {
-        const existingIdx = prev.findIndex(l => l.id === itemId);
-        if (existingIdx >= 0) {
-          const updated = [...prev];
-          updated[existingIdx] = {
-            ...updated[existingIdx],
-            text: (updated[existingIdx].text ?? "") + delta,
-            partial: true,
-          };
-          return updated;
-        }
-        return [...prev, { id: itemId, speaker: "agent", text: delta, partial: true }];
-      });
-    }
-
-    if (type === "response.audio_transcript.done") {
-      const itemId = event.item_id as string;
-      const transcript = event.transcript as string;
-      setTranscript(prev => {
-        const idx = prev.findIndex(l => l.id === itemId);
-        if (idx >= 0) {
-          const updated = [...prev];
-          updated[idx] = { ...updated[idx], text: transcript, partial: false };
-          return updated;
-        }
-        return [...prev, { id: itemId, speaker: "agent", text: transcript, partial: false }];
-      });
-    }
-
-    if (type === "conversation.item.input_audio_transcription.completed") {
-      const itemId = event.item_id as string;
-      const transcriptText = event.transcript as string;
-      if (transcriptText?.trim()) {
-        addTranscriptLine("user", transcriptText.trim(), false, itemId);
-      }
-    }
-
-    if (type === "response.function_call_arguments.done") {
-      const name = event.name as string;
-      if (name === "book_meeting") {
+    const handleChunk = (raw: string) => {
+      for (const line of raw.split(/\n+/)) {
+        if (!line.startsWith("data:")) continue;
         try {
-          const args = JSON.parse(event.arguments as string) as {
-            date: string; time: string; agendaTopic: string;
-            dayLabel?: string; timeLabel?: string;
-          };
-          setBooking({
-            date: args.date,
-            time: args.time,
-            agendaTopic: args.agendaTopic,
-            dayLabel: args.dayLabel ?? args.date,
-            timeLabel: args.timeLabel ?? args.time,
-          });
-          const callId = event.call_id as string;
-          if (dcRef.current?.readyState === "open") {
-            dcRef.current.send(JSON.stringify({
-              type: "conversation.item.create",
-              item: {
-                type: "function_call_output",
-                call_id: callId,
-                output: JSON.stringify({ success: true, message: "Meeting booked successfully." }),
-              },
-            }));
-            dcRef.current.send(JSON.stringify({ type: "response.create" }));
+          const evt = JSON.parse(line.slice(5).trim()) as Record<string, unknown>;
+
+          if (evt.type === "user_transcript" && typeof evt.data === "string" && (evt.data as string).trim()) {
+            setTranscript(prev => [...prev, { id: crypto.randomUUID(), speaker: "user", text: evt.data as string }]);
+          }
+
+          if (evt.type === "audio" && typeof evt.data === "string") {
+            audioPlayback.pushAudio(evt.data as string);
+          }
+
+          if (evt.type === "transcript" && typeof evt.data === "string") {
+            mayaText = evt.data as string;
+            setTranscript(prev => {
+              const idx = prev.findIndex(l => l.id === mayaId);
+              if (idx >= 0) {
+                const u = [...prev];
+                u[idx] = { ...u[idx], text: mayaText, partial: false };
+                return u;
+              }
+              return [...prev, { id: mayaId, speaker: "agent", text: mayaText, partial: false }];
+            });
+          }
+
+          if (evt.type === "book_meeting") {
+            setBooking({
+              date: evt.date as string,
+              time: evt.time as string,
+              agendaTopic: evt.agendaTopic as string,
+              dayLabel: evt.dayLabel as string,
+              timeLabel: evt.timeLabel as string,
+            });
+          }
+
+          if ("done" in evt && evt.done) {
+            audioPlayback.signalComplete();
+            if (mayaText) {
+              onHistory(mayaText);
+            }
+            setAgentSpeaking(false);
+            setCallStatus("user-turn");
           }
         } catch { /* ignore */ }
       }
-    }
-  }, [addTranscriptLine]);
+    };
 
-  const startCall = async () => {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const blocks = buffer.split(/\n\n/);
+      buffer = blocks.pop() ?? "";
+      for (const block of blocks) handleChunk(block);
+    }
+    if (buffer) handleChunk(buffer);
+  }, [audioPlayback]);
+
+  const sendTurn = useCallback(async (blob: Blob) => {
     if (!lead) return;
-    setCallStatus("connecting");
-    setStatusText("Connecting to Maya...");
-    setTranscript([]);
-    setBooking(null);
+    setCallStatus("maya-speaking");
+    setAgentSpeaking(true);
 
     try {
-      const res = await fetch("/api/realtime/session", {
+      const audioBase64 = await blobToBase64(blob);
+      const currentHistory = voiceHistory;
+
+      const res = await fetch("/api/voice/maya-turn", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          audio: audioBase64,
+          history: currentHistory,
           advisorName: lead.name,
           advisorCompany: lead.company,
           advisorSegment: advisor?.segment,
@@ -370,117 +336,87 @@ export default function ScheduleMe() {
         }),
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Unknown error" }));
-        throw new Error(err.error ?? "Session creation failed");
-      }
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
 
-      const { ephemeralKey } = await res.json() as { ephemeralKey: string };
+      await processMayaSSE(res, (text) => {
+        setVoiceHistory(prev => [...prev, { role: "assistant", text }]);
+      });
+    } catch (err) {
+      console.error("Send turn failed:", err);
+      setCallStatus("user-turn");
+      setAgentSpeaking(false);
+    }
+  }, [lead, advisor, voiceHistory, blobToBase64, processMayaSSE]);
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      localStreamRef.current = stream;
+  const startCall = useCallback(async () => {
+    if (!lead) return;
+    setCallStatus("connecting");
+    setTranscript([]);
+    setVoiceHistory([]);
+    setBooking(null);
+    setAgentSpeaking(true);
 
-      const pc = new RTCPeerConnection();
-      pcRef.current = pc;
+    try {
+      const res = await fetch("/api/voice/maya-turn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isOpener: true,
+          history: [],
+          advisorName: lead.name,
+          advisorCompany: lead.company,
+          advisorSegment: advisor?.segment,
+          aumM: advisor?.aumM,
+          fiOpportunities: advisor?.fiOpportunities,
+          etfOpportunities: advisor?.etfOpportunities,
+          alpha: advisor?.alpha,
+          competitors: advisor?.competitors,
+          territory: advisor?.territory,
+        }),
+      });
 
-      const audioEl = document.createElement("audio");
-      audioEl.autoplay = true;
-      audioElRef.current = audioEl;
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
 
-      pc.ontrack = (e) => {
-        audioEl.srcObject = e.streams[0];
-      };
+      setCallStartTime(new Date());
+      setCallStatus("maya-speaking");
 
-      stream.getTracks().forEach(t => pc.addTrack(t, stream));
-
-      const dc = pc.createDataChannel("oai-events");
-      dcRef.current = dc;
-
-      dc.onopen = () => {
-        setStatusText("Connected — Maya is speaking...");
-      };
-
-      dc.onmessage = (e) => {
-        try {
-          const event = JSON.parse(e.data as string) as Record<string, unknown>;
-          handleRealtimeEvent(event);
-        } catch { /* ignore */ }
-      };
-
-      pc.oniceconnectionstatechange = () => {
-        if (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") {
-          setCallStatus("ended");
-          setStatusText("Call ended");
-        }
-      };
-
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-
-      const sdpRes = await fetch(
-        "https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${ephemeralKey}`,
-            "Content-Type": "application/sdp",
-          },
-          body: offer.sdp,
-        }
-      );
-
-      if (!sdpRes.ok) {
-        throw new Error("WebRTC SDP exchange failed: " + await sdpRes.text());
-      }
-
-      const answerSdp = await sdpRes.text();
-      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+      await processMayaSSE(res, (text) => {
+        setVoiceHistory([{ role: "assistant", text }]);
+      });
 
     } catch (err) {
       console.error("Call start failed:", err);
       setCallStatus("idle");
-      setStatusText("Ready to connect");
-      let desc = "Could not start the call. Please try again.";
-      if (err instanceof Error) {
-        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-          desc = "Microphone access was denied. Please allow microphone access and try again.";
-        } else if (err.name === "NotFoundError") {
-          desc = "No microphone found. Please connect a microphone and try again.";
-        } else {
-          desc = err.message;
-        }
-      } else if (err && typeof err === "object" && "name" in err) {
-        const domErr = err as DOMException;
-        if (domErr.name === "NotAllowedError") {
-          desc = "Microphone access was denied. Please allow microphone access and try again.";
-        }
-      }
+      setAgentSpeaking(false);
+      let desc = "Could not connect. Please try again.";
+      if (err instanceof Error) desc = err.message;
       toast({ title: "Connection failed", description: desc, variant: "destructive" });
     }
-  };
+  }, [lead, advisor, processMayaSSE, toast]);
 
-  const endCall = () => {
-    dcRef.current?.close();
-    pcRef.current?.close();
-    pcRef.current = null;
-    dcRef.current = null;
-    localStreamRef.current?.getTracks().forEach(t => t.stop());
-    localStreamRef.current = null;
-    if (audioElRef.current) {
-      audioElRef.current.srcObject = null;
-    }
+  const endCall = useCallback(() => {
     setCallStatus("ended");
     setAgentSpeaking(false);
-    setUserSpeaking(false);
-    setStatusText("Call ended");
-  };
+    setIsRecording(false);
+  }, []);
 
-  const toggleMute = () => {
-    if (!localStreamRef.current) return;
-    const enabled = !isMuted;
-    localStreamRef.current.getAudioTracks().forEach(t => { t.enabled = enabled; });
-    setIsMuted(!enabled);
-  };
+  const handleMicDown = useCallback(async () => {
+    if (callStatus !== "user-turn") return;
+    setIsRecording(true);
+    await startRecording();
+  }, [callStatus, startRecording]);
+
+  const handleMicUp = useCallback(async () => {
+    if (!isRecording) return;
+    setIsRecording(false);
+    setCallStatus("processing");
+    const blob = await stopRecording();
+    if (blob.size === 0) {
+      setCallStatus("user-turn");
+      return;
+    }
+    await sendTurn(blob);
+  }, [isRecording, stopRecording, sendTurn]);
 
   const handleConfirmBooking = () => {
     if (!lead || !booking) return;
@@ -800,7 +736,7 @@ export default function ScheduleMe() {
               <div className="absolute inset-0 pointer-events-none">
                 <div className={cn(
                   "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-3xl transition-all duration-1000",
-                  callStatus === "live"
+                  (callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing")
                     ? agentSpeaking ? "bg-teal-500/10 scale-125" : "bg-blue-500/8"
                     : "bg-slate-500/5"
                 )} />
@@ -811,29 +747,29 @@ export default function ScheduleMe() {
                 {/* Maya Avatar */}
                 <div className="relative flex flex-col items-center gap-6">
                   <div className="relative">
-                    <PulsingRing active={callStatus === "live" && agentSpeaking} />
+                    <PulsingRing active={(callStatus === "maya-speaking") && agentSpeaking} />
                     <motion.div
                       className={cn(
                         "w-28 h-28 rounded-full flex items-center justify-center relative z-10 transition-all duration-500",
-                        callStatus === "live"
+                        (callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing")
                           ? "shadow-[0_0_40px_rgba(45,212,191,0.3)] border-2 border-teal-400/50"
                           : callStatus === "connecting"
                           ? "border-2 border-teal-400/30 animate-pulse"
                           : "border-2 border-white/10"
                       )}
                       style={{
-                        background: callStatus === "live"
+                        background: (callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing")
                           ? "radial-gradient(circle at 30% 30%, #1e4a6e, #0a1a2e)"
                           : "radial-gradient(circle at 30% 30%, #1a2540, #0a1020)",
                       }}
-                      animate={callStatus === "live" && agentSpeaking ? { scale: [1, 1.04, 1] } : {}}
+                      animate={(callStatus === "maya-speaking") && agentSpeaking ? { scale: [1, 1.04, 1] } : {}}
                       transition={{ duration: 0.8, repeat: Infinity }}
                     >
                       <div className="text-center">
                         <div className="text-3xl font-bold text-teal-300">M</div>
                         <div className="text-[9px] text-teal-400/70 font-semibold tracking-wider uppercase mt-0.5">Maya</div>
                       </div>
-                      {callStatus === "live" && (
+                      {(callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing") && (
                         <motion.div
                           className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-[#0a1628] flex items-center justify-center"
                           initial={{ scale: 0 }}
@@ -854,7 +790,7 @@ export default function ScheduleMe() {
                 {/* Waveform */}
                 <div className="flex flex-col items-center gap-3">
                   <AnimatePresence mode="wait">
-                    {callStatus === "live" ? (
+                    {(callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing") ? (
                       <motion.div
                         key="waveform"
                         initial={{ opacity: 0, y: 8 }}
@@ -868,12 +804,16 @@ export default function ScheduleMe() {
                             <span className="text-teal-300 flex items-center gap-1.5">
                               <Volume2 className="w-3.5 h-3.5" /> Maya is speaking
                             </span>
-                          ) : userSpeaking ? (
+                          ) : isRecording ? (
                             <span className="text-blue-300 flex items-center gap-1.5">
                               <Mic className="w-3.5 h-3.5" /> You are speaking
                             </span>
+                          ) : callStatus === "processing" ? (
+                            <span className="text-amber-300 flex items-center gap-1.5">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Processing...
+                            </span>
                           ) : (
-                            <span className="text-muted-foreground/60">Listening...</span>
+                            <span className="text-muted-foreground/60">Hold mic button to speak</span>
                           )}
                         </p>
                       </motion.div>
@@ -917,7 +857,7 @@ export default function ScheduleMe() {
                 </div>
 
                 {/* Status bar */}
-                {callStatus === "live" && (
+                {(callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing") && (
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -953,16 +893,23 @@ export default function ScheduleMe() {
                     <div className="flex items-center gap-4">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={toggleMute}
+                        whileTap={{ scale: 0.95 }}
+                        onMouseDown={handleMicDown}
+                        onMouseUp={handleMicUp}
+                        onTouchStart={handleMicDown}
+                        onTouchEnd={handleMicUp}
+                        disabled={callStatus !== "user-turn" && !isRecording}
                         className={cn(
-                          "w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all",
-                          isMuted
-                            ? "bg-rose-500/20 border-rose-500/40 text-rose-400"
-                            : "bg-white/6 border-white/15 text-white/70 hover:border-white/30"
+                          "w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all select-none",
+                          isRecording
+                            ? "bg-blue-500/30 border-blue-400/60 text-blue-300 shadow-lg shadow-blue-500/30"
+                            : callStatus === "user-turn"
+                              ? "bg-white/6 border-white/15 text-white/70 hover:border-white/30"
+                              : "bg-white/3 border-white/8 text-white/30 cursor-not-allowed"
                         )}
+                        title={callStatus === "user-turn" ? "Hold to speak" : "Wait for Maya to finish"}
                       >
-                        {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                        {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                       </motion.button>
 
                       <motion.button
@@ -1047,10 +994,10 @@ export default function ScheduleMe() {
               <div className="flex items-center gap-3 px-5 py-4 border-b border-white/8 bg-background/30 shrink-0">
                 <div className={cn(
                   "w-2 h-2 rounded-full transition-colors duration-300",
-                  callStatus === "live" ? "bg-emerald-400 animate-pulse" : "bg-white/15"
+                  (callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing") ? "bg-emerald-400 animate-pulse" : "bg-white/15"
                 )} />
                 <p className="text-sm font-semibold text-white">Live Transcript</p>
-                {callStatus === "live" && (
+                {(callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing") && (
                   <span className="ml-auto text-[10px] text-muted-foreground/60 uppercase tracking-wider">Real-time</span>
                 )}
               </div>
