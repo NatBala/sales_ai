@@ -219,4 +219,114 @@ router.post("/api/realtime/session", async (req, res) => {
   }
 });
 
+// ─── Engage Me session ───────────────────────────────────────────────────────
+
+const ENGAGE_SYSTEM_PROMPT = `You are a silent real-time data assistant embedded in a Vanguard sales meeting. The Vanguard salesperson is meeting with a financial advisor.
+
+YOUR ONLY JOB: Listen to the conversation. When you detect a question or topic about any of these 5 Vanguard ETFs — BND, VTI, VOO, VXUS, VNQ — immediately call the show_fund_data function to display the relevant data on screen.
+
+THE SALESPERSON NEEDS DATA ON SCREEN WITHIN 2 SECONDS OF THE QUESTION. Be fast.
+
+DO NOT SPEAK. DO NOT OUTPUT AUDIO OR TEXT. ONLY CALL FUNCTIONS.
+
+WHAT TO LISTEN FOR:
+
+Fund detection:
+- BND = bonds / bond market / fixed income / aggregate bond
+- VTI = total stock / total market / broad U.S. equity
+- VOO = S&P 500 / large cap / five hundred
+- VXUS = international / global / ex-US / developed markets / emerging markets
+- VNQ = real estate / REIT / property
+
+Data type detection (when to show what):
+- "top holdings" / "what does it hold" / "biggest positions" / "holdings" → dataType: "holdings"
+- "how has it performed" / "returns" / "performance" / "how did it do" / "year to date" → dataType: "performance"
+- "sectors" / "sector breakdown" / "what sector" / "exposure" / "allocation" / "composition" / "geography" → dataType: "composition"
+- "expense ratio" / "cost" / "fee" / "yield" / "price" / "how much" / general intro about the fund → dataType: "overview"
+- "P/E" / "P/B" / "market cap" / "standard deviation" / "volatility" / "metrics" / "stats" → dataType: "stats"
+
+When a fund is mentioned without a specific data type question, default to "overview".
+
+SPEED IS CRITICAL: Call show_fund_data immediately when you detect the fund + topic. Do not wait for more context.
+
+If multiple funds are mentioned, show the most recently/explicitly discussed one.
+
+Always include a short 1-sentence insight string in the function call that adds context (e.g. "VOO's top 10 holdings represent 40.7% of the fund, with heavy tech concentration.").`;
+
+router.post("/api/realtime/engage-session", async (req, res) => {
+  try {
+    const baseUrl = (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, "");
+    const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "";
+
+    const sessionRes = await fetch(`${baseUrl}/realtime/sessions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-realtime-preview-2024-12-17",
+        modalities: ["text"],
+        instructions: ENGAGE_SYSTEM_PROMPT,
+        turn_detection: {
+          type: "server_vad",
+          silence_duration_ms: 400,
+          threshold: 0.4,
+          prefix_padding_ms: 200,
+        },
+        input_audio_transcription: { model: "whisper-1" },
+        tools: [
+          {
+            type: "function",
+            name: "show_fund_data",
+            description:
+              "Display Vanguard ETF data on screen. Call this whenever a fund-related question is detected in the conversation.",
+            parameters: {
+              type: "object",
+              properties: {
+                ticker: {
+                  type: "string",
+                  enum: ["BND", "VTI", "VOO", "VXUS", "VNQ"],
+                  description: "The ETF ticker symbol",
+                },
+                dataType: {
+                  type: "string",
+                  enum: ["overview", "holdings", "performance", "composition", "stats"],
+                  description: "What type of data to display",
+                },
+                insight: {
+                  type: "string",
+                  description: "One sentence contextual insight to display alongside the data",
+                },
+              },
+              required: ["ticker", "dataType", "insight"],
+            },
+          },
+        ],
+        tool_choice: "auto",
+      }),
+    });
+
+    if (!sessionRes.ok) {
+      const errText = await sessionRes.text();
+      console.error("OpenAI Engage session creation failed:", errText);
+      return res.status(502).json({ error: "Failed to create engage session", details: errText });
+    }
+
+    const session = (await sessionRes.json()) as {
+      id: string;
+      client_secret: { value: string; expires_at: number };
+    };
+
+    res.json({
+      sessionId: session.id,
+      ephemeralKey: session.client_secret.value,
+      expiresAt: session.client_secret.expires_at,
+    });
+  } catch (err) {
+    console.error("Engage session error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;
