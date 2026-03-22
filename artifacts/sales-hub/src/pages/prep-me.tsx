@@ -35,7 +35,20 @@ export default function PrepMe() {
   const { state: recorderState, startRecording, stopRecording } = useVoiceRecorder();
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const meetings = meetingsData?.meetings?.filter(m => m.status === "scheduled") || [];
+  const allScheduled = meetingsData?.meetings?.filter(m => m.status === "scheduled") || [];
+
+  // Deduplicate: keep only the next upcoming meeting per advisor (by leadId)
+  const byLead = new Map<string, Meeting>();
+  for (const m of allScheduled) {
+    const existing = byLead.get(m.leadId);
+    if (!existing || new Date(m.scheduledAt) < new Date(existing.scheduledAt)) {
+      byLead.set(m.leadId, m);
+    }
+  }
+  const meetings = Array.from(byLead.values()).sort(
+    (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
+  );
+
   const selectedMeeting = meetings.find(m => m.id === selectedMeetingId);
 
   const prepData = voicePrepData ?? (hookPrepData as PrepResult | undefined);
