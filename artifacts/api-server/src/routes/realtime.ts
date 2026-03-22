@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { openai } from "@workspace/integrations-openai-ai-server";
+import { ensureCompatibleFormat, speechToText } from "@workspace/integrations-openai-ai-server/audio";
 
 const router = Router();
 
@@ -219,7 +221,97 @@ router.post("/realtime/session", async (req, res) => {
   }
 });
 
-// ─── Engage Me session ───────────────────────────────────────────────────────
+// ─── Engage Me: Turn-based audio analyze ─────────────────────────────────────
+
+router.post("/realtime/analyze", async (req, res) => {
+  try {
+    const { audio } = req.body as { audio?: string };
+    if (!audio) return res.status(400).json({ error: "audio required" });
+
+    const audioBuffer = Buffer.from(audio, "base64");
+    const { buffer: wavBuffer, format } = await ensureCompatibleFormat(audioBuffer);
+    const transcript = await speechToText(wavBuffer, format);
+
+    if (!transcript.trim()) {
+      return res.json({ detected: null, transcript: "" });
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1",
+      messages: [
+        {
+          role: "system",
+          content: `You are a silent assistant listening to a financial sales meeting. Detect whether any Vanguard ETF was mentioned.
+
+ETF detection:
+- BND = bonds / bond market / fixed income / aggregate bond / total bond
+- VTI = total stock / total market / broad U.S. equity / domestic equity
+- VOO = S&P 500 / large cap / five hundred / S and P
+- VXUS = international / global / ex-US / developed markets / emerging markets / foreign
+- VNQ = real estate / REIT / property / real estate investment trust
+
+Data type detection:
+- "top holdings" / "biggest positions" / "holdings" / "what does it hold" → dataType: "holdings"
+- "how has it performed" / "returns" / "performance" / "year to date" / "ytd" → dataType: "performance"
+- "sectors" / "sector breakdown" / "exposure" / "allocation" / "composition" / "geography" → dataType: "composition"
+- "expense ratio" / "cost" / "fee" / "yield" / "price" / general fund mention → dataType: "overview"
+- "P/E" / "P/B" / "market cap" / "volatility" / "metrics" / "stats" → dataType: "stats"
+
+If a fund is mentioned without a specific data type, default to "overview".
+If NO fund is clearly mentioned, call show_fund_data with ticker null.`,
+        },
+        { role: "user", content: transcript },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "show_fund_data",
+            description: "Called when a Vanguard ETF is detected in the conversation",
+            parameters: {
+              type: "object" as const,
+              properties: {
+                ticker: {
+                  type: "string",
+                  enum: ["BND", "VTI", "VOO", "VXUS", "VNQ"],
+                  description: "The ETF ticker detected, or omit if none detected",
+                },
+                dataType: {
+                  type: "string",
+                  enum: ["overview", "holdings", "performance", "composition", "stats"],
+                  description: "Type of data being asked about",
+                },
+                insight: {
+                  type: "string",
+                  description: "One-sentence contextual insight about the fund data",
+                },
+              },
+              required: ["dataType", "insight"],
+            },
+          },
+        },
+      ],
+      tool_choice: "auto",
+    });
+
+    const toolCall = completion.choices[0]?.message?.tool_calls?.[0];
+    if (toolCall?.function?.name === "show_fund_data") {
+      const args = JSON.parse(toolCall.function.arguments) as {
+        ticker?: string; dataType: string; insight: string;
+      };
+      if (args.ticker) {
+        return res.json({ detected: args, transcript });
+      }
+    }
+
+    res.json({ detected: null, transcript });
+  } catch (err) {
+    console.error("Engage analyze error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ─── Engage Me session (legacy WebRTC — kept for reference) ───────────────────
 
 const ENGAGE_SYSTEM_PROMPT = `You are a silent real-time data assistant embedded in a Vanguard sales meeting. The Vanguard salesperson is meeting with a financial advisor.
 

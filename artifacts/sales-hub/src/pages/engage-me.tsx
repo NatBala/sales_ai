@@ -3,13 +3,26 @@ import { Layout } from "@/components/layout";
 import { useMeetings } from "@/hooks/use-meetings";
 import { Button } from "@/components/ui/button";
 import {
-  Loader2, Activity, Mic, MicOff, Radio, ArrowRightCircle,
+  Loader2, Activity, Mic, Radio, ArrowRightCircle,
   ArrowRight, CheckSquare, BarChart3, PieChart, ListOrdered,
-  TrendingUp, Info, LayoutGrid,
+  TrendingUp, Info, LayoutGrid, Square,
 } from "lucide-react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useVoiceRecorder } from "@workspace/integrations-openai-ai-react";
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      resolve(result.split(",")[1] ?? "");
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
 
 // ─── ETF Data Corpus ─────────────────────────────────────────────────────────
 
@@ -570,130 +583,76 @@ export default function EngageMe() {
 
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [sessionCompleted, setSessionCompleted] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
 
   const [currentDisplay, setCurrentDisplay] = useState<FundDisplay | null>(null);
   const [displayHistory, setDisplayHistory] = useState<FundDisplay[]>([]);
   const [recentTranscript, setRecentTranscript] = useState("");
-  const [userSpeaking, setUserSpeaking] = useState(false);
+  const [noFundMsg, setNoFundMsg] = useState("");
 
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const dcRef = useRef<RTCDataChannel | null>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
+  const noFundTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { startRecording, stopRecording } = useVoiceRecorder();
 
   const selectedMeeting = meetings.find(m => m.id === selectedMeetingId);
 
-  const handleRealtimeEvent = useCallback((event: Record<string, unknown>) => {
-    const type = event.type as string;
-
-    if (type === "input_audio_buffer.speech_started") setUserSpeaking(true);
-    if (type === "input_audio_buffer.speech_stopped") setUserSpeaking(false);
-
-    if (type === "conversation.item.input_audio_transcription.completed") {
-      const text = (event.transcript as string)?.trim();
-      if (text) setRecentTranscript(text);
-    }
-
-    if (type === "response.function_call_arguments.done") {
-      const name = event.name as string;
-      if (name === "show_fund_data") {
-        try {
-          const args = JSON.parse(event.arguments as string) as {
-            ticker: string; dataType: DataType; insight: string;
-          };
-          if (ETF_DATA[args.ticker]) {
-            const display: FundDisplay = {
-              ticker: args.ticker,
-              dataType: args.dataType,
-              insight: args.insight,
-              triggeredAt: Date.now(),
-            };
-            setCurrentDisplay(display);
-            setDisplayHistory(prev => [display, ...prev].slice(0, 8));
-          }
-          const callId = event.call_id as string;
-          if (dcRef.current?.readyState === "open") {
-            dcRef.current.send(JSON.stringify({
-              type: "conversation.item.create",
-              item: {
-                type: "function_call_output",
-                call_id: callId,
-                output: JSON.stringify({ success: true }),
-              },
-            }));
-            dcRef.current.send(JSON.stringify({ type: "response.create" }));
-          }
-        } catch { /* ignore */ }
-      }
-    }
+  const showNoFund = useCallback((msg: string) => {
+    if (noFundTimerRef.current) clearTimeout(noFundTimerRef.current);
+    setNoFundMsg(msg);
+    noFundTimerRef.current = setTimeout(() => setNoFundMsg(""), 3000);
   }, []);
 
-  const startListening = async () => {
-    setIsConnecting(true);
+  const startCapture = useCallback(async () => {
     try {
-      const res = await fetch("/api/realtime/engage-session", {
+      await startRecording();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Mic access failed:", err);
+    }
+  }, [startRecording]);
+
+  const stopCapture = useCallback(async () => {
+    if (!isRecording) return;
+    setIsRecording(false);
+    setIsAnalyzing(true);
+    try {
+      const blob = await stopRecording();
+      if (!blob.size) { setIsAnalyzing(false); return; }
+      const audio = await blobToBase64(blob);
+      const res = await fetch("/api/realtime/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ audio }),
       });
-      if (!res.ok) throw new Error("Session failed");
-      const { ephemeralKey } = await res.json() as { ephemeralKey: string };
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      localStreamRef.current = stream;
-
-      const pc = new RTCPeerConnection();
-      pcRef.current = pc;
-
-      stream.getTracks().forEach(t => pc.addTrack(t, stream));
-
-      const dc = pc.createDataChannel("oai-events");
-      dcRef.current = dc;
-      dc.onmessage = (e) => {
-        try { handleRealtimeEvent(JSON.parse(e.data as string) as Record<string, unknown>); }
-        catch { /* ignore */ }
+      if (!res.ok) throw new Error("Analyze failed");
+      const data = await res.json() as {
+        detected: { ticker: string; dataType: string; insight: string } | null;
+        transcript: string;
       };
-      dc.onopen = () => { setIsListening(true); setIsConnecting(false); };
-
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-
-      const sdpRes = await fetch(
-        "https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17",
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${ephemeralKey}`, "Content-Type": "application/sdp" },
-          body: offer.sdp,
-        }
-      );
-      if (!sdpRes.ok) throw new Error("SDP failed");
-      await pc.setRemoteDescription({ type: "answer", sdp: await sdpRes.text() });
+      if (data.transcript) setRecentTranscript(data.transcript);
+      if (data.detected?.ticker && ETF_DATA[data.detected.ticker]) {
+        const display: FundDisplay = {
+          ticker: data.detected.ticker,
+          dataType: data.detected.dataType as DataType,
+          insight: data.detected.insight,
+          triggeredAt: Date.now(),
+        };
+        setCurrentDisplay(display);
+        setDisplayHistory(prev => [display, ...prev].slice(0, 8));
+      } else if (data.transcript) {
+        showNoFund("No ETF detected — try mentioning BND, VTI, VOO, VXUS, or VNQ");
+      }
     } catch (err) {
-      setIsConnecting(false);
-      setIsListening(false);
-      console.error("Engage listen failed:", err);
+      console.error("Engage analyze failed:", err);
+    } finally {
+      setIsAnalyzing(false);
     }
-  };
+  }, [isRecording, stopRecording, showNoFund]);
 
-  const stopListening = () => {
-    dcRef.current?.close();
-    pcRef.current?.close();
-    pcRef.current = null; dcRef.current = null;
-    localStreamRef.current?.getTracks().forEach(t => t.stop());
-    localStreamRef.current = null;
-    setIsListening(false);
-    setUserSpeaking(false);
-    setSessionCompleted(true);
-  };
-
-  const toggleMute = () => {
-    if (!localStreamRef.current) return;
-    const next = !isMuted;
-    localStreamRef.current.getAudioTracks().forEach(t => { t.enabled = !next; });
-    setIsMuted(next);
-  };
+  useEffect(() => () => {
+    if (noFundTimerRef.current) clearTimeout(noFundTimerRef.current);
+  }, []);
 
   const manualShow = (ticker: string, dataType: DataType) => {
     const display: FundDisplay = {
@@ -767,41 +726,50 @@ export default function EngageMe() {
           <div className="flex items-center gap-3">
             {isListening && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/25">
-                <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
+                <div className={cn("w-2 h-2 rounded-full bg-rose-400", isRecording && "animate-ping")} />
                 <span className="text-xs font-semibold text-rose-300">
-                  {userSpeaking ? "Hearing you..." : "Listening..."}
+                  {isRecording ? "Recording..." : isAnalyzing ? "Analyzing..." : "Session live"}
                 </span>
               </div>
             )}
 
             {isListening ? (
               <div className="flex items-center gap-2">
-                <button
-                  onClick={toggleMute}
+                <Button
+                  onMouseDown={startCapture}
+                  onMouseUp={stopCapture}
+                  onTouchStart={startCapture}
+                  onTouchEnd={stopCapture}
+                  disabled={isAnalyzing}
                   className={cn(
-                    "w-9 h-9 rounded-xl flex items-center justify-center border transition-all",
-                    isMuted ? "bg-rose-500/20 border-rose-500/40 text-rose-400" : "bg-white/5 border-white/10 text-white/50 hover:text-white"
+                    "h-9 px-4 text-sm font-semibold transition-all select-none",
+                    isRecording
+                      ? "bg-rose-600 hover:bg-rose-600 text-white shadow-lg shadow-rose-600/40 scale-95"
+                      : isAnalyzing
+                      ? "bg-white/10 text-white/50 cursor-not-allowed"
+                      : "bg-rose-500/20 border border-rose-500/40 text-rose-300 hover:bg-rose-500/30"
                   )}
                 >
-                  {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                </button>
+                  {isAnalyzing
+                    ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Analyzing</>
+                    : isRecording
+                    ? <><Square className="w-3.5 h-3.5 mr-2 fill-current" />Release to Analyze</>
+                    : <><Mic className="w-4 h-4 mr-2" />Hold to Capture</>
+                  }
+                </Button>
                 <Button
-                  onClick={stopListening}
-                  className="bg-rose-600 hover:bg-rose-500 text-white h-9 px-4 text-sm font-semibold"
+                  onClick={() => { setIsListening(false); setSessionCompleted(true); }}
+                  className="bg-white/8 hover:bg-white/12 text-white/60 hover:text-white h-9 px-4 text-sm border border-white/10"
                 >
                   End Session
                 </Button>
               </div>
             ) : (
               <Button
-                onClick={startListening}
-                disabled={isConnecting}
+                onClick={() => setIsListening(true)}
                 className="bg-rose-500 hover:bg-rose-400 text-white h-9 px-5 text-sm font-semibold shadow-lg shadow-rose-500/25"
               >
-                {isConnecting
-                  ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Connecting...</>
-                  : <><Radio className="w-4 h-4 mr-2" />Start Listening</>
-                }
+                <Radio className="w-4 h-4 mr-2" />Start Session
               </Button>
             )}
           </div>
@@ -827,12 +795,16 @@ export default function EngageMe() {
                   </div>
                   <div>
                     <p className="text-white/40 text-lg font-medium mb-1">
-                      {isListening ? "Listening to your meeting..." : "Start listening to activate"}
+                      {isListening
+                        ? isRecording ? "Recording — release to analyze..."
+                        : isAnalyzing ? "Analyzing transcript..."
+                        : noFundMsg || "Hold Capture and speak a fund name"
+                        : "Start a session to activate"}
                     </p>
                     <p className="text-white/25 text-sm">
                       {isListening
-                        ? 'Try asking about "VOO holdings" or "BND performance"'
-                        : "Press Start Listening — the AI will surface fund data as you speak"
+                        ? 'Say "VOO holdings" or "BND performance" then release'
+                        : "Press Start Session — hold Capture and mention an ETF"
                       }
                     </p>
                   </div>
@@ -891,8 +863,10 @@ export default function EngageMe() {
             <div className="shrink-0 bg-card/40 border border-white/8 rounded-2xl px-4 py-3 flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground/50 shrink-0">
                 <Mic className="w-3.5 h-3.5" />
-                {recentTranscript ? (
-                  <span className="text-white/50 italic max-w-[200px] truncate">"{recentTranscript}"</span>
+                {noFundMsg ? (
+                  <span className="text-amber-400/70 max-w-[240px] truncate">{noFundMsg}</span>
+                ) : recentTranscript ? (
+                  <span className="text-white/50 italic max-w-[240px] truncate">"{recentTranscript}"</span>
                 ) : (
                   <span>Manual override ↓</span>
                 )}
