@@ -101,7 +101,7 @@ WHAT NOT TO DO:
 Today's date is March 22, 2026. You are making an outbound call to ${opts.advisorName} at ${opts.advisorCompany}.`;
 }
 
-router.post("/api/realtime/session", async (req, res) => {
+router.post("/realtime/session", async (req, res) => {
   try {
     const {
       advisorName = "the advisor",
@@ -253,7 +253,7 @@ If multiple funds are mentioned, show the most recently/explicitly discussed one
 
 Always include a short 1-sentence insight string in the function call that adds context (e.g. "VOO's top 10 holdings represent 40.7% of the fund, with heavy tech concentration.").`;
 
-router.post("/api/realtime/engage-session", async (req, res) => {
+router.post("/realtime/engage-session", async (req, res) => {
   try {
     const baseUrl = (process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ?? "https://api.openai.com/v1").replace(/\/$/, "");
     const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "";

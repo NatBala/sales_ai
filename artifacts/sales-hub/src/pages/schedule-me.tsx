@@ -3,12 +3,16 @@ import { Layout } from "@/components/layout";
 import { useParams, useLocation, Link } from "wouter";
 import { useLead } from "@/hooks/use-leads";
 import { useCreateMeeting } from "@/hooks/use-meetings";
+import { useAgentScheduleMe } from "@/hooks/use-agents";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Loader2, ArrowLeft, Building2, MapPin, TrendingUp, Zap,
   Calendar, ExternalLink, PhoneCall, PhoneOff, Mic, MicOff,
   CheckCircle2, Sparkles, Volume2, Radio, SquareActivity,
+  Mail, Copy, Check, Send, Edit3,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -129,6 +133,18 @@ export default function ScheduleMe() {
   const { mutate: createMeeting, isPending: isCreating } = useCreateMeeting();
   const { toast } = useToast();
 
+  // Mode: email or voice
+  type Mode = "email" | "voice";
+  const [mode, setMode] = useState<Mode>("email");
+
+  // Email state
+  const { mutate: generateEmail, isPending: emailPending, data: emailData, reset: resetEmail } = useAgentScheduleMe();
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [emailEditing, setEmailEditing] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
+
+  // Voice state
   const [callStatus, setCallStatus] = useState<CallStatus>("idle");
   const [isMuted, setIsMuted] = useState(false);
   const [agentSpeaking, setAgentSpeaking] = useState(false);
@@ -147,6 +163,63 @@ export default function ScheduleMe() {
 
   const advisor = lead ? parseAdvisorData(lead.assets ?? "") : null;
   const seg = advisor ? (SEGMENT_CONFIG[advisor.segment] ?? SEGMENT_CONFIG.C) : null;
+
+  // Sync AI email data into editable fields
+  useEffect(() => {
+    if (emailData) {
+      setEmailSubject((emailData as { subject?: string }).subject ?? "");
+      setEmailBody((emailData as { body?: string }).body ?? "");
+      setEmailEditing(false);
+    }
+  }, [emailData]);
+
+  const handleGenerateEmail = () => {
+    if (!lead) return;
+    const ctx = advisor
+      ? `Advisor AUM: $${advisor.aumM.toFixed(1)}M. Segment: ${advisor.segment}. ` +
+        `Fixed income opportunity: $${(advisor.fiOpportunities / 1000).toFixed(0)}K. ` +
+        `ETF opportunity: $${(advisor.etfOpportunities / 1000).toFixed(0)}K. ` +
+        `Alpha: $${(advisor.alpha / 1000).toFixed(0)}K. ` +
+        `Territory: ${advisor.territory}. ` +
+        (advisor.competitors.length ? `Key competitors: ${advisor.competitors.join(", ")}.` : "")
+      : "";
+    generateEmail({
+      data: {
+        leadId: lead.id,
+        leadName: lead.name,
+        leadCompany: lead.company,
+        leadTitle: lead.title ?? "Financial Advisor",
+        context: ctx,
+      },
+    });
+  };
+
+  const handleCopyEmail = () => {
+    void navigator.clipboard.writeText(`Subject: ${emailSubject}\n\n${emailBody}`);
+    setEmailCopied(true);
+    setTimeout(() => setEmailCopied(false), 2000);
+  };
+
+  const handleEmailBookMeeting = () => {
+    if (!lead) return;
+    const scheduledAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    createMeeting({
+      data: {
+        leadId: lead.id,
+        leadName: lead.name,
+        leadCompany: lead.company,
+        scheduledAt,
+        purpose: emailSubject || "Follow-up meeting",
+        emailSubject: emailSubject,
+        emailBody: emailBody,
+      },
+    }, {
+      onSuccess: () => {
+        toast({ title: "Meeting booked!", description: "Added to your upcoming meetings in Prep Me." });
+        setLocation("/prep-me");
+      },
+    });
+  };
 
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -367,11 +440,22 @@ export default function ScheduleMe() {
       console.error("Call start failed:", err);
       setCallStatus("idle");
       setStatusText("Ready to connect");
-      toast({
-        title: "Connection failed",
-        description: err instanceof Error ? err.message : "Could not start the call. Please try again.",
-        variant: "destructive",
-      });
+      let desc = "Could not start the call. Please try again.";
+      if (err instanceof Error) {
+        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+          desc = "Microphone access was denied. Please allow microphone access and try again.";
+        } else if (err.name === "NotFoundError") {
+          desc = "No microphone found. Please connect a microphone and try again.";
+        } else {
+          desc = err.message;
+        }
+      } else if (err && typeof err === "object" && "name" in err) {
+        const domErr = err as DOMException;
+        if (domErr.name === "NotAllowedError") {
+          desc = "Microphone access was denied. Please allow microphone access and try again.";
+        }
+      }
+      toast({ title: "Connection failed", description: desc, variant: "destructive" });
     }
   };
 
@@ -499,17 +583,210 @@ export default function ScheduleMe() {
           </CardContent>
         </Card>
 
-        {/* Page header */}
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-teal-400/10 border border-teal-400/20 flex items-center justify-center">
-            <Radio className="w-6 h-6 text-teal-400" />
+        {/* Page header + Mode Tabs */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-4 flex-1">
+            <div className="w-12 h-12 rounded-2xl bg-teal-400/10 border border-teal-400/20 flex items-center justify-center">
+              {mode === "email" ? <Mail className="w-6 h-6 text-teal-400" /> : <Radio className="w-6 h-6 text-teal-400" />}
+            </div>
+            <div>
+              <h1 className="text-3xl font-display font-bold text-white">Schedule Me</h1>
+              <p className="text-muted-foreground">
+                {mode === "email" ? "AI-drafted outreach email — personalized with advisor context." : "AI voice agent — Maya will call this advisor and book the meeting."}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-display font-bold text-white">Schedule Me</h1>
-            <p className="text-muted-foreground">AI voice agent — Maya will call this advisor and book the meeting.</p>
+          {/* Tab switcher */}
+          <div className="flex bg-white/4 border border-white/10 rounded-2xl p-1 gap-1 self-start sm:self-auto">
+            <button
+              onClick={() => setMode("email")}
+              className={cn(
+                "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                mode === "email"
+                  ? "bg-teal-500/20 border border-teal-500/30 text-teal-300 shadow-sm"
+                  : "text-muted-foreground hover:text-white"
+              )}
+            >
+              <Mail className="w-4 h-4" /> Email
+            </button>
+            <button
+              onClick={() => setMode("voice")}
+              className={cn(
+                "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                mode === "voice"
+                  ? "bg-teal-500/20 border border-teal-500/30 text-teal-300 shadow-sm"
+                  : "text-muted-foreground hover:text-white"
+              )}
+            >
+              <PhoneCall className="w-4 h-4" /> Voice Call
+            </button>
           </div>
         </div>
 
+        {/* ── Email Panel ─────────────────────────────────────────────── */}
+        {mode === "email" && (
+          <div className="grid lg:grid-cols-[1fr_340px] gap-6 items-start">
+            <div className="space-y-4">
+              {!emailData && !emailPending ? (
+                /* Generate prompt */
+                <div className="rounded-3xl border border-white/8 bg-gradient-to-br from-[#0a1628] via-[#0d1f3c] to-[#071224] p-10 flex flex-col items-center justify-center gap-6 text-center" style={{ minHeight: 380 }}>
+                  <div className="w-20 h-20 rounded-2xl bg-teal-400/10 border border-teal-400/20 flex items-center justify-center">
+                    <Mail className="w-10 h-10 text-teal-400/60" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-2">Generate Outreach Email</h3>
+                    <p className="text-sm text-muted-foreground max-w-xs">
+                      AI will write a 3-paragraph email personalized with {lead.name}'s AUM, alpha opportunity, and Vanguard talking points.
+                    </p>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                    onClick={handleGenerateEmail}
+                    className="flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-white text-base shadow-xl bg-gradient-to-br from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 shadow-teal-500/30"
+                  >
+                    <Sparkles className="w-5 h-5" /> Generate Email Draft
+                  </motion.button>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {["3 paragraphs · ~160 words", "Personalized with AUM & alpha", "No buzzwords"].map(t => (
+                      <span key={t} className="text-xs px-3 py-1 rounded-full bg-white/5 border border-white/8 text-white/50">{t}</span>
+                    ))}
+                  </div>
+                </div>
+              ) : emailPending ? (
+                /* Loading */
+                <div className="rounded-3xl border border-white/8 bg-gradient-to-br from-[#0a1628] via-[#0d1f3c] to-[#071224] p-10 flex flex-col items-center justify-center gap-6 text-center" style={{ minHeight: 380 }}>
+                  <Loader2 className="w-10 h-10 text-teal-400 animate-spin" />
+                  <p className="text-sm text-teal-300 animate-pulse">Drafting personalized email...</p>
+                </div>
+              ) : (
+                /* Email editor */
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                  {/* Subject */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Subject</label>
+                    <div className="relative">
+                      <Input
+                        value={emailSubject}
+                        onChange={e => setEmailSubject(e.target.value)}
+                        className="h-12 bg-card/60 border-white/10 text-white pr-10 font-medium"
+                        placeholder="Email subject..."
+                      />
+                    </div>
+                  </div>
+                  {/* Body */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between px-1">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Body</label>
+                      <button
+                        onClick={() => setEmailEditing(!emailEditing)}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-white transition-colors"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                        {emailEditing ? "Done editing" : "Edit"}
+                      </button>
+                    </div>
+                    {emailEditing ? (
+                      <Textarea
+                        value={emailBody}
+                        onChange={e => setEmailBody(e.target.value)}
+                        className="min-h-[280px] bg-card/60 border-white/10 text-white/90 text-sm leading-relaxed resize-none font-mono"
+                      />
+                    ) : (
+                      <div className="bg-card/40 border border-white/8 rounded-xl p-5 text-sm text-white/80 leading-relaxed whitespace-pre-wrap min-h-[280px]">
+                        {emailBody}
+                      </div>
+                    )}
+                  </div>
+                  {/* Actions */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Button
+                      onClick={handleCopyEmail}
+                      variant="outline"
+                      className="border-white/15 text-white hover:bg-white/8 gap-2"
+                    >
+                      {emailCopied ? <><Check className="w-4 h-4 text-emerald-400" /> Copied!</> : <><Copy className="w-4 h-4" /> Copy Email</>}
+                    </Button>
+                    <Button
+                      onClick={() => { resetEmail(); setEmailSubject(""); setEmailBody(""); }}
+                      variant="ghost"
+                      className="text-muted-foreground hover:text-white gap-2"
+                    >
+                      <Sparkles className="w-4 h-4" /> Regenerate
+                    </Button>
+                    <div className="flex-1" />
+                    <Button
+                      onClick={handleEmailBookMeeting}
+                      disabled={isCreating || !emailSubject}
+                      className="bg-teal-500 hover:bg-teal-400 text-white shadow-lg shadow-teal-500/25 gap-2"
+                    >
+                      {isCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      Mark Sent &amp; Book Meeting
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Right: How it works / advisor context */}
+            <div className="space-y-4">
+              <Card className="bg-card/40 border-white/8">
+                <CardContent className="p-5 space-y-4">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Context</p>
+                  {advisor ? (
+                    <div className="space-y-2">
+                      {[
+                        { label: "AUM",        value: `$${advisor.aumM.toFixed(1)}M` },
+                        { label: "Alpha Opp",  value: `$${(advisor.alpha / 1000).toFixed(0)}K` },
+                        { label: "FI Opp",     value: `$${(advisor.fiOpportunities / 1000).toFixed(0)}K` },
+                        { label: "ETF Opp",    value: `$${(advisor.etfOpportunities / 1000).toFixed(0)}K` },
+                        { label: "Territory",  value: advisor.territory },
+                        { label: "Segment",    value: `${advisor.segment} · ${seg?.label ?? ""}` },
+                      ].map(m => (
+                        <div key={m.label} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0 text-sm">
+                          <span className="text-muted-foreground">{m.label}</span>
+                          <span className="font-semibold text-white">{m.value}</span>
+                        </div>
+                      ))}
+                      {advisor.competitors.length > 0 && (
+                        <div className="pt-1">
+                          <p className="text-xs text-muted-foreground mb-1.5">Competitors to differentiate from:</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {advisor.competitors.map(c => (
+                              <span key={c} className="text-xs px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-300">{c}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No advisor data available.</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card/40 border-white/8">
+                <CardContent className="p-5 space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Style</p>
+                  {[
+                    "3 paragraphs, ~160 words",
+                    "Opens with relationship reference",
+                    "Data-driven market insight",
+                    "Soft calendar close",
+                    "No buzzwords or templates",
+                  ].map((s, i) => (
+                    <div key={i} className="flex items-start gap-2 text-sm text-white/60">
+                      <CheckCircle2 className="w-4 h-4 text-teal-400/60 mt-0.5 shrink-0" />
+                      {s}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* ── Voice Call Panel ────────────────────────────────────────── */}
+        {mode === "voice" && (
         <div className="grid lg:grid-cols-[1fr_380px] gap-6 items-start">
 
           {/* ── Call Interface ─────────────────────────────────────── */}
@@ -860,6 +1137,8 @@ export default function ScheduleMe() {
           </div>
 
         </div>
+        )}
+
       </div>
     </Layout>
   );
