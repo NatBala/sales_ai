@@ -12,7 +12,7 @@ import {
   Loader2, ArrowLeft, Building2, MapPin, TrendingUp, Zap,
   Calendar, ExternalLink, PhoneCall, PhoneOff, Mic, MicOff,
   CheckCircle2, Sparkles, Volume2, Radio, SquareActivity,
-  Mail, Copy, Check, Send, Edit3,
+  Mail, Copy, Check, Send, Edit3, CalendarCheck, Clock,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -145,6 +145,16 @@ export default function ScheduleMe() {
   const [emailEditing, setEmailEditing] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
 
+  interface BookingConfirmed {
+    leadName: string;
+    leadCompany: string;
+    dayLabel: string;
+    timeLabel: string;
+    agendaTopic: string;
+  }
+  const [bookingConfirmed, setBookingConfirmed] = useState<BookingConfirmed | null>(null);
+  const [redirectCountdown, setRedirectCountdown] = useState(5);
+
   // Voice state
   const [callStatus, setCallStatus] = useState<CallStatus>("idle");
   const [agentSpeaking, setAgentSpeaking] = useState(false);
@@ -201,7 +211,7 @@ export default function ScheduleMe() {
 
   const handleEmailBookMeeting = () => {
     if (!lead) return;
-    const scheduledAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const scheduledAt = new Date("2026-03-24T09:30:00").toISOString();
     createMeeting({
       data: {
         leadId: lead.id,
@@ -214,8 +224,13 @@ export default function ScheduleMe() {
       },
     }, {
       onSuccess: () => {
-        toast({ title: "Meeting booked!", description: "Added to your upcoming meetings in Prep Me." });
-        setLocation("/prep-me");
+        setBookingConfirmed({
+          leadName: lead.name,
+          leadCompany: lead.company,
+          dayLabel: "Tuesday Mar 24",
+          timeLabel: "9:30 AM PT",
+          agendaTopic: emailSubject || "Vanguard working session",
+        });
       },
     });
   };
@@ -223,6 +238,22 @@ export default function ScheduleMe() {
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [transcript]);
+
+  useEffect(() => {
+    if (!bookingConfirmed) return;
+    setRedirectCountdown(5);
+    const interval = setInterval(() => {
+      setRedirectCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setLocation("/");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [bookingConfirmed, setLocation]);
 
   const blobToBase64 = useCallback((blob: Blob): Promise<string> => new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -421,6 +452,7 @@ export default function ScheduleMe() {
   const handleConfirmBooking = () => {
     if (!lead || !booking) return;
     const scheduledAt = new Date(`${booking.date}T${booking.time}`).toISOString();
+    const confirmedBooking = booking;
     createMeeting({
       data: {
         leadId: lead.id,
@@ -433,8 +465,13 @@ export default function ScheduleMe() {
       },
     }, {
       onSuccess: () => {
-        toast({ title: "Meeting confirmed!", description: `Booked for ${booking.dayLabel} at ${booking.timeLabel}.` });
-        setLocation("/prep-me");
+        setBookingConfirmed({
+          leadName: lead.name,
+          leadCompany: lead.company,
+          dayLabel: confirmedBooking.dayLabel,
+          timeLabel: confirmedBooking.timeLabel,
+          agendaTopic: confirmedBooking.agendaTopic,
+        });
       },
     });
   };
@@ -449,6 +486,112 @@ export default function ScheduleMe() {
 
   return (
     <Layout>
+      {/* Booking Success Overlay */}
+      <AnimatePresence>
+        {bookingConfirmed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0, y: 24 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 22, stiffness: 300 }}
+              className="w-full max-w-md bg-[#0d1f35] border border-emerald-500/30 rounded-3xl shadow-2xl shadow-emerald-500/10 overflow-hidden"
+            >
+              {/* Green top bar */}
+              <div className="h-1.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-400" />
+
+              <div className="p-8 flex flex-col items-center text-center gap-5">
+                {/* Animated check */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.1, type: "spring", damping: 14, stiffness: 320 }}
+                  className="w-20 h-20 rounded-full bg-emerald-500/15 border-2 border-emerald-400/40 flex items-center justify-center shadow-lg shadow-emerald-500/20"
+                >
+                  <CalendarCheck className="w-10 h-10 text-emerald-400" />
+                </motion.div>
+
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-bold text-white">Meeting Confirmed</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Calendar invite has been created
+                  </p>
+                </div>
+
+                {/* Meeting detail card */}
+                <div className="w-full bg-white/[0.04] border border-white/8 rounded-2xl p-4 space-y-3 text-left">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-sm font-bold text-emerald-400">{bookingConfirmed.leadName[0]}</span>
+                    </div>
+                    <div>
+                      <p className="text-white font-semibold text-sm">{bookingConfirmed.leadName}</p>
+                      <p className="text-xs text-muted-foreground">{bookingConfirmed.leadCompany}</p>
+                    </div>
+                  </div>
+                  <div className="border-t border-white/6 pt-3 space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span className="text-white font-medium">{bookingConfirmed.dayLabel}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span className="text-white font-medium">{bookingConfirmed.timeLabel}</span>
+                      <span className="text-muted-foreground/60">· 20 min</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm">
+                      <Sparkles className="w-3.5 h-3.5 text-teal-400 shrink-0 mt-0.5" />
+                      <span className="text-muted-foreground">{bookingConfirmed.agendaTopic}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-col gap-2.5 w-full">
+                  <button
+                    onClick={() => setLocation("/")}
+                    className="w-full py-3 px-4 rounded-xl font-semibold text-sm text-white
+                      bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400
+                      shadow-lg shadow-emerald-500/25 transition-all hover:shadow-emerald-400/30"
+                  >
+                    <CalendarCheck className="w-4 h-4 inline-block mr-2 -mt-0.5" />
+                    View on Calendar
+                  </button>
+                  <button
+                    onClick={() => setLocation("/prep-me")}
+                    className="w-full py-3 px-4 rounded-xl font-medium text-sm text-white/70 hover:text-white
+                      bg-white/[0.04] hover:bg-white/[0.08] border border-white/8 transition-all"
+                  >
+                    Go to Prep Brief
+                  </button>
+                </div>
+
+                {/* Countdown */}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground/50">
+                  <div className="relative w-4 h-4">
+                    <svg viewBox="0 0 16 16" className="absolute inset-0 -rotate-90">
+                      <circle cx="8" cy="8" r="6" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2" />
+                      <circle
+                        cx="8" cy="8" r="6" fill="none"
+                        stroke="rgba(52,211,153,0.5)" strokeWidth="2"
+                        strokeDasharray={`${(redirectCountdown / 5) * 37.7} 37.7`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
+                  Redirecting to calendar in {redirectCountdown}s
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="space-y-6 max-w-5xl mx-auto pb-12">
 
         <Link href="/leads" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-white transition-colors">
