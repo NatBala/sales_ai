@@ -100,13 +100,26 @@ export default function ScheduleMe() {
   const handleGenerate = () => {
     if (!lead) return;
     setHasGenerated(false);
+    const adv = parseAdvisorData(lead.assets ?? "");
+    const advisorContext = adv
+      ? [
+          `AUM: $${adv.aumM.toFixed(1)}M`,
+          `Fixed Income Opportunity: $${(adv.fiOpportunities / 1000).toFixed(0)}K`,
+          `Active ETF Opportunity: $${(adv.etfOpportunities / 1000).toFixed(0)}K`,
+          `Alpha Generated: $${(adv.alpha / 1000).toFixed(0)}K`,
+          `Territory: ${adv.territory}`,
+          `Segment: ${adv.segment}`,
+          adv.competitors.length > 0 ? `Current competitor products: ${adv.competitors.slice(0, 3).join(", ")}` : "",
+        ].filter(Boolean).join(". ")
+      : "";
+    const fullContext = [advisorContext, context].filter(Boolean).join(". ");
     generateEmail({
       data: {
         leadId: lead.id,
         leadName: lead.name,
         leadCompany: lead.company,
         leadTitle: lead.title,
-        context: context || undefined
+        context: fullContext || undefined
       }
     });
   };

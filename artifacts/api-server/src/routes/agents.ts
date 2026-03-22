@@ -315,6 +315,7 @@ router.post("/agents/schedule-me", async (req: Request, res: Response) => {
   }
 
   const { leadName, leadCompany, leadTitle, context } = parsed.data;
+  const firstName = leadName.split(" ")[0];
 
   try {
     const response = await openai.chat.completions.create({
@@ -323,23 +324,35 @@ router.post("/agents/schedule-me", async (req: Request, res: Response) => {
       messages: [
         {
           role: "system",
-          content: `You are an expert sales communication AI that crafts highly personalized, professional outreach emails for financial services sales professionals.
-Your emails are concise, value-focused, and avoid generic language. Always respond with valid JSON only.`,
+          content: `You are a senior Vanguard financial sales representative writing warm, personal follow-up emails to financial advisors. Your emails read like they were written by a real person who has an existing relationship with the advisor — not a marketing template. Always respond with valid JSON only.`,
         },
         {
           role: "user",
-          content: `Generate a personalized outreach email for:
-Name: ${leadName}
-Company: ${leadCompany}
+          content: `Write a personal outreach email to a financial advisor to set up a meeting. The email must follow this exact structure and style:
+
+STRUCTURE (3 paragraphs, ~150-180 words total):
+1. Opening paragraph: Start with "Dear ${firstName}," on its own line. Then begin the body (no line break after the greeting). Open warmly — reference a recent meeting or conversation. Mention you've been thinking about their investment strategy or portfolio. One or two sentences.
+2. Market insight paragraph: Share a specific, relevant market insight or data point tied to current conditions (interest rates, inflation, Fed policy, ETF flows, fixed income spreads — make it feel timely and data-driven). Connect this insight to a specific Vanguard product opportunity (e.g. core bond funds, active ETFs, short-duration fixed income). 2-3 sentences with at least one real-sounding statistic.
+3. Close: Express genuine enthusiasm about the opportunity for their practice. Propose meeting next week with a soft ask ("Could we set up a time..."). End warmly. 2 sentences.
+
+Advisor details:
+Full name: ${leadName}
+First name: ${firstName}
+Firm: ${leadCompany}
 Title: ${leadTitle}
-Additional Context: ${context || "No additional context provided"}
+Context / talking points: ${context || "General portfolio discussion around fixed income and active ETF opportunities."}
+
+STYLE RULES:
+- Use first name only in the greeting: "Dear ${firstName},"
+- DO NOT use salesy language ("excited to share", "reach out", "touch base", "synergy")
+- DO NOT use bullet points or headers — flowing prose only
+- Sound like a real person writing to a colleague they know, not a template
+- Subject line: conversational, specific, not click-baity (e.g. "Following up on our conversation" or "Quick thought on [specific topic]")
 
 Return a JSON object with:
-- subject: Email subject line (compelling, personalized)
-- body: Full email body (professional, 150-200 words, personalized to their role/company, clear value proposition, specific call to action for a 30-minute call)
-- scheduledTime: null (the user will pick the time)
-
-The email should feel hand-written, not templated. Reference their role and company specifically.`,
+- subject: string (conversational subject line)
+- body: string (the full 3-paragraph email, starting with "Dear ${firstName},")
+- scheduledTime: null`,
         },
       ],
     });
@@ -716,6 +729,8 @@ router.post("/agents/schedule-me/voice", async (req: Request, res: Response) => 
     return;
   }
 
+  const voiceFirstName = leadName.split(" ")[0];
+
   try {
     const audioBuffer = Buffer.from(audio, "base64");
     const { buffer, format } = await ensureCompatibleFormat(audioBuffer);
@@ -727,23 +742,22 @@ router.post("/agents/schedule-me/voice", async (req: Request, res: Response) => 
       messages: [
         {
           role: "system",
-          content: `You are an expert sales communication AI that crafts highly personalized, professional outreach emails for financial services sales professionals.
-Your emails are concise, value-focused, and avoid generic language. Always respond with valid JSON only.`,
+          content: `You are a senior Vanguard financial sales representative writing warm, personal follow-up emails to financial advisors. Your emails read like they were written by a real person who has an existing relationship with the advisor — not a marketing template. Always respond with valid JSON only.`,
         },
         {
           role: "user",
-          content: `Generate a personalized outreach email for:
-Name: ${leadName}
-Company: ${leadCompany}
-Title: ${leadTitle || "Executive"}
-Salesperson's voice instructions: "${transcript}"
+          content: `Write a personal outreach email to a financial advisor. The salesperson recorded these voice instructions: "${transcript}". Use those as your talking points.
 
-Return a JSON object with:
-- subject: Email subject line (compelling, personalized)
-- body: Full email body (professional, 150-200 words, personalized to their role/company, clear value proposition, specific call to action for a 30-minute call)
-- scheduledTime: null
+The email must follow this exact structure:
+1. Opening: "Dear ${voiceFirstName}," then warm opening referencing a recent conversation. 1-2 sentences.
+2. Market insight: A specific, data-driven insight tied to current market conditions (rates, Fed policy, inflation, ETF flows). Connect to a Vanguard product relevant to their situation. Include at least one real-sounding statistic. 2-3 sentences.
+3. Close: Soft ask to meet next week ("Could we set up a time…"). Warm sign-off. 2 sentences.
 
-Incorporate the voice instructions naturally. The email should feel hand-written, not templated.`,
+Advisor: ${leadName}, ${leadTitle || "Financial Advisor"} at ${leadCompany}
+
+STYLE: Personal, flowing prose. No bullets. No salesy language. First name greeting only. ~150-180 words total.
+
+Return JSON: { subject: string, body: string (starts "Dear ${voiceFirstName},"), scheduledTime: null }`,
         },
       ],
     });
