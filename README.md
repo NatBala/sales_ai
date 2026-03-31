@@ -77,6 +77,7 @@ pnpm run typecheck
 pnpm run build
 pnpm --filter @workspace/api-server run typecheck
 pnpm --filter @workspace/sales-hub run typecheck
+pnpm --filter @workspace/mockup-sandbox run dev
 pnpm --filter @workspace/db run push
 pnpm --filter @workspace/api-spec run codegen
 ```
@@ -103,3 +104,4 @@ Sales-Navigator/
 - The API server defaults to in-memory behavior when a database is not reachable.
 - If port `4000` is taken, run the frontend with another port and update the URL you open locally.
 - Frontend changes hot reload. API server changes require rebuild and restart.
+- The component preview sandbox lives under `artifacts/mockup-sandbox` and serves on `__mockup` when run locally.
