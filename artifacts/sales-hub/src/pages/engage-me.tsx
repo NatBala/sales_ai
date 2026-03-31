@@ -5,23 +5,32 @@ import { Button } from "@/components/ui/button";
 import {
   Loader2, Activity, Mic, Radio, ArrowRightCircle,
   ArrowRight, CheckSquare, BarChart3, PieChart, ListOrdered,
-  TrendingUp, Info, LayoutGrid, Square,
+  TrendingUp, Info, LayoutGrid,
 } from "lucide-react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { useVoiceRecorder } from "@workspace/integrations-openai-ai-react";
+import {
+  buildRealtimeConnectError,
+  DEFAULT_REALTIME_CONNECT_TIMEOUT_MS,
+  waitForUsableIceCandidate,
+} from "@/lib/realtime";
 
-async function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      resolve(result.split(",")[1] ?? "");
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+];
+
+function parseRequestError(raw: string): string {
+  try {
+    const parsed = JSON.parse(raw) as { error?: string; details?: string };
+    if (typeof parsed.details === "string" && parsed.details.trim()) return parsed.details;
+    if (typeof parsed.error === "string" && parsed.error.trim()) return parsed.error;
+  } catch {
+    const bodyMatch = raw.match(/<pre>([\s\S]*?)<\/pre>/i);
+    if (bodyMatch?.[1]) return bodyMatch[1].trim();
+  }
+  return raw.trim();
 }
 
 // ─── ETF Data Corpus ─────────────────────────────────────────────────────────
@@ -568,6 +577,35 @@ const DATA_TYPE_LABELS: Record<DataType, string> = {
   stats: "Key Stats",
 };
 
+type RealtimeEvent = {
+  type?: string;
+  transcript?: string;
+  error?: { message?: string };
+  response?: {
+    output?: Array<{
+      type?: string;
+      name?: string;
+      call_id?: string;
+      arguments?: string;
+    }>;
+  };
+};
+
+const FUND_HINT_REGEX = /\b(bnd|vti|voo|vxus|vnq|bond|fixed income|s&p|international|reit|real estate)\b/i;
+
+function isDataType(value: unknown): value is DataType {
+  return value === "overview"
+    || value === "holdings"
+    || value === "performance"
+    || value === "composition"
+    || value === "stats";
+}
+
+function formatTimestamp(value: number | null) {
+  if (!value) return "Waiting for first pull";
+  return new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function EngageMe() {
@@ -582,37 +620,51 @@ export default function EngageMe() {
   const meetings = Array.from(byLead.values());
 
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isUserSpeaking, setIsUserSpeaking] = useState(false);
   const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [sessionLabel, setSessionLabel] = useState("OpenAI Realtime idle");
+  const [sessionError, setSessionError] = useState("");
 
   const [currentDisplay, setCurrentDisplay] = useState<FundDisplay | null>(null);
   const [displayHistory, setDisplayHistory] = useState<FundDisplay[]>([]);
   const [recentTranscript, setRecentTranscript] = useState("");
   const [noFundMsg, setNoFundMsg] = useState("");
+  const [lastUpdateAt, setLastUpdateAt] = useState<number | null>(null);
 
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const dataChannelRef = useRef<RTCDataChannel | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const disconnectTimeoutRef = useRef<number | null>(null);
+  const connectTimeoutRef = useRef<number | null>(null);
+  const hasConnectedOnceRef = useRef(false);
   const noFundTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { startRecording, stopRecording } = useVoiceRecorder();
+  const pendingNoFundTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handledToolCallsRef = useRef<Set<string>>(new Set());
 
   const selectedMeeting = meetings.find(m => m.id === selectedMeetingId);
 
-  const showNoFund = useCallback((msg: string) => {
+  const clearNoFundTimers = useCallback(() => {
     if (noFundTimerRef.current) clearTimeout(noFundTimerRef.current);
-    setNoFundMsg(msg);
-    noFundTimerRef.current = setTimeout(() => setNoFundMsg(""), 3000);
+    if (pendingNoFundTimerRef.current) clearTimeout(pendingNoFundTimerRef.current);
   }, []);
 
-  const startCapture = useCallback(async () => {
-    try {
-      await startRecording();
-      setIsRecording(true);
-    } catch (err) {
-      console.error("Mic access failed:", err);
-    }
-  }, [startRecording]);
+  const showNoFund = useCallback((msg: string) => {
+    clearNoFundTimers();
+    setNoFundMsg(msg);
+    noFundTimerRef.current = setTimeout(() => setNoFundMsg(""), 3200);
+  }, [clearNoFundTimers]);
 
-  const stopCapture = useCallback(async () => {
+  const pushDisplay = useCallback((display: FundDisplay) => {
+    clearNoFundTimers();
+    setNoFundMsg("");
+    setCurrentDisplay(display);
+    setLastUpdateAt(display.triggeredAt);
+    setDisplayHistory(prev => [display, ...prev].slice(0, 8));
+  }, [clearNoFundTimers]);
+
+  /* const stopCapture = useCallback(async () => {
     if (!isRecording) return;
     setIsRecording(false);
     setIsAnalyzing(true);
@@ -648,24 +700,354 @@ export default function EngageMe() {
     } finally {
       setIsAnalyzing(false);
     }
-  }, [isRecording, stopRecording, showNoFund]);
+  }, [isRecording, stopRecording, showNoFund]); */
+
+  const sendRealtimeEvent = useCallback((event: Record<string, unknown>) => {
+    const channel = dataChannelRef.current;
+    if (!channel || channel.readyState !== "open") return;
+    channel.send(JSON.stringify(event));
+  }, []);
+
+  const acknowledgeToolCall = useCallback((callId: string) => {
+    sendRealtimeEvent({
+      type: "conversation.item.create",
+      item: {
+        type: "function_call_output",
+        call_id: callId,
+        output: JSON.stringify({ status: "rendered" }),
+      },
+    });
+    sendRealtimeEvent({
+      type: "response.create",
+      response: {
+        output_modalities: ["text"],
+        max_output_tokens: 1,
+        instructions: "The UI has rendered the requested ETF data. Reply with the single token ok, then wait silently for the next user turn.",
+      },
+    });
+  }, [sendRealtimeEvent]);
+
+  const handleToolArguments = useCallback((rawArguments?: string, callId?: string) => {
+    if (!rawArguments) return;
+    try {
+      const parsed = JSON.parse(rawArguments) as {
+        ticker?: string;
+        dataType?: string;
+        insight?: string;
+      };
+
+      if (!parsed.ticker || !ETF_DATA[parsed.ticker] || !isDataType(parsed.dataType)) {
+        showNoFund("No ETF match yet. Try BND, VTI, VOO, VXUS, or VNQ.");
+        return;
+      }
+
+      pushDisplay({
+        ticker: parsed.ticker,
+        dataType: parsed.dataType,
+        insight: parsed.insight ?? "",
+        triggeredAt: Date.now(),
+      });
+      setSessionLabel(`Pulled ${parsed.ticker} ${DATA_TYPE_LABELS[parsed.dataType].toLowerCase()}`);
+      if (callId) acknowledgeToolCall(callId);
+    } catch (error) {
+      console.error("Failed to parse realtime tool arguments:", error);
+    }
+  }, [acknowledgeToolCall, pushDisplay, showNoFund]);
+
+  const handleRealtimeEvent = useCallback((event: RealtimeEvent) => {
+    switch (event.type) {
+      case "input_audio_buffer.speech_started":
+        setIsUserSpeaking(true);
+        setSessionLabel("Listening to the conversation");
+        break;
+      case "input_audio_buffer.speech_stopped":
+        setIsUserSpeaking(false);
+        setSessionLabel("Processing the latest turn");
+        break;
+      case "conversation.item.input_audio_transcription.completed": {
+        const transcript = (event.transcript ?? "").trim();
+        if (!transcript) break;
+        setRecentTranscript(transcript);
+        clearNoFundTimers();
+        pendingNoFundTimerRef.current = setTimeout(() => {
+          if (FUND_HINT_REGEX.test(transcript)) {
+            showNoFund("Heard the fund topic. Waiting for the next live pull.");
+          } else {
+            showNoFund("No ETF topic detected yet. Ask about BND, VTI, VOO, VXUS, or VNQ.");
+          }
+        }, 1800);
+        break;
+      }
+      case "response.done": {
+        const outputs = event.response?.output ?? [];
+        let handledOutput = false;
+        for (const item of outputs) {
+          if (item.type !== "function_call" || item.name !== "show_fund_data") continue;
+          if (item.call_id && handledToolCallsRef.current.has(item.call_id)) continue;
+          if (item.call_id) handledToolCallsRef.current.add(item.call_id);
+          handleToolArguments(item.arguments, item.call_id);
+          handledOutput = true;
+        }
+        if (!handledOutput) setSessionLabel("Listening live");
+        break;
+      }
+      case "error":
+        setSessionError(event.error?.message ?? "OpenAI Realtime session error.");
+        setSessionLabel("Realtime session error");
+        break;
+      default:
+        break;
+    }
+  }, [clearNoFundTimers, handleToolArguments, showNoFund]);
+
+  const stopListening = useCallback((options?: { completed?: boolean }) => {
+    clearNoFundTimers();
+    handledToolCallsRef.current.clear();
+    if (disconnectTimeoutRef.current !== null) {
+      window.clearTimeout(disconnectTimeoutRef.current);
+      disconnectTimeoutRef.current = null;
+    }
+    if (connectTimeoutRef.current !== null) {
+      window.clearTimeout(connectTimeoutRef.current);
+      connectTimeoutRef.current = null;
+    }
+
+    const channel = dataChannelRef.current;
+    if (channel) {
+      channel.onopen = null;
+      channel.onclose = null;
+      channel.onerror = null;
+      channel.onmessage = null;
+      if (channel.readyState !== "closed") channel.close();
+      dataChannelRef.current = null;
+    }
+
+    const peer = peerConnectionRef.current;
+    if (peer) {
+      peer.onconnectionstatechange = null;
+      peer.oniceconnectionstatechange = null;
+      if (peer.signalingState !== "closed") peer.close();
+      peerConnectionRef.current = null;
+    }
+
+    const stream = localStreamRef.current;
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      localStreamRef.current = null;
+    }
+
+    setIsConnecting(false);
+    setIsListening(false);
+    setIsUserSpeaking(false);
+    setSessionLabel(options?.completed ? "Session complete" : "OpenAI Realtime idle");
+    hasConnectedOnceRef.current = false;
+    if (options?.completed) setSessionCompleted(true);
+  }, [clearNoFundTimers]);
+
+  const startListening = useCallback(async () => {
+    if (!selectedMeeting || isConnecting || isListening) return;
+
+    setSessionCompleted(false);
+    setSessionError("");
+    setNoFundMsg("");
+    setIsConnecting(true);
+    setSessionLabel("Connecting to OpenAI Realtime");
+    handledToolCallsRef.current.clear();
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      localStreamRef.current = stream;
+
+      const peer = new RTCPeerConnection({
+        iceServers: DEFAULT_ICE_SERVERS,
+        iceCandidatePoolSize: 4,
+      });
+      peerConnectionRef.current = peer;
+
+      peer.onconnectionstatechange = () => {
+        if (peer.connectionState === "connected") {
+          hasConnectedOnceRef.current = true;
+          if (connectTimeoutRef.current !== null) {
+            window.clearTimeout(connectTimeoutRef.current);
+            connectTimeoutRef.current = null;
+          }
+          if (disconnectTimeoutRef.current !== null) {
+            window.clearTimeout(disconnectTimeoutRef.current);
+            disconnectTimeoutRef.current = null;
+          }
+          setIsConnecting(false);
+          setIsListening(true);
+          setSessionLabel("OpenAI Realtime live");
+        } else if (peer.connectionState === "failed") {
+          if (!hasConnectedOnceRef.current) {
+            setSessionError("Realtime connection failed to initialize. Please try again.");
+            stopListening();
+            return;
+          }
+          setSessionLabel("Reconnecting to OpenAI Realtime");
+          if (disconnectTimeoutRef.current !== null) {
+            window.clearTimeout(disconnectTimeoutRef.current);
+          }
+          disconnectTimeoutRef.current = window.setTimeout(() => {
+            if (peerConnectionRef.current === peer && peer.connectionState === "failed") {
+              setSessionError("The Realtime connection dropped. Start a new session to reconnect.");
+              stopListening();
+            }
+          }, 5000);
+        } else if (peer.connectionState === "closed") {
+          setSessionError("The Realtime connection dropped. Start a new session to reconnect.");
+          stopListening();
+        } else if (peer.connectionState === "disconnected") {
+          setSessionLabel("Reconnecting to OpenAI Realtime");
+          if (disconnectTimeoutRef.current !== null) {
+            window.clearTimeout(disconnectTimeoutRef.current);
+          }
+          disconnectTimeoutRef.current = window.setTimeout(() => {
+            if (peerConnectionRef.current === peer && peer.connectionState === "disconnected") {
+              setSessionError("The Realtime connection dropped. Start a new session to reconnect.");
+              stopListening();
+            }
+          }, 5000);
+        }
+      };
+
+      peer.oniceconnectionstatechange = () => {
+        if (peer.iceConnectionState === "connected" || peer.iceConnectionState === "completed") {
+          if (connectTimeoutRef.current !== null) {
+            window.clearTimeout(connectTimeoutRef.current);
+            connectTimeoutRef.current = null;
+          }
+          if (disconnectTimeoutRef.current !== null) {
+            window.clearTimeout(disconnectTimeoutRef.current);
+            disconnectTimeoutRef.current = null;
+          }
+          setIsConnecting(false);
+          setIsListening(true);
+          setSessionLabel("OpenAI Realtime live");
+        }
+      };
+
+      stream.getTracks().forEach(track => peer.addTrack(track, stream));
+
+      const dataChannel = peer.createDataChannel("oai-events");
+      dataChannelRef.current = dataChannel;
+      dataChannel.onopen = () => {
+        if (connectTimeoutRef.current !== null) {
+          window.clearTimeout(connectTimeoutRef.current);
+          connectTimeoutRef.current = null;
+        }
+        setIsListening(true);
+        setIsConnecting(false);
+        setSessionLabel("OpenAI Realtime live");
+      };
+      dataChannel.onclose = () => {
+        setIsListening(false);
+      };
+      dataChannel.onerror = () => {
+        setSessionError("The Realtime data channel closed unexpectedly.");
+      };
+      dataChannel.onmessage = (message) => {
+        try {
+          handleRealtimeEvent(JSON.parse(message.data) as RealtimeEvent);
+        } catch (error) {
+          console.error("Invalid realtime event:", error);
+        }
+      };
+
+      const offer = await peer.createOffer();
+      await peer.setLocalDescription(offer);
+      await waitForUsableIceCandidate(peer);
+
+      connectTimeoutRef.current = window.setTimeout(() => {
+        if (!hasConnectedOnceRef.current && peerConnectionRef.current === peer) {
+          setSessionError(buildRealtimeConnectError(peer));
+          stopListening();
+        }
+      }, DEFAULT_REALTIME_CONNECT_TIMEOUT_MS);
+
+      const res = await fetch("/api/realtime/engage-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          offerSdp: peer.localDescription?.sdp ?? offer.sdp,
+          advisorName: selectedMeeting.leadName,
+          advisorCompany: selectedMeeting.leadCompany,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Failed to create Realtime session");
+      }
+
+      const data = await res.json() as { answerSdp?: string; ephemeralKey?: string; webrtcUrl?: string };
+
+      if (data.answerSdp) {
+        await peer.setRemoteDescription({
+          type: "answer",
+          sdp: data.answerSdp,
+        });
+      } else if (data.ephemeralKey && data.webrtcUrl) {
+        const answerRes = await fetch(data.webrtcUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${data.ephemeralKey}`,
+            "Content-Type": "application/sdp",
+          },
+          body: peer.localDescription?.sdp ?? offer.sdp ?? "",
+        });
+
+        if (!answerRes.ok) {
+          const errorText = await answerRes.text();
+          throw new Error(parseRequestError(errorText || "Realtime WebRTC connect failed"));
+        }
+
+        const answerSdp = await answerRes.text();
+        if (!answerSdp) throw new Error("Realtime answer SDP missing");
+
+        await peer.setRemoteDescription({
+          type: "answer",
+          sdp: answerSdp,
+        });
+      } else {
+        throw new Error("Realtime session metadata missing");
+      }
+    } catch (error) {
+      console.error("Failed to start Engage Me realtime session:", error);
+      setSessionError(error instanceof Error ? error.message : "Could not start OpenAI Realtime.");
+      stopListening();
+    }
+  }, [handleRealtimeEvent, isConnecting, isListening, selectedMeeting, stopListening]);
 
   useEffect(() => () => {
     if (noFundTimerRef.current) clearTimeout(noFundTimerRef.current);
   }, []);
 
   const manualShow = (ticker: string, dataType: DataType) => {
-    const display: FundDisplay = {
-      ticker, dataType, insight: "", triggeredAt: Date.now(),
-    };
-    setCurrentDisplay(display);
-    setDisplayHistory(prev => [display, ...prev].slice(0, 8));
+    pushDisplay({
+      ticker,
+      dataType,
+      insight: "",
+      triggeredAt: Date.now(),
+    });
   };
 
   const fund = currentDisplay ? ETF_DATA[currentDisplay.ticker] : null;
+  const latestSummary = currentDisplay
+    ? `${currentDisplay.ticker} ${DATA_TYPE_LABELS[currentDisplay.dataType]}`
+    : "Waiting for the first fund question";
+  const isRecording = isUserSpeaking;
+  const isAnalyzing = isConnecting;
 
   // Cleanup on unmount
-  useEffect(() => () => { stopListening(); }, []);
+  useEffect(() => () => { stopListening(); }, [stopListening]);
 
   // ── Meeting selection gate ──────────────────────────────────────────────────
   if (!selectedMeeting) {
@@ -677,8 +1059,8 @@ export default function EngageMe() {
               <Activity className="w-5 h-5 text-rose-500" />
             </div>
             <div>
-              <h1 className="text-2xl font-display font-bold text-white">Engage Me</h1>
-              <p className="text-sm text-muted-foreground">Live AI listener — surfaces Vanguard ETF data in real time</p>
+              <h1 className="text-2xl font-display font-bold text-white">My Engage</h1>
+              <p className="text-sm text-muted-foreground">OpenAI Realtime listener that surfaces Vanguard ETF data as the meeting unfolds</p>
             </div>
           </div>
 
@@ -714,68 +1096,72 @@ export default function EngageMe() {
         <div className="flex items-center justify-between px-1 pb-4 shrink-0">
           <div className="flex items-center gap-3">
             <div className="relative w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-              {isListening && <span className="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full animate-ping" />}
-              <Activity className={cn("w-4 h-4 text-rose-500", isListening && "animate-pulse")} />
+              {(isListening || isConnecting) && <span className="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full animate-ping" />}
+              <Activity className={cn("w-4 h-4 text-rose-500", (isListening || isConnecting) && "animate-pulse")} />
             </div>
             <div>
-              <h1 className="text-xl font-display font-bold text-white leading-tight">Engage Me</h1>
+              <h1 className="text-xl font-display font-bold text-white leading-tight">My Engage</h1>
               <p className="text-xs text-muted-foreground">Live with <span className="text-white font-medium">{selectedMeeting.leadName}</span></p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            {isListening && (
+            {(isListening || isConnecting) && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/25">
-                <div className={cn("w-2 h-2 rounded-full bg-rose-400", isRecording && "animate-ping")} />
+                <div className={cn("w-2 h-2 rounded-full bg-rose-400", (isConnecting || isUserSpeaking) && "animate-ping")} />
                 <span className="text-xs font-semibold text-rose-300">
-                  {isRecording ? "Recording..." : isAnalyzing ? "Analyzing..." : "Session live"}
+                  {isConnecting ? "Connecting..." : isUserSpeaking ? "Listening..." : sessionLabel}
                 </span>
               </div>
             )}
 
             {isListening ? (
-              <div className="flex items-center gap-2">
-                <Button
-                  onMouseDown={startCapture}
-                  onMouseUp={stopCapture}
-                  onTouchStart={startCapture}
-                  onTouchEnd={stopCapture}
-                  disabled={isAnalyzing}
-                  className={cn(
-                    "h-9 px-4 text-sm font-semibold transition-all select-none",
-                    isRecording
-                      ? "bg-rose-600 hover:bg-rose-600 text-white shadow-lg shadow-rose-600/40 scale-95"
-                      : isAnalyzing
-                      ? "bg-white/10 text-white/50 cursor-not-allowed"
-                      : "bg-rose-500/20 border border-rose-500/40 text-rose-300 hover:bg-rose-500/30"
-                  )}
-                >
-                  {isAnalyzing
-                    ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Analyzing</>
-                    : isRecording
-                    ? <><Square className="w-3.5 h-3.5 mr-2 fill-current" />Release to Analyze</>
-                    : <><Mic className="w-4 h-4 mr-2" />Hold to Capture</>
-                  }
-                </Button>
-                <Button
-                  onClick={() => { setIsListening(false); setSessionCompleted(true); }}
-                  className="bg-white/8 hover:bg-white/12 text-white/60 hover:text-white h-9 px-4 text-sm border border-white/10"
-                >
-                  End Session
-                </Button>
-              </div>
+              <Button
+                onClick={() => stopListening({ completed: true })}
+                className="bg-white/8 hover:bg-white/12 text-white/60 hover:text-white h-9 px-4 text-sm border border-white/10"
+              >
+                End Session
+              </Button>
             ) : (
               <Button
-                onClick={() => setIsListening(true)}
-                className="bg-rose-500 hover:bg-rose-400 text-white h-9 px-5 text-sm font-semibold shadow-lg shadow-rose-500/25"
+                onClick={startListening}
+                disabled={isConnecting}
+                className="bg-rose-500 hover:bg-rose-400 text-white h-9 px-5 text-sm font-semibold shadow-lg shadow-rose-500/25 disabled:opacity-70"
               >
-                <Radio className="w-4 h-4 mr-2" />Start Session
+                {isConnecting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Radio className="w-4 h-4 mr-2" />}
+                {isConnecting ? "Opening Realtime" : "Start Realtime Session"}
               </Button>
             )}
           </div>
         </div>
 
         {/* ── Main content ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pb-4 shrink-0">
+          {[
+            {
+              label: "Mode",
+              value: "OpenAI Realtime",
+              sub: isListening ? "Continuous WebRTC listening" : "Ready to connect",
+            },
+            {
+              label: "Last Heard",
+              value: recentTranscript || "Waiting for live audio",
+              sub: noFundMsg || sessionError || "Transcript updates after each detected speech turn",
+            },
+            {
+              label: "Latest Pull",
+              value: latestSummary,
+              sub: `Updated ${formatTimestamp(lastUpdateAt)}`,
+            },
+          ].map((card) => (
+            <div key={card.label} className="rounded-2xl border border-white/8 bg-card/30 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground/55 font-semibold mb-2">{card.label}</p>
+              <p className="text-sm font-semibold text-white leading-snug">{card.value}</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">{card.sub}</p>
+            </div>
+          ))}
+        </div>
+
         <div className="flex-1 flex gap-4 min-h-0">
 
           {/* Visualization area */}
@@ -796,15 +1182,15 @@ export default function EngageMe() {
                   <div>
                     <p className="text-white/40 text-lg font-medium mb-1">
                       {isListening
-                        ? isRecording ? "Recording — release to analyze..."
-                        : isAnalyzing ? "Analyzing transcript..."
-                        : noFundMsg || "Hold Capture and speak a fund name"
+                        ? isRecording ? "Listening to the live conversation..."
+                        : isAnalyzing ? "Opening the OpenAI Realtime session..."
+                        : noFundMsg || "Waiting for an ETF question"
                         : "Start a session to activate"}
                     </p>
                     <p className="text-white/25 text-sm">
                       {isListening
-                        ? 'Say "VOO holdings" or "BND performance" then release'
-                        : "Press Start Session — hold Capture and mention an ETF"
+                        ? 'Try questions like "What are VOO top holdings?" or "How has BND performed?"'
+                        : "Press Start Realtime Session and the agent will listen continuously"
                       }
                     </p>
                   </div>
@@ -845,6 +1231,10 @@ export default function EngageMe() {
                         )}
                       </div>
                     </div>
+                    <div className="text-right">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold">Live Briefing</p>
+                      <p className="text-xs text-white/65">{formatTimestamp(currentDisplay.triggeredAt)}</p>
+                    </div>
                   </div>
 
                   {/* Panel body */}
@@ -863,12 +1253,14 @@ export default function EngageMe() {
             <div className="shrink-0 bg-card/40 border border-white/8 rounded-2xl px-4 py-3 flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground/50 shrink-0">
                 <Mic className="w-3.5 h-3.5" />
-                {noFundMsg ? (
+                {sessionError ? (
+                  <span className="text-rose-300/80 max-w-[280px] truncate">{sessionError}</span>
+                ) : noFundMsg ? (
                   <span className="text-amber-400/70 max-w-[240px] truncate">{noFundMsg}</span>
                 ) : recentTranscript ? (
                   <span className="text-white/50 italic max-w-[240px] truncate">"{recentTranscript}"</span>
                 ) : (
-                  <span>Manual override ↓</span>
+                  <span>Manual override below</span>
                 )}
               </div>
 
@@ -989,7 +1381,7 @@ export default function EngageMe() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Session complete · Next step</p>
-                  <p className="text-sm font-semibold text-white">Follow Me — Turn this meeting into action items</p>
+                  <p className="text-sm font-semibold text-white">My Follow up — Turn this meeting into action items</p>
                 </div>
               </div>
               <Button asChild className="shrink-0 bg-amber-500 hover:bg-amber-400 text-white shadow-lg shadow-amber-500/20 h-9 text-sm">

@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import {
   Search,
+  Mail,
   Calendar,
   FileText,
   BrainCircuit,
@@ -21,17 +22,17 @@ import {
 } from "@/components/ui/sidebar";
 
 const agents = [
-  { title: "Lead Me", url: "/lead-me", icon: Search, desc: "Lead Gen" },
-  { title: "Schedule Me", url: "/schedule-me", icon: Calendar, desc: "Outreach" },
-  { title: "Prep Me", url: "/prep-me", icon: FileText, desc: "Meeting Prep" },
-  { title: "Coach Me", url: "/coach-me", icon: BrainCircuit, desc: "Coaching" },
-  { title: "Engage Me", url: "/engage-me", icon: Activity, desc: "Live Intel" },
-  { title: "Follow Me", url: "/follow-me", icon: CheckSquare, desc: "Tasks" },
+  { title: "My Leads", url: "/lead-me", icon: Search, desc: "Lead Gen" },
+  { title: "My Schedule", url: "/schedule-me", icon: Calendar, desc: "Outreach" },
+  { title: "My Prep", url: "/prep-me", icon: FileText, desc: "Meeting Prep" },
+  { title: "My Coach", url: "/coach-me", icon: BrainCircuit, desc: "Coaching" },
+  { title: "My Engage", url: "/engage-me", icon: Activity, desc: "Live Intel" },
+  { title: "My Follow up", url: "/follow-me", icon: CheckSquare, desc: "Tasks" },
+  { title: "My Email", url: "/email-me", icon: Mail, desc: "Email" },
 ];
 
 const data = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "My Leads", url: "/leads", icon: Users },
 ];
 
 export function AppSidebar() {

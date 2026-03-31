@@ -17,12 +17,12 @@ export default function LeadsList() {
               <Users className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-3xl font-display font-bold text-white">My Pipeline</h1>
+              <h1 className="text-3xl font-display font-bold text-white">My Leads</h1>
               <p className="text-muted-foreground">Saved leads ready for outreach.</p>
             </div>
           </div>
           <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Link href="/lead-me">Find More Leads</Link>
+            <Link href="/lead-me">Open My Leads</Link>
           </Button>
         </div>
 
@@ -35,9 +35,9 @@ export default function LeadsList() {
             <CardContent className="flex flex-col items-center justify-center py-24 text-center">
               <Users className="w-16 h-16 text-muted-foreground/30 mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">Your pipeline is empty</h3>
-              <p className="text-muted-foreground max-w-md mb-6">Use the Lead Me agent to discover highly targeted prospects and add them to your pipeline.</p>
+              <p className="text-muted-foreground max-w-md mb-6">Use My Leads to discover highly targeted prospects and add them to your pipeline.</p>
               <Button asChild>
-                <Link href="/lead-me">Launch Lead Me</Link>
+                <Link href="/lead-me">Launch My Leads</Link>
               </Button>
             </CardContent>
           </Card>

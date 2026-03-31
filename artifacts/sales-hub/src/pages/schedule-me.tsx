@@ -17,7 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { useVoiceRecorder, useAudioPlayback } from "@workspace/integrations-openai-ai-react";
+import { useRealtimeCall } from "@/hooks/use-realtime-call";
 
 interface AdvisorData {
   aumM: number; salesAmt: number; redemption: number;
@@ -39,6 +39,18 @@ function fmt(n: number): string {
   return `$${n}`;
 }
 
+function normalizeScheduleEmailSender(body: string): string {
+  const trimmed = body.trim();
+  if (!trimmed) return trimmed;
+
+  const signaturePattern = /(\n\n(?:best|best regards|regards|thanks|thank you|sincerely),?\s*\n)([^\n]+)/i;
+  if (signaturePattern.test(trimmed)) {
+    return trimmed.replace(signaturePattern, (_match, prefix) => `${prefix}Nat`);
+  }
+
+  return `${trimmed}\n\nBest,\nNat`;
+}
+
 const SEGMENT_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
   A: { label: "Top Tier",   color: "text-emerald-300", bg: "bg-emerald-500/10", border: "border-emerald-500/25" },
   B: { label: "High Value", color: "text-blue-300",    bg: "bg-blue-500/10",    border: "border-blue-500/25" },
@@ -47,7 +59,7 @@ const SEGMENT_CONFIG: Record<string, { label: string; color: string; bg: string;
   E: { label: "Emerging",   color: "text-violet-300",  bg: "bg-violet-500/10",  border: "border-violet-500/25" },
 };
 
-type CallStatus = "idle" | "connecting" | "maya-speaking" | "user-turn" | "processing" | "ended";
+type CallStatus = "idle" | "connecting" | "active" | "ended";
 type Speaker = "agent" | "user";
 
 interface TranscriptLine {
@@ -145,6 +157,14 @@ export default function ScheduleMe() {
   const [emailEditing, setEmailEditing] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
 
+  useEffect(() => {
+    if (!emailBody) return;
+    const normalized = normalizeScheduleEmailSender(emailBody);
+    if (normalized !== emailBody) {
+      setEmailBody(normalized);
+    }
+  }, [emailBody]);
+
   interface BookingConfirmed {
     leadName: string;
     leadCompany: string;
@@ -157,21 +177,105 @@ export default function ScheduleMe() {
 
   // Voice state
   const [callStatus, setCallStatus] = useState<CallStatus>("idle");
-  const [agentSpeaking, setAgentSpeaking] = useState(false);
   const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
-  const [voiceHistory, setVoiceHistory] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
   const [booking, setBooking] = useState<BookingProposal | null>(null);
   const [callStartTime, setCallStartTime] = useState<Date | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
 
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
-  const workletPath = `${import.meta.env.BASE_URL}audio-playback-worklet.js`;
 
-  const { startRecording, stopRecording } = useVoiceRecorder();
-  const audioPlayback = useAudioPlayback(workletPath);
+  const {
+    agentSpeaking,
+    isMuted,
+    startCall: rtStartCall,
+    endCall: rtEndCall,
+    toggleMute,
+  } = useRealtimeCall({
+    playbackWorkletPath: `${import.meta.env.BASE_URL}audio-playback-worklet.js`,
+    captureWorkletPath: `${import.meta.env.BASE_URL}audio-capture-worklet.js`,
+    onUserTranscriptDelta: (_delta, accumulated) => {
+      setTranscript(prev => {
+        const lastLine = prev[prev.length - 1];
+        if (lastLine?.speaker === "user" && lastLine.partial) {
+          const updated = [...prev];
+          updated[updated.length - 1] = { ...lastLine, text: accumulated };
+          return updated;
+        }
+        return [...prev, {
+          id: crypto.randomUUID(),
+          speaker: "user",
+          text: accumulated,
+          partial: true,
+        }];
+      });
+    },
+    onUserTranscript: (text) => {
+      setTranscript(prev => {
+        const lastLine = prev[prev.length - 1];
+        if (lastLine?.speaker === "user" && lastLine.partial) {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            ...lastLine,
+            text,
+            partial: false,
+          };
+          return updated;
+        }
+        return [...prev, {
+          id: crypto.randomUUID(),
+          speaker: "user",
+          text,
+          partial: false,
+        }];
+      });
+    },
+    onAgentTranscriptDelta: (_delta, accumulated) => {
+      setTranscript(prev => {
+        const lastLine = prev[prev.length - 1];
+        if (lastLine?.speaker === "agent" && lastLine.partial) {
+          const updated = [...prev];
+          updated[updated.length - 1] = { ...lastLine, text: accumulated };
+          return updated;
+        }
+        return [...prev, {
+          id: crypto.randomUUID(),
+          speaker: "agent",
+          text: accumulated,
+          partial: true,
+        }];
+      });
+    },
+    onAgentResponseDone: (fullText) => {
+      setTranscript(prev => {
+        const updated = [...prev];
+        for (let i = updated.length - 1; i >= 0; i--) {
+          if (updated[i].speaker === "agent" && updated[i].partial) {
+            updated[i] = { ...updated[i], text: fullText, partial: false };
+            break;
+          }
+        }
+        return updated;
+      });
+    },
+    onBookingDetected: (b) => setBooking(b),
+    onError: (err) => {
+      console.error("Realtime call error:", err);
+      toast({ title: "Call error", description: err.message, variant: "destructive" });
+    },
+    onConnectionStateChange: (state) => {
+      if (state === "connecting") setCallStatus("connecting");
+      else if (state === "connected") {
+        setCallStatus("active");
+        setCallStartTime(new Date());
+      } else if (state === "disconnected" || state === "error") {
+        setCallStatus("ended");
+      }
+    },
+  });
 
   const advisor = lead ? parseAdvisorData(lead.assets ?? "") : null;
   const seg = advisor ? (SEGMENT_CONFIG[advisor.segment] ?? SEGMENT_CONFIG.C) : null;
+  const advisorTranscriptLabel = lead?.name.split(" ")[0] || "Advisor";
+  const advisorTranscriptInitial = advisorTranscriptLabel.charAt(0).toUpperCase() || "A";
 
   // Sync AI email data into editable fields
   useEffect(() => {
@@ -255,199 +359,27 @@ export default function ScheduleMe() {
     return () => clearInterval(interval);
   }, [bookingConfirmed, setLocation]);
 
-  const blobToBase64 = useCallback((blob: Blob): Promise<string> => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result.slice(result.indexOf(",") + 1));
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  }), []);
-
-  const processMayaSSE = useCallback(async (
-    res: Response,
-    onHistory: (text: string) => void,
-  ) => {
-    if (!res.body) throw new Error("No response body");
-
-    await audioPlayback.init();
-    audioPlayback.clear();
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let mayaText = "";
-    const mayaId = crypto.randomUUID();
-
-    const handleChunk = (raw: string) => {
-      for (const line of raw.split(/\n+/)) {
-        if (!line.startsWith("data:")) continue;
-        try {
-          const evt = JSON.parse(line.slice(5).trim()) as Record<string, unknown>;
-
-          if (evt.type === "user_transcript" && typeof evt.data === "string" && (evt.data as string).trim()) {
-            setTranscript(prev => [...prev, { id: crypto.randomUUID(), speaker: "user", text: evt.data as string }]);
-          }
-
-          if (evt.type === "audio" && typeof evt.data === "string") {
-            audioPlayback.pushAudio(evt.data as string);
-          }
-
-          if (evt.type === "transcript" && typeof evt.data === "string") {
-            mayaText = evt.data as string;
-            setTranscript(prev => {
-              const idx = prev.findIndex(l => l.id === mayaId);
-              if (idx >= 0) {
-                const u = [...prev];
-                u[idx] = { ...u[idx], text: mayaText, partial: false };
-                return u;
-              }
-              return [...prev, { id: mayaId, speaker: "agent", text: mayaText, partial: false }];
-            });
-          }
-
-          if (evt.type === "book_meeting") {
-            setBooking({
-              date: evt.date as string,
-              time: evt.time as string,
-              agendaTopic: evt.agendaTopic as string,
-              dayLabel: evt.dayLabel as string,
-              timeLabel: evt.timeLabel as string,
-            });
-          }
-
-          if ("done" in evt && evt.done) {
-            audioPlayback.signalComplete();
-            if (mayaText) {
-              onHistory(mayaText);
-            }
-            setAgentSpeaking(false);
-            setCallStatus("user-turn");
-          }
-        } catch { /* ignore */ }
-      }
-    };
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const blocks = buffer.split(/\n\n/);
-      buffer = blocks.pop() ?? "";
-      for (const block of blocks) handleChunk(block);
-    }
-    if (buffer) handleChunk(buffer);
-  }, [audioPlayback]);
-
-  const sendTurn = useCallback(async (blob: Blob) => {
-    if (!lead) return;
-    setCallStatus("maya-speaking");
-    setAgentSpeaking(true);
-
-    try {
-      const audioBase64 = await blobToBase64(blob);
-      const currentHistory = voiceHistory;
-
-      const res = await fetch("/api/voice/maya-turn", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          audio: audioBase64,
-          history: currentHistory,
-          advisorName: lead.name,
-          advisorCompany: lead.company,
-          advisorSegment: advisor?.segment,
-          aumM: advisor?.aumM,
-          fiOpportunities: advisor?.fiOpportunities,
-          etfOpportunities: advisor?.etfOpportunities,
-          alpha: advisor?.alpha,
-          competitors: advisor?.competitors,
-          territory: advisor?.territory,
-        }),
-      });
-
-      if (!res.ok) throw new Error(`Server error ${res.status}`);
-
-      await processMayaSSE(res, (text) => {
-        setVoiceHistory(prev => [...prev, { role: "assistant", text }]);
-      });
-    } catch (err) {
-      console.error("Send turn failed:", err);
-      setCallStatus("user-turn");
-      setAgentSpeaking(false);
-    }
-  }, [lead, advisor, voiceHistory, blobToBase64, processMayaSSE]);
-
   const startCall = useCallback(async () => {
     if (!lead) return;
-    setCallStatus("connecting");
     setTranscript([]);
-    setVoiceHistory([]);
     setBooking(null);
-    setAgentSpeaking(true);
-
-    try {
-      const res = await fetch("/api/voice/maya-turn", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          isOpener: true,
-          history: [],
-          advisorName: lead.name,
-          advisorCompany: lead.company,
-          advisorSegment: advisor?.segment,
-          aumM: advisor?.aumM,
-          fiOpportunities: advisor?.fiOpportunities,
-          etfOpportunities: advisor?.etfOpportunities,
-          alpha: advisor?.alpha,
-          competitors: advisor?.competitors,
-          territory: advisor?.territory,
-        }),
-      });
-
-      if (!res.ok) throw new Error(`Server error ${res.status}`);
-
-      setCallStartTime(new Date());
-      setCallStatus("maya-speaking");
-
-      await processMayaSSE(res, (text) => {
-        setVoiceHistory([{ role: "assistant", text }]);
-      });
-
-    } catch (err) {
-      console.error("Call start failed:", err);
-      setCallStatus("idle");
-      setAgentSpeaking(false);
-      let desc = "Could not connect. Please try again.";
-      if (err instanceof Error) desc = err.message;
-      toast({ title: "Connection failed", description: desc, variant: "destructive" });
-    }
-  }, [lead, advisor, processMayaSSE, toast]);
+    await rtStartCall({
+      advisorName: lead.name,
+      advisorCompany: lead.company,
+      advisorSegment: advisor?.segment,
+      aumM: advisor?.aumM,
+      fiOpportunities: advisor?.fiOpportunities,
+      etfOpportunities: advisor?.etfOpportunities,
+      alpha: advisor?.alpha,
+      competitors: advisor?.competitors,
+      territory: advisor?.territory,
+    });
+  }, [lead, advisor, rtStartCall]);
 
   const endCall = useCallback(() => {
+    rtEndCall();
     setCallStatus("ended");
-    setAgentSpeaking(false);
-    setIsRecording(false);
-  }, []);
-
-  const handleMicDown = useCallback(async () => {
-    if (callStatus !== "user-turn") return;
-    setIsRecording(true);
-    await startRecording();
-  }, [callStatus, startRecording]);
-
-  const handleMicUp = useCallback(async () => {
-    if (!isRecording) return;
-    setIsRecording(false);
-    setCallStatus("processing");
-    const blob = await stopRecording();
-    if (blob.size === 0) {
-      setCallStatus("user-turn");
-      return;
-    }
-    await sendTurn(blob);
-  }, [isRecording, stopRecording, sendTurn]);
+  }, [rtEndCall]);
 
   const handleConfirmBooking = () => {
     if (!lead || !booking) return;
@@ -669,7 +601,7 @@ export default function ScheduleMe() {
               {mode === "email" ? <Mail className="w-6 h-6 text-teal-400" /> : <Radio className="w-6 h-6 text-teal-400" />}
             </div>
             <div>
-              <h1 className="text-3xl font-display font-bold text-white">Schedule Me</h1>
+              <h1 className="text-3xl font-display font-bold text-white">My Schedule</h1>
               <p className="text-muted-foreground">
                 {mode === "email" ? "AI-drafted outreach email — personalized with advisor context." : "AI voice agent — Maya will call this advisor and book the meeting."}
               </p>
@@ -879,7 +811,7 @@ export default function ScheduleMe() {
               <div className="absolute inset-0 pointer-events-none">
                 <div className={cn(
                   "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-3xl transition-all duration-1000",
-                  (callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing")
+                  callStatus === "active"
                     ? agentSpeaking ? "bg-teal-500/10 scale-125" : "bg-blue-500/8"
                     : "bg-slate-500/5"
                 )} />
@@ -890,29 +822,29 @@ export default function ScheduleMe() {
                 {/* Maya Avatar */}
                 <div className="relative flex flex-col items-center gap-6">
                   <div className="relative">
-                    <PulsingRing active={(callStatus === "maya-speaking") && agentSpeaking} />
+                    <PulsingRing active={callStatus === "active" && agentSpeaking} />
                     <motion.div
                       className={cn(
                         "w-28 h-28 rounded-full flex items-center justify-center relative z-10 transition-all duration-500",
-                        (callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing")
+                        callStatus === "active"
                           ? "shadow-[0_0_40px_rgba(45,212,191,0.3)] border-2 border-teal-400/50"
                           : callStatus === "connecting"
                           ? "border-2 border-teal-400/30 animate-pulse"
                           : "border-2 border-white/10"
                       )}
                       style={{
-                        background: (callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing")
+                        background: callStatus === "active"
                           ? "radial-gradient(circle at 30% 30%, #1e4a6e, #0a1a2e)"
                           : "radial-gradient(circle at 30% 30%, #1a2540, #0a1020)",
                       }}
-                      animate={(callStatus === "maya-speaking") && agentSpeaking ? { scale: [1, 1.04, 1] } : {}}
+                      animate={callStatus === "active" && agentSpeaking ? { scale: [1, 1.04, 1] } : {}}
                       transition={{ duration: 0.8, repeat: Infinity }}
                     >
                       <div className="text-center">
                         <div className="text-3xl font-bold text-teal-300">M</div>
                         <div className="text-[9px] text-teal-400/70 font-semibold tracking-wider uppercase mt-0.5">Maya</div>
                       </div>
-                      {(callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing") && (
+                      {callStatus === "active" && (
                         <motion.div
                           className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-[#0a1628] flex items-center justify-center"
                           initial={{ scale: 0 }}
@@ -933,7 +865,7 @@ export default function ScheduleMe() {
                 {/* Waveform */}
                 <div className="flex flex-col items-center gap-3">
                   <AnimatePresence mode="wait">
-                    {(callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing") ? (
+                    {callStatus === "active" ? (
                       <motion.div
                         key="waveform"
                         initial={{ opacity: 0, y: 8 }}
@@ -947,16 +879,14 @@ export default function ScheduleMe() {
                             <span className="text-teal-300 flex items-center gap-1.5">
                               <Volume2 className="w-3.5 h-3.5" /> Maya is speaking
                             </span>
-                          ) : isRecording ? (
-                            <span className="text-blue-300 flex items-center gap-1.5">
-                              <Mic className="w-3.5 h-3.5" /> You are speaking
-                            </span>
-                          ) : callStatus === "processing" ? (
-                            <span className="text-amber-300 flex items-center gap-1.5">
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Processing...
+                          ) : isMuted ? (
+                            <span className="text-rose-300 flex items-center gap-1.5">
+                              <MicOff className="w-3.5 h-3.5" /> Muted
                             </span>
                           ) : (
-                            <span className="text-muted-foreground/60">Hold mic button to speak</span>
+                            <span className="text-emerald-300 flex items-center gap-1.5">
+                              <Mic className="w-3.5 h-3.5" /> Listening...
+                            </span>
                           )}
                         </p>
                       </motion.div>
@@ -1000,7 +930,7 @@ export default function ScheduleMe() {
                 </div>
 
                 {/* Status bar */}
-                {(callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing") && (
+                {callStatus === "active" && (
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1037,22 +967,16 @@ export default function ScheduleMe() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onMouseDown={handleMicDown}
-                        onMouseUp={handleMicUp}
-                        onTouchStart={handleMicDown}
-                        onTouchEnd={handleMicUp}
-                        disabled={callStatus !== "user-turn" && !isRecording}
+                        onClick={toggleMute}
                         className={cn(
                           "w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all select-none",
-                          isRecording
-                            ? "bg-blue-500/30 border-blue-400/60 text-blue-300 shadow-lg shadow-blue-500/30"
-                            : callStatus === "user-turn"
-                              ? "bg-white/6 border-white/15 text-white/70 hover:border-white/30"
-                              : "bg-white/3 border-white/8 text-white/30 cursor-not-allowed"
+                          isMuted
+                            ? "bg-rose-500/20 border-rose-400/40 text-rose-300"
+                            : "bg-emerald-500/20 border-emerald-400/40 text-emerald-300"
                         )}
-                        title={callStatus === "user-turn" ? "Hold to speak" : "Wait for Maya to finish"}
+                        title={isMuted ? "Unmute" : "Mute"}
                       >
-                        {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                        {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                       </motion.button>
 
                       <motion.button
@@ -1137,10 +1061,10 @@ export default function ScheduleMe() {
               <div className="flex items-center gap-3 px-5 py-4 border-b border-white/8 bg-background/30 shrink-0">
                 <div className={cn(
                   "w-2 h-2 rounded-full transition-colors duration-300",
-                  (callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing") ? "bg-emerald-400 animate-pulse" : "bg-white/15"
+                  callStatus === "active" ? "bg-emerald-400 animate-pulse" : "bg-white/15"
                 )} />
                 <p className="text-sm font-semibold text-white">Live Transcript</p>
-                {(callStatus === "maya-speaking" || callStatus === "user-turn" || callStatus === "processing") && (
+                {callStatus === "active" && (
                   <span className="ml-auto text-[10px] text-muted-foreground/60 uppercase tracking-wider">Real-time</span>
                 )}
               </div>
@@ -1176,6 +1100,12 @@ export default function ScheduleMe() {
                           ? "bg-white/6 border border-white/8 text-white/85 rounded-tl-sm"
                           : "bg-blue-500/15 border border-blue-500/20 text-blue-100 rounded-tr-sm"
                       )}>
+                        <p className={cn(
+                          "mb-1 text-[10px] font-semibold uppercase tracking-wider",
+                          line.speaker === "agent" ? "text-teal-300/80" : "text-blue-300/80",
+                        )}>
+                          {line.speaker === "agent" ? "Maya" : advisorTranscriptLabel}
+                        </p>
                         {line.text}
                         {line.partial && (
                           <span className="inline-block ml-1 opacity-50">
@@ -1184,8 +1114,11 @@ export default function ScheduleMe() {
                         )}
                       </div>
                       {line.speaker === "user" && (
-                        <div className="w-6 h-6 rounded-full bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0 mt-0.5">
-                          <span className="text-[9px] font-bold text-blue-400">You</span>
+                        <div
+                          title={advisorTranscriptLabel}
+                          className="w-6 h-6 rounded-full bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0 mt-0.5"
+                        >
+                          <span className="text-[9px] font-bold text-blue-400">{advisorTranscriptInitial}</span>
                         </div>
                       )}
                     </motion.div>

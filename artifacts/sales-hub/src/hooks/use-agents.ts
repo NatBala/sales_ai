@@ -9,6 +9,7 @@ import {
 
 // Re-exporting agent hooks for consistency
 export const useAgentLeadMe = useGenerateLeads;
+export const useAgentEmailMe = useGenerateEmail;
 export const useAgentScheduleMe = useGenerateEmail;
 export const useAgentPrepMe = useGenerateMeetingPrep;
 export const useAgentCoachMe = useGenerateCoachingPlan;

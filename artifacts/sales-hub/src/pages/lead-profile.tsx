@@ -22,6 +22,9 @@ interface AdvisorData {
   territory: string;
   segment: string;
   ratings: number | null;
+  advisorProfile?: string;
+  salesEngagement?: string;
+  salesNotes?: string;
 }
 
 function parseAdvisorData(assets: string): AdvisorData | null {
@@ -136,6 +139,7 @@ export default function LeadProfile() {
   ] : [];
 
   const netFlow = advisor ? advisor.salesAmt - advisor.redemption : 0;
+  const salesNotes = advisor?.salesNotes?.trim() || lead.reasoning || "";
 
   return (
     <Layout>
@@ -395,25 +399,26 @@ export default function LeadProfile() {
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-6">No competitor products on file.</p>
                   )}
+
+                  <div className="mt-5 border-t border-white/5 pt-4">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">AI Matching Summary</p>
+                    <p className="text-sm text-white/80 leading-relaxed">{lead.reason}</p>
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* AI Deep Analysis */}
+              {/* Sales Notes */}
               <Card className="bg-card/40 border-white/8">
                 <CardHeader className="border-b border-white/5 pb-4">
                   <CardTitle className="text-base text-white flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-primary" /> AI Deep Analysis
+                    <Zap className="w-4 h-4 text-primary" /> Sales Notes
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-5 space-y-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">Why this advisor matches</p>
-                    <p className="text-sm text-white/80 leading-relaxed">{lead.reason}</p>
-                  </div>
-                  {lead.reasoning && (
+                  {salesNotes && (
                     <div className="bg-primary/5 border border-primary/15 rounded-xl p-4">
-                      <p className="text-xs text-primary uppercase tracking-wider font-semibold mb-2">Opportunity Analysis</p>
-                      <p className="text-sm text-white/75 leading-relaxed">{lead.reasoning}</p>
+                      <p className="text-xs text-primary uppercase tracking-wider font-semibold mb-2">Sales Notes</p>
+                      <p className="text-sm text-white/75 leading-relaxed whitespace-pre-wrap">{salesNotes}</p>
                     </div>
                   )}
                 </CardContent>

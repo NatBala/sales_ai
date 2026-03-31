@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Layout } from "@/components/layout";
 import { useMeetings } from "@/hooks/use-meetings";
-import { useAgentCoachMe } from "@/hooks/use-agents";
 import type { Meeting } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Loader2,
+  BookOpen,
   BrainCircuit,
   Calendar as CalendarIcon,
   Users,
@@ -21,85 +21,445 @@ import {
   ChevronUp,
   UserCircle,
   Sparkles,
+  ExternalLink,
+  RefreshCw,
 } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
-import { CoachPractice, type AdvisorPersona, type ConversationTurn } from "@/components/coach-practice";
+import { CoachPractice, normalizeCoachScenario, type CoachScenario, type ConversationTurn } from "@/components/coach-practice";
 import { CoachScorecard, type ScorecardData } from "@/components/coach-scorecard";
 
 type View = "plan" | "practice" | "scorecard";
+type CoachMode = "scheduled" | "prospects";
+
+const COACH_ME_PROSPECTS_URL = "https://coachme-vg.azurewebsites.net/";
+
+const VG_WAY_STAGES = [
+  {
+    title: "Agenda",
+    guidance: "Thank them, time check, and align on the purpose before you go anywhere else.",
+  },
+  {
+    title: "Discovery",
+    guidance: "Get to the advisor's client context, current approach, constraints, and one live case.",
+  },
+  {
+    title: "Insights",
+    guidance: "Tie one idea directly to what the advisor said instead of giving a generic pitch.",
+  },
+  {
+    title: "Practice Management",
+    guidance: "Show how Vanguard helps workflow, implementation, scalability, or client communication.",
+  },
+  {
+    title: "Summarize & Prioritize",
+    guidance: "Play back the real issue and narrow the next move to the highest-priority need.",
+  },
+  {
+    title: "Close",
+    guidance: "Land a real next step with owner, timing, and a practical reason to continue.",
+  },
+] as const;
+
+interface CoachingPlanData {
+  coachingTips: string[];
+  objections: { objection: string; suggestedResponse: string }[];
+  openingPitches: string[];
+  winThemes: string[];
+}
+
+interface CoachAdvisorContext {
+  aumM?: number;
+  salesAmt?: number;
+  redemption?: number;
+  fiOpportunities?: number;
+  etfOpportunities?: number;
+  alpha?: number;
+  competitors?: string[];
+  buyingUnit?: string;
+  territory?: string;
+  segment?: string;
+  ratings?: number | null;
+  advisorProfile?: string;
+  salesEngagement?: string;
+  salesNotes?: string;
+  advisorRow?: Record<string, string>;
+}
+
+interface CoachLeadResponse {
+  title?: string | null;
+  assets?: string;
+}
+
+function emptyCoachingPlanData(): CoachingPlanData {
+  return {
+    coachingTips: [],
+    objections: [],
+    openingPitches: [],
+    winThemes: [],
+  };
+}
+
+function decodeJsonString(value: string): string {
+  try {
+    return JSON.parse(`"${value}"`) as string;
+  } catch {
+    return value
+      .replace(/\\"/g, "\"")
+      .replace(/\\n/g, "\n")
+      .replace(/\\\\/g, "\\");
+  }
+}
+
+function extractArraySection(content: string, key: keyof CoachingPlanData): string {
+  const keyIndex = content.indexOf(`"${key}"`);
+  if (keyIndex === -1) return "";
+
+  const start = content.indexOf("[", keyIndex);
+  if (start === -1) return "";
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < content.length; i++) {
+    const char = content[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === "\\") {
+        escaped = true;
+      } else if (char === "\"") {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = true;
+      continue;
+    }
+
+    if (char === "[") depth++;
+    if (char === "]") {
+      depth--;
+      if (depth === 0) {
+        return content.slice(start, i + 1);
+      }
+    }
+  }
+
+  return content.slice(start);
+}
+
+function extractStringArray(content: string, key: "coachingTips" | "openingPitches" | "winThemes"): string[] {
+  const section = extractArraySection(content, key);
+  if (!section) return [];
+
+  const matches = section.matchAll(/"((?:\\.|[^"\\])*)"/g);
+  return Array.from(matches, (match) => decodeJsonString(match[1]));
+}
+
+function extractObjections(content: string): CoachingPlanData["objections"] {
+  const section = extractArraySection(content, "objections");
+  if (!section) return [];
+
+  const matches = section.matchAll(
+    /"objection"\s*:\s*"((?:\\.|[^"\\])*)"\s*,\s*"suggestedResponse"\s*:\s*"((?:\\.|[^"\\])*)"/g,
+  );
+
+  return Array.from(matches, (match) => ({
+    objection: decodeJsonString(match[1]),
+    suggestedResponse: decodeJsonString(match[2]),
+  }));
+}
+
+function parseStreamingCoachPlan(content: string): CoachingPlanData {
+  return {
+    coachingTips: extractStringArray(content, "coachingTips"),
+    openingPitches: extractStringArray(content, "openingPitches"),
+    winThemes: extractStringArray(content, "winThemes"),
+    objections: extractObjections(content),
+  };
+}
+
+function parseLeadAdvisorData(assets?: string): CoachAdvisorContext | null {
+  if (!assets) return null;
+
+  try {
+    const parsed = JSON.parse(assets) as { __advisorData?: CoachAdvisorContext };
+    return parsed.__advisorData ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function parseRequestError(raw: string): string {
+  try {
+    const parsed = JSON.parse(raw) as { error?: string; details?: string };
+    if (parsed.details) return `${parsed.error ?? "Request failed"}: ${parsed.details}`;
+    return parsed.error ?? raw;
+  } catch {
+    return raw;
+  }
+}
 
 export default function CoachMe() {
   const { data: meetingsData, isLoading: meetingsLoading } = useMeetings();
-  const { mutate: generateCoach, isPending, data: coachData } = useAgentCoachMe();
+  const [coachMode, setCoachMode] = useState<CoachMode>("scheduled");
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
   const [focusArea, setFocusArea] = useState("");
   const [expandedObjection, setExpandedObjection] = useState<number | null>(null);
+  const [coachData, setCoachData] = useState<CoachingPlanData | null>(null);
+  const [isPending, setIsPending] = useState(false);
+  const [streamingPreview, setStreamingPreview] = useState("");
 
   const [view, setView] = useState<View>("plan");
-  const [persona, setPersona] = useState<AdvisorPersona | null>(null);
-  const [isGeneratingPersona, setIsGeneratingPersona] = useState(false);
+  const [scenario, setScenario] = useState<CoachScenario | null>(null);
+  const [isGeneratingScenario, setIsGeneratingScenario] = useState(false);
   const [practiceTranscript, setPracticeTranscript] = useState<ConversationTurn[]>([]);
   const [scorecard, setScorecard] = useState<ScorecardData | null>(null);
   const [isScorecardLoading, setIsScorecardLoading] = useState(false);
+  const [scorecardPreview, setScorecardPreview] = useState("");
+  const [scorecardError, setScorecardError] = useState("");
+  const [prospectsFrameKey, setProspectsFrameKey] = useState(0);
+  const [isProspectsLoading, setIsProspectsLoading] = useState(true);
+  const coachStreamAbortRef = useRef<AbortController | null>(null);
+  const scorecardPreviewAbortRef = useRef<AbortController | null>(null);
 
   const meetings = meetingsData?.meetings?.filter(m => m.status === "scheduled") || [];
   const selectedMeeting = meetings.find(m => m.id === selectedMeetingId);
+  const streamingCoachData = streamingPreview
+    ? parseStreamingCoachPlan(streamingPreview)
+    : emptyCoachingPlanData();
+  const hasStreamingDraft = (
+    streamingCoachData.coachingTips.length > 0 ||
+    streamingCoachData.objections.length > 0 ||
+    streamingCoachData.openingPitches.length > 0 ||
+    streamingCoachData.winThemes.length > 0
+  );
+  const displayedCoachData = coachData ?? (hasStreamingDraft ? streamingCoachData : null);
 
-  const handleGenerate = (meeting: Meeting) => {
+  useEffect(() => () => {
+    coachStreamAbortRef.current?.abort();
+    scorecardPreviewAbortRef.current?.abort();
+  }, []);
+
+  const handleGenerate = async (meeting: Meeting) => {
+    coachStreamAbortRef.current?.abort();
+    const controller = new AbortController();
+    coachStreamAbortRef.current = controller;
+
     setSelectedMeetingId(meeting.id);
     setExpandedObjection(null);
     setView("plan");
-    setPersona(null);
+    setScenario(null);
     setScorecard(null);
-    generateCoach({
-      data: {
-        meetingId: meeting.id,
-        leadName: meeting.leadName,
-        leadCompany: meeting.leadCompany,
-        meetingPurpose: meeting.purpose,
-        focusArea: focusArea || undefined,
-      },
-    });
+    setScorecardPreview("");
+    setScorecardError("");
+    setCoachData(null);
+    setStreamingPreview("");
+    setIsPending(true);
+
+    try {
+      const res = await fetch("/api/agents/coach-me/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          meetingId: meeting.id,
+          leadName: meeting.leadName,
+          leadCompany: meeting.leadCompany,
+          meetingPurpose: meeting.purpose,
+          focusArea: focusArea || undefined,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok || !res.body) {
+        throw new Error("Failed to generate coaching plan");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+
+        for (const event of events) {
+          const line = event.split("\n").find(part => part.startsWith("data: "));
+          if (!line) continue;
+
+          const rawPayload = line.slice(6).trim();
+          if (!rawPayload || rawPayload === "[DONE]") continue;
+
+          const payload = JSON.parse(rawPayload) as {
+            type?: "delta" | "done" | "error";
+            content?: string;
+            data?: CoachingPlanData;
+            error?: string;
+          };
+
+          if (payload.type === "error") {
+            throw new Error(payload.error || "Failed to generate coaching plan");
+          }
+
+          if (payload.content) {
+            setStreamingPreview(payload.content);
+          }
+
+          if (payload.type === "done" && payload.data) {
+            setCoachData(payload.data);
+            setStreamingPreview("");
+          }
+        }
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        console.error("Coach plan streaming failed:", error);
+        setCoachData(null);
+      }
+    } finally {
+      if (coachStreamAbortRef.current === controller) {
+        coachStreamAbortRef.current = null;
+      }
+      setIsPending(false);
+    }
   };
 
   const handleStartPractice = async () => {
     if (!selectedMeeting) return;
-    setIsGeneratingPersona(true);
+    setIsGeneratingScenario(true);
     try {
-      const res = await fetch("/api/agents/coach-me/persona", {
+      let advisorContext: CoachAdvisorContext | null = null;
+      let leadTitle: string | undefined;
+
+      if (selectedMeeting.leadId) {
+        try {
+          const leadRes = await fetch(`/api/leads/${selectedMeeting.leadId}`);
+          if (leadRes.ok) {
+            const lead = await leadRes.json() as CoachLeadResponse;
+            advisorContext = parseLeadAdvisorData(lead.assets);
+            leadTitle = lead.title ?? undefined;
+          }
+        } catch (error) {
+          console.warn("Coach Me lead context fetch failed:", error);
+        }
+      }
+
+      const res = await fetch("/api/agents/coach-me/scenario", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           leadName: selectedMeeting.leadName,
           leadCompany: selectedMeeting.leadCompany,
+          leadTitle,
           meetingPurpose: selectedMeeting.purpose,
+          focusArea: focusArea || undefined,
+          advisorContext,
         }),
       });
       if (!res.ok) throw new Error("Failed");
-      const p: AdvisorPersona = await res.json();
-      setPersona(p);
+      const nextScenario: CoachScenario = normalizeCoachScenario(await res.json());
+      setScenario(nextScenario);
       setPracticeTranscript([]);
+      setScorecardError("");
       setView("practice");
     } catch {
     } finally {
-      setIsGeneratingPersona(false);
+      setIsGeneratingScenario(false);
+    }
+  };
+
+  const streamScorecardPreview = async (scenarioToScore: CoachScenario, transcript: ConversationTurn[]) => {
+    scorecardPreviewAbortRef.current?.abort();
+    const controller = new AbortController();
+    scorecardPreviewAbortRef.current = controller;
+    setScorecardPreview("");
+
+    try {
+      const res = await fetch("/api/agents/coach-me/preview-stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scenario: scenarioToScore,
+          transcript,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok || !res.body) {
+        throw new Error("Failed to stream scorecard preview");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+
+        for (const event of events) {
+          const line = event.split("\n").find(part => part.startsWith("data: "));
+          if (!line) continue;
+
+          const rawPayload = line.slice(6).trim();
+          if (!rawPayload || rawPayload === "[DONE]") continue;
+
+          const payload = JSON.parse(rawPayload) as {
+            type?: "delta" | "done" | "error";
+            content?: string;
+            error?: string;
+          };
+
+          if (payload.type === "error") {
+            throw new Error(payload.error || "Failed to stream coach preview");
+          }
+
+          if (payload.content) {
+            setScorecardPreview(payload.content);
+          }
+        }
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        console.error("Coach preview streaming failed:", error);
+      }
+    } finally {
+      if (scorecardPreviewAbortRef.current === controller) {
+        scorecardPreviewAbortRef.current = null;
+      }
     }
   };
 
   const handleScorecardRequest = async (transcript: ConversationTurn[]) => {
-    if (!persona || !selectedMeeting) return;
+    if (!scenario || !selectedMeeting) return;
     setPracticeTranscript(transcript);
     setIsScorecardLoading(true);
     setView("plan");
+    setScorecardPreview("");
+    setScorecardError("");
 
     try {
-      const res = await fetch("/api/agents/coach-me/scorecard", {
+      void streamScorecardPreview(scenario, transcript);
+
+      const res = await fetch("/api/agents/coach-me/scorecard-v2", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          persona,
+          scenario,
           meetingContext: {
             leadName: selectedMeeting.leadName,
             leadCompany: selectedMeeting.leadCompany,
@@ -108,12 +468,19 @@ export default function CoachMe() {
           transcript,
         }),
       });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(parseRequestError(errorText || "Failed to generate scorecard"));
+      }
       const sc: ScorecardData = await res.json();
       setScorecard(sc);
       setView("scorecard");
-    } catch {
+    } catch (error) {
+      console.error("Scorecard generation failed:", error);
+      setScorecardError(error instanceof Error ? error.message : "Failed to generate scorecard");
+      setView("plan");
     } finally {
+      scorecardPreviewAbortRef.current?.abort();
       setIsScorecardLoading(false);
     }
   };
@@ -121,12 +488,14 @@ export default function CoachMe() {
   const handleRetry = () => {
     setView("plan");
     setScorecard(null);
+    setScorecardPreview("");
+    setScorecardError("");
   };
 
-  if (view === "practice" && persona && selectedMeeting) {
+  if (view === "practice" && scenario && selectedMeeting) {
     return (
       <CoachPractice
-        persona={persona}
+        scenario={scenario}
         meeting={{ leadName: selectedMeeting.leadName, leadCompany: selectedMeeting.leadCompany, purpose: selectedMeeting.purpose }}
         onScorecard={handleScorecardRequest}
         onBack={() => setView("plan")}
@@ -144,10 +513,86 @@ export default function CoachMe() {
             <BrainCircuit className="w-6 h-6 text-violet-400" />
           </div>
           <div>
-            <h1 className="text-3xl font-display font-bold text-white">Coach Me</h1>
-            <p className="text-muted-foreground">Sharpen your pitch and practice with an AI advisor persona.</p>
+            <h1 className="text-3xl font-display font-bold text-white">My Coach</h1>
+            <p className="text-muted-foreground">Practice scheduled advisors or jump into the prospects coaching workspace.</p>
           </div>
         </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            onClick={() => setCoachMode("scheduled")}
+            className={coachMode === "scheduled"
+              ? "bg-violet-600 hover:bg-violet-500 text-white"
+              : "bg-white/5 text-white hover:bg-white/10 border border-white/10"}
+          >
+            Scheduled Advisors
+          </Button>
+          <Button
+            type="button"
+            onClick={() => setCoachMode("prospects")}
+            className={coachMode === "prospects"
+              ? "bg-violet-600 hover:bg-violet-500 text-white"
+              : "bg-white/5 text-white hover:bg-white/10 border border-white/10"}
+          >
+            Prospects
+          </Button>
+        </div>
+
+        {coachMode === "prospects" ? (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/8 bg-card/30 p-5">
+              <div>
+                <h2 className="text-xl font-bold text-white">My Coach Prospects</h2>
+                <p className="text-sm text-muted-foreground">Embedded prospects coaching workspace from the deployed Azure application.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  className="border-white/10 text-white hover:bg-white/5 gap-2"
+                  onClick={() => {
+                    setIsProspectsLoading(true);
+                    setProspectsFrameKey((current) => current + 1);
+                  }}
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Reload
+                </Button>
+                <Button asChild className="bg-violet-600 hover:bg-violet-500 text-white gap-2">
+                  <a href={COACH_ME_PROSPECTS_URL} target="_blank" rel="noreferrer">
+                    <ExternalLink className="w-4 h-4" />
+                    Open In New Tab
+                  </a>
+                </Button>
+              </div>
+            </div>
+
+            <div className="relative overflow-hidden rounded-3xl border border-white/8 bg-[#08111f] min-h-[78vh]">
+              {isProspectsLoading && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-[#08111f]">
+                  <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+                  <p className="text-sm text-violet-200">Loading My Coach Prospects...</p>
+                </div>
+              )}
+
+              <div className="h-[78vh] w-full overflow-auto bg-white">
+                <iframe
+                  key={prospectsFrameKey}
+                  src={COACH_ME_PROSPECTS_URL}
+                  title="My Coach Prospects"
+                  className="border-0 bg-white"
+                  style={{
+                    width: "111.11%",
+                    height: "86.67vh",
+                    transform: "scale(0.9)",
+                    transformOrigin: "top left",
+                  }}
+                  onLoad={() => setIsProspectsLoading(false)}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
 
         <div className="grid lg:grid-cols-[340px_1fr] gap-8 items-start">
 
@@ -208,15 +653,25 @@ export default function CoachMe() {
               <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-card/20 rounded-3xl border border-white/5 border-dashed">
                 <Trophy className="w-12 h-12 text-violet-400 animate-pulse mb-6" />
                 <h3 className="text-xl font-semibold text-white mb-2">Generating Your Scorecard...</h3>
-                <p className="text-muted-foreground max-w-sm">Evaluating your practice session against the VG Way framework. This takes a moment.</p>
+                <p className="text-muted-foreground max-w-sm">
+                  Evaluating your practice session against the VG Way and building a compact report with examples.
+                </p>
+                {scorecardPreview && (
+                  <div className="mt-6 max-w-3xl rounded-2xl border border-white/8 bg-background/40 p-5 text-left">
+                    <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-violet-300/75">Live Coach Preview</p>
+                    <div className="max-h-[360px] overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-white/80">
+                      {scorecardPreview}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Scorecard View */}
-            {!isScorecardLoading && view === "scorecard" && scorecard && persona && selectedMeeting && (
+            {!isScorecardLoading && view === "scorecard" && scorecard && scenario && selectedMeeting && (
               <CoachScorecard
                 scorecard={scorecard}
-                persona={persona}
+                scenario={scenario}
                 meeting={{ leadName: selectedMeeting.leadName, leadCompany: selectedMeeting.leadCompany, purpose: selectedMeeting.purpose }}
                 onRetry={handleRetry}
               />
@@ -225,13 +680,18 @@ export default function CoachMe() {
             {/* Plan View */}
             {!isScorecardLoading && view === "plan" && (
               <>
-                {isPending ? (
+                {scorecardError && (
+                  <div className="mb-6 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                    {scorecardError}
+                  </div>
+                )}
+                {isPending && !displayedCoachData ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-card/20 rounded-3xl border border-white/5 border-dashed">
                     <BrainCircuit className="w-12 h-12 text-violet-400 animate-pulse mb-6" />
                     <h3 className="text-xl font-semibold text-white mb-2">Building Your Game Plan...</h3>
-                    <p className="text-muted-foreground max-w-sm">Analyzing the client profile and crafting your personalized coaching playbook.</p>
+                    <p className="text-muted-foreground max-w-sm">Analyzing the client profile and starting your tile-by-tile coaching plan.</p>
                   </div>
-                ) : !coachData ? (
+                ) : !displayedCoachData ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-12 bg-card/20 rounded-3xl border border-white/5 border-dashed">
                     <BrainCircuit className="w-16 h-16 text-muted-foreground/20 mb-4" />
                     <p className="text-muted-foreground text-lg">Select a meeting to generate your coaching plan.</p>
@@ -254,6 +714,48 @@ export default function CoachMe() {
                         </div>
                       </div>
 
+                      {isPending && (
+                        <div className="flex items-center gap-3 rounded-2xl border border-violet-500/15 bg-violet-500/5 px-4 py-3">
+                          <Loader2 className="w-4 h-4 text-violet-300 animate-spin" />
+                          <p className="text-sm text-violet-100/85">Streaming your coaching plan into the tiles as it generates.</p>
+                        </div>
+                      )}
+
+                      <Card className="bg-card/40 border-white/5">
+                        <CardHeader className="border-b border-white/5 bg-background/30 pb-4">
+                          <CardTitle className="text-lg flex items-center gap-2 text-white">
+                            <BookOpen className="w-5 h-5 text-cyan-400" /> VG Way
+                            <span className="text-xs font-normal text-muted-foreground ml-1">- The framework to run the call</span>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-5">
+                          <div className="mb-4 rounded-xl border border-cyan-500/15 bg-cyan-500/5 p-4">
+                            <p className="text-sm leading-relaxed text-white/80">
+                              Use this as your operating system during the call: lead the opening, earn discovery, connect the idea to the advisor's real issue, and leave with a clear next step.
+                            </p>
+                          </div>
+                          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                            {VG_WAY_STAGES.map((stage, index) => (
+                              <motion.div
+                                key={stage.title}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                                className="rounded-xl border border-white/6 bg-background/40 p-4"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-400/10 text-xs font-bold text-cyan-300">
+                                    {index + 1}
+                                  </span>
+                                  <p className="text-sm font-semibold text-white">{stage.title}</p>
+                                </div>
+                                <p className="mt-3 text-sm leading-relaxed text-white/75">{stage.guidance}</p>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+
                       {/* Win Themes */}
                       <Card className="bg-card/40 border-white/5">
                         <CardHeader className="border-b border-white/5 bg-background/30 pb-4">
@@ -264,7 +766,7 @@ export default function CoachMe() {
                         </CardHeader>
                         <CardContent className="pt-5">
                           <div className="grid sm:grid-cols-2 gap-3">
-                            {(coachData.winThemes as string[]).map((theme, i) => (
+                            {displayedCoachData.winThemes.map((theme, i) => (
                               <motion.div
                                 key={i}
                                 initial={{ opacity: 0, scale: 0.95 }}
@@ -276,6 +778,9 @@ export default function CoachMe() {
                                 {theme}
                               </motion.div>
                             ))}
+                            {isPending && displayedCoachData.winThemes.length === 0 && (
+                              <div className="sm:col-span-2 text-sm text-muted-foreground">Waiting for win themes...</div>
+                            )}
                           </div>
                         </CardContent>
                       </Card>
@@ -289,7 +794,7 @@ export default function CoachMe() {
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="pt-5 space-y-4">
-                          {(coachData.openingPitches as string[]).map((pitch, i) => {
+                          {displayedCoachData.openingPitches.map((pitch, i) => {
                             const labels = ["Confident", "Consultative", "Value-First"];
                             const colors = ["text-blue-400 bg-blue-400/10 border-blue-400/20", "text-sky-400 bg-sky-400/10 border-sky-400/20", "text-cyan-400 bg-cyan-400/10 border-cyan-400/20"];
                             return (
@@ -307,6 +812,9 @@ export default function CoachMe() {
                               </motion.div>
                             );
                           })}
+                          {isPending && displayedCoachData.openingPitches.length === 0 && (
+                            <div className="text-sm text-muted-foreground">Waiting for opening pitches...</div>
+                          )}
                         </CardContent>
                       </Card>
 
@@ -319,7 +827,7 @@ export default function CoachMe() {
                         </CardHeader>
                         <CardContent className="pt-5">
                           <ul className="space-y-3">
-                            {(coachData.coachingTips as string[]).map((tip, i) => (
+                            {displayedCoachData.coachingTips.map((tip, i) => (
                               <motion.li
                                 key={i}
                                 initial={{ opacity: 0, x: -10 }}
@@ -333,6 +841,9 @@ export default function CoachMe() {
                                 <span className="leading-relaxed">{tip}</span>
                               </motion.li>
                             ))}
+                            {isPending && displayedCoachData.coachingTips.length === 0 && (
+                              <li className="text-sm text-muted-foreground">Waiting for coaching tips...</li>
+                            )}
                           </ul>
                         </CardContent>
                       </Card>
@@ -346,7 +857,7 @@ export default function CoachMe() {
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="pt-5 space-y-3">
-                          {(coachData.objections as { objection: string; suggestedResponse: string }[]).map((obj, i) => (
+                          {displayedCoachData.objections.map((obj, i) => (
                             <motion.div
                               key={i}
                               initial={{ opacity: 0, y: 8 }}
@@ -386,10 +897,13 @@ export default function CoachMe() {
                               </AnimatePresence>
                             </motion.div>
                           ))}
+                          {isPending && displayedCoachData.objections.length === 0 && (
+                            <div className="text-sm text-muted-foreground">Waiting for objections...</div>
+                          )}
                         </CardContent>
                       </Card>
 
-                      {/* Practice with AI Persona CTA */}
+                      {/* Practice with Realtime Persona CTA */}
                       <motion.div
                         initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -404,21 +918,21 @@ export default function CoachMe() {
                             </div>
                             <div>
                               <p className="text-xs text-violet-300/70 uppercase tracking-wider font-semibold mb-0.5">Ready to Practice?</p>
-                              <p className="text-white font-bold">Practice with AI Advisor Persona</p>
+                              <p className="text-white font-bold">Simulate the Selected Advisor Live</p>
                               <p className="text-sm text-muted-foreground mt-0.5">
-                                Roleplay with an AI-generated {selectedMeeting?.leadCompany} advisor — get voice feedback &amp; a P.A.C.E. scorecard.
+                                Run a realtime roleplay with the selected advisor scenario, get live coaching during the call, and finish with a concise scorecard.
                               </p>
                             </div>
                           </div>
                           <Button
                             onClick={handleStartPractice}
-                            disabled={isGeneratingPersona}
+                            disabled={isGeneratingScenario}
                             className="shrink-0 bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-500/25 gap-2"
                           >
-                            {isGeneratingPersona ? (
+                            {isGeneratingScenario ? (
                               <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
                             ) : (
-                              <><Sparkles className="w-4 h-4" /> Start Practice</>
+                              <><Sparkles className="w-4 h-4" /> Start Realtime Practice</>
                             )}
                           </Button>
                         </div>
@@ -437,7 +951,7 @@ export default function CoachMe() {
                           </div>
                           <div>
                             <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Next Step</p>
-                            <p className="text-sm font-semibold text-white">Engage Me — Real-time meeting intelligence</p>
+                            <p className="text-sm font-semibold text-white">My Engage — Real-time meeting intelligence</p>
                           </div>
                         </div>
                         <Button asChild className="shrink-0 bg-rose-500 hover:bg-rose-400 text-white shadow-lg shadow-rose-500/20">
@@ -454,6 +968,7 @@ export default function CoachMe() {
             )}
           </div>
         </div>
+        )}
       </div>
     </Layout>
   );

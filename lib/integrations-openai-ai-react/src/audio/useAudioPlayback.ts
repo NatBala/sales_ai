@@ -59,6 +59,9 @@ export function useAudioPlayback(workletPath: string) {
     }
 
     const ctx = new AudioContext({ sampleRate: 24000 });
+    if (ctx.state === "suspended") {
+      await ctx.resume();
+    }
     await ctx.audioWorklet.addModule(workletPath);
     const worklet = new AudioWorkletNode(ctx, "audio-playback-processor");
     worklet.connect(ctx.destination);

@@ -16,6 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
+import { useRealtimeCall } from "@/hooks/use-realtime-call";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell
 } from "recharts";
@@ -34,6 +35,102 @@ interface ParsedFilters {
   ratingsMin: number | null;
   competitors: string[];
   totalOppMin: number | null;
+}
+
+interface LeadSearchResponse {
+  leads: GeneratedLead[];
+  parsedFilters?: ParsedFilters;
+  filteredCount?: number;
+  totalCount?: number;
+  usedFallback?: boolean;
+  rankingMode?: string;
+  showAdvisorProfile?: boolean;
+}
+
+interface RealtimeEvent {
+  type: string;
+  transcript?: string;
+  delta?: string;
+  error?: { message?: string };
+}
+
+interface SpeechRecognitionAlternativeLike {
+  transcript: string;
+}
+
+interface SpeechRecognitionResultLike {
+  isFinal: boolean;
+  length: number;
+  item(index: number): SpeechRecognitionAlternativeLike;
+  [index: number]: SpeechRecognitionAlternativeLike;
+}
+
+interface SpeechRecognitionEventLike extends Event {
+  resultIndex: number;
+  results: {
+    length: number;
+    item(index: number): SpeechRecognitionResultLike;
+    [index: number]: SpeechRecognitionResultLike;
+  };
+}
+
+interface SpeechRecognitionLike extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: Event & { error?: string }) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
+
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
+
+function cleanLeadTranscriptText(text: string): string {
+  return text
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .trim();
+}
+
+function mergeLeadTranscript(existing: string, addition: string): string {
+  const left = cleanLeadTranscriptText(existing);
+  const right = cleanLeadTranscriptText(addition);
+
+  if (!right) return left;
+  if (!left) return right;
+
+  const leftLower = left.toLowerCase();
+  const rightLower = right.toLowerCase();
+
+  if (leftLower === rightLower || leftLower.endsWith(rightLower)) {
+    return left;
+  }
+
+  if (rightLower.startsWith(leftLower)) {
+    return right;
+  }
+
+  const maxOverlap = Math.min(left.length, right.length);
+  for (let overlap = maxOverlap; overlap > 0; overlap -= 1) {
+    if (leftLower.slice(-overlap) === rightLower.slice(0, overlap)) {
+      return cleanLeadTranscriptText(`${left}${right.slice(overlap)}`);
+    }
+  }
+
+  return cleanLeadTranscriptText(`${left} ${right}`);
+}
+
+function parseRequestError(raw: string): string {
+  try {
+    const parsed = JSON.parse(raw) as { error?: string; details?: string };
+    if (parsed.details) return `${parsed.error ?? "Request failed"}: ${parsed.details}`;
+    return parsed.error ?? raw;
+  } catch {
+    return raw;
+  }
 }
 
 interface FilterChip {
@@ -73,15 +170,35 @@ function buildFilterChips(f: ParsedFilters): FilterChip[] {
 }
 
 function QueryIntelligencePanel({
-  parsedFilters, filteredCount, totalCount, usedFallback
+  parsedFilters, filteredCount, totalCount, usedFallback, rankingMode
 }: {
   parsedFilters: ParsedFilters;
   filteredCount: number;
   totalCount: number;
   usedFallback: boolean;
+  rankingMode?: string;
 }) {
   const chips = buildFilterChips(parsedFilters);
   const hasFilters = chips.length > 0;
+  const rankingLabel = rankingMode && rankingMode !== "semantic"
+    ? rankingMode === "totalOpportunity"
+      ? "Ranking by total opportunity"
+      : rankingMode === "fiOpportunity"
+        ? "Ranking by FI opportunity"
+        : rankingMode === "etfOpportunity"
+          ? "Ranking by ETF opportunity"
+          : rankingMode === "alpha"
+            ? "Ranking by alpha"
+            : rankingMode === "aum"
+              ? "Ranking by AUM"
+              : rankingMode === "ratings"
+                ? "Ranking by ratings"
+                : rankingMode === "netPositiveFlow"
+                  ? "Ranking by positive net flow"
+                  : rankingMode === "netNegativeFlow"
+                    ? "Ranking by redemptions / outflow"
+                    : null
+    : null;
 
   return (
     <motion.div
@@ -128,10 +245,19 @@ function QueryIntelligencePanel({
                 {chip.value}
               </motion.span>
             ))}
+            {rankingLabel && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border bg-fuchsia-500/10 border-fuchsia-500/25 text-fuchsia-300">
+                <span className="opacity-50 font-normal">Sort:</span>
+                {rankingLabel}
+              </span>
+            )}
           </div>
         ) : (
           <div className="text-xs text-muted-foreground">
-            <span className="text-white/60">No explicit filters detected.</span> Showing AI-selected top matches across all {totalCount} advisors based on semantic similarity.
+            <span className="text-white/60">No explicit filters detected.</span>{" "}
+            {rankingLabel
+              ? `${rankingLabel} across all ${totalCount} advisors.`
+              : `Showing AI-selected top matches across all ${totalCount} advisors based on semantic similarity.`}
           </div>
         )}
 
@@ -168,6 +294,9 @@ interface AdvisorData {
   territory: string;
   segment: string;
   ratings: number | null;
+  advisorProfile?: string;
+  salesEngagement?: string;
+  salesNotes?: string;
 }
 
 function parseAdvisorData(assets: string): AdvisorData | null {
@@ -230,6 +359,9 @@ function AdvisorExpandedView({ lead, advisor }: { lead: GeneratedLead; advisor: 
   const seg = SEGMENT_LABELS[advisor.segment] ?? SEGMENT_LABELS.C;
   const flowData = [{ name: "Flow", Sales: advisor.salesAmt, Redemption: advisor.redemption }];
   const oppData = [{ name: "Opportunity", "Fixed Income": advisor.fiOpportunities, "Active ETFs": advisor.etfOpportunities }];
+  const advisorProfile = advisor.advisorProfile?.trim() ?? "";
+  const salesNotes = advisor.salesNotes?.trim() ?? "";
+  const salesEngagement = advisor.salesEngagement?.trim() ?? "";
 
   return (
     <motion.div
@@ -333,10 +465,27 @@ function AdvisorExpandedView({ lead, advisor }: { lead: GeneratedLead; advisor: 
           </div>
         )}
 
-        {/* Deep reasoning */}
         <div className="bg-primary/5 border border-primary/15 rounded-xl p-4">
-          <p className="text-[10px] uppercase tracking-wider text-primary font-semibold mb-2">AI Deep Analysis</p>
+          <p className="text-[10px] uppercase tracking-wider text-primary font-semibold mb-2">AI Match Analysis</p>
           <p className="text-sm text-white/80 leading-relaxed">{lead.reasoning}</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {advisorProfile && (
+            <div className="bg-background/40 rounded-xl p-4 border border-white/5">
+              <p className="text-[10px] uppercase tracking-wider text-cyan-300 font-semibold mb-2">Advisor Profile</p>
+              <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">{advisorProfile}</p>
+            </div>
+          )}
+
+          {(salesNotes || salesEngagement) && (
+            <div className="bg-background/40 rounded-xl p-4 border border-white/5">
+              <p className="text-[10px] uppercase tracking-wider text-emerald-300 font-semibold mb-2">Sales Context</p>
+              <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">
+                {salesNotes || salesEngagement}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -472,14 +621,25 @@ function GeneratingProgress({ step }: { step: number }) {
 
 export default function LeadMe() {
   const [query, setQuery] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [interimQuery, setInterimQuery] = useState("");
+  const [sessionState, setSessionState] = useState<"idle" | "connecting" | "live" | "ended">("idle");
+  const [sessionError, setSessionError] = useState("");
+  const [isUserSpeaking, setIsUserSpeaking] = useState(false);
   const finalTranscriptRef = useRef("");
+  const partialTranscriptRef = useRef("");
+  const transcriptNormalizationRequestIdRef = useRef(0);
+  const sessionRunRef = useRef(0);
+  const sessionStateRef = useRef<"idle" | "connecting" | "live" | "ended">("idle");
+  const speechRecognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const isRecording = sessionState === "live";
+  const isTranscribing = sessionState === "connecting";
   const { mutate: generateLeads, isPending: isGenerating, data } = useAgentLeadMe();
   const { mutate: saveLead, isPending: isSaving } = useCreateLead();
   const { toast } = useToast();
   const [savedIndices, setSavedIndices] = useState<number[]>([]);
+  const [savedLeadIdsByIndex, setSavedLeadIdsByIndex] = useState<Record<number, string>>({});
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const responseData = data as LeadSearchResponse | undefined;
 
   const [progressStep, setProgressStep] = useState(0);
   const progressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -507,70 +667,277 @@ export default function LeadMe() {
     };
   }, [isGenerating]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    setSavedIndices([]);
-    setExpandedIdx(null);
-    generateLeads({ data: { query } });
+  useEffect(() => {
+    if (responseData?.showAdvisorProfile && responseData.leads.length > 0) {
+      setExpandedIdx(0);
+    }
+  }, [responseData?.showAdvisorProfile, responseData?.leads.length]);
+
+  useEffect(() => {
+    sessionStateRef.current = sessionState;
+  }, [sessionState]);
+
+  const {
+    startCall: startRealtimeCall,
+    endCall: endRealtimeCall,
+  } = useRealtimeCall({
+    playbackWorkletPath: `${import.meta.env.BASE_URL}audio-playback-worklet.js`,
+    captureWorkletPath: `${import.meta.env.BASE_URL}audio-capture-worklet.js`,
+    onUserTranscriptDelta: (delta) => {
+      partialTranscriptRef.current = mergeLeadTranscript(partialTranscriptRef.current, delta);
+      setQuery(mergeLeadTranscript(finalTranscriptRef.current, partialTranscriptRef.current));
+    },
+    onUserTranscript: (text) => {
+      const transcript = cleanLeadTranscriptText(text ?? partialTranscriptRef.current);
+      if (!transcript) return;
+      finalTranscriptRef.current = mergeLeadTranscript(finalTranscriptRef.current, transcript);
+      partialTranscriptRef.current = "";
+      setInterimQuery("");
+      setQuery(finalTranscriptRef.current);
+      void normalizeLeadTranscript(finalTranscriptRef.current);
+    },
+    onRealtimeEvent: (event) => {
+      switch (event.type) {
+        case "input_audio_buffer.speech_started":
+          setIsUserSpeaking(true);
+          break;
+        case "input_audio_buffer.speech_stopped":
+          setIsUserSpeaking(false);
+          break;
+        default:
+          break;
+      }
+    },
+    onError: (error) => {
+      setSessionError(error.message || "Realtime transcription error.");
+    },
+    onConnectionStateChange: (state) => {
+      if (state === "idle") {
+        setSessionState("idle");
+        return;
+      }
+      if (state === "connecting") {
+        setSessionState("connecting");
+        return;
+      }
+      if (state === "connected") {
+        setSessionState("live");
+        return;
+      }
+      setSessionState((prev) => (prev === "idle" ? prev : "ended"));
+    },
+  });
+
+  const disposeRecognition = () => {
+    const recognition = speechRecognitionRef.current;
+    if (recognition) {
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+      recognition.abort();
+      speechRecognitionRef.current = null;
+    }
   };
 
-  const handleMicClick = () => {
-    if (isRecording) {
-      recognitionRef.current?.stop();
-      recognitionRef.current = null;
-      setIsRecording(false);
-      return;
-    }
+  const stopSession = (nextState: "idle" | "ended" = "ended") => {
+    sessionRunRef.current += 1;
+    disposeRecognition();
+    endRealtimeCall();
+    partialTranscriptRef.current = "";
+    transcriptNormalizationRequestIdRef.current += 1;
+    setInterimQuery("");
+    setIsUserSpeaking(false);
+    setSessionState(nextState);
+  };
 
-    const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
-    if (!SR) {
-      toast({ title: "Live transcription not supported", description: "Please type your query.", variant: "destructive" });
-      return;
-    }
+  useEffect(() => () => {
+    disposeRecognition();
+    endRealtimeCall();
+  }, [endRealtimeCall]);
 
-    const rec = new SR() as SpeechRecognition;
-    rec.continuous = true;
-    rec.interimResults = true;
-    rec.lang = "en-US";
+  async function normalizeLeadTranscript(transcript: string) {
+    const requestId = ++transcriptNormalizationRequestIdRef.current;
+
+    try {
+      const res = await fetch("/api/agents/lead-me/normalize-transcript", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(parseRequestError(errorText || "Failed to normalize lead transcript"));
+      }
+
+      const data = await res.json() as { correctedTranscript?: string };
+      const correctedTranscript = cleanLeadTranscriptText(data.correctedTranscript ?? transcript);
+      if (transcriptNormalizationRequestIdRef.current === requestId && correctedTranscript) {
+        finalTranscriptRef.current = correctedTranscript;
+        partialTranscriptRef.current = "";
+        setQuery(correctedTranscript);
+      }
+    } catch (error) {
+      console.error("Failed to normalize Lead Me transcript:", error);
+    }
+  }
+
+  const startListening = async () => {
+    if (sessionState === "connecting" || sessionState === "live") return;
+
+    stopSession("idle");
+    setSessionError("");
+    setSessionState("connecting");
     finalTranscriptRef.current = "";
+    partialTranscriptRef.current = "";
+    setInterimQuery("");
+    setQuery("");
+    const sessionRun = sessionRunRef.current;
 
-    rec.onresult = (event: SpeechRecognitionEvent) => {
-      let interim = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const t = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscriptRef.current += t;
-        } else {
-          interim = t;
+    try {
+      const recognitionCtor = (
+        window as Window & {
+          SpeechRecognition?: SpeechRecognitionCtor;
+          webkitSpeechRecognition?: SpeechRecognitionCtor;
+        }
+      ).SpeechRecognition ?? (
+        window as Window & {
+          SpeechRecognition?: SpeechRecognitionCtor;
+          webkitSpeechRecognition?: SpeechRecognitionCtor;
+        }
+      ).webkitSpeechRecognition;
+
+      if (recognitionCtor) {
+        const recognition = new recognitionCtor();
+        speechRecognitionRef.current = recognition;
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = "en-US";
+        recognition.onresult = (event) => {
+          if (sessionRunRef.current !== sessionRun || speechRecognitionRef.current !== recognition) return;
+
+          let liveInterim = "";
+          let liveFinal = finalTranscriptRef.current;
+
+          for (let i = event.resultIndex; i < event.results.length; i += 1) {
+            const result = event.results[i];
+            const alt = result[0]?.transcript ?? result.item(0)?.transcript ?? "";
+            if (!alt.trim()) continue;
+
+            if (result.isFinal) {
+              liveFinal = mergeLeadTranscript(liveFinal, alt);
+            } else {
+              liveInterim = mergeLeadTranscript(liveInterim, alt);
+            }
+          }
+
+          finalTranscriptRef.current = liveFinal;
+          setInterimQuery(liveInterim);
+          setQuery(liveInterim ? mergeLeadTranscript(liveFinal, liveInterim) : liveFinal);
+        };
+        recognition.onerror = () => {
+          if (sessionRunRef.current !== sessionRun || speechRecognitionRef.current !== recognition) return;
+          speechRecognitionRef.current = null;
+        };
+        recognition.onend = () => {
+          if (sessionRunRef.current !== sessionRun || speechRecognitionRef.current !== recognition) return;
+          if (sessionStateRef.current === "live" || sessionStateRef.current === "connecting") {
+            try {
+              recognition.start();
+            } catch {
+              speechRecognitionRef.current = null;
+            }
+          }
+        };
+        try {
+          recognition.start();
+        } catch {
+          speechRecognitionRef.current = null;
         }
       }
-      setQuery(finalTranscriptRef.current + interim);
-    };
+      await startRealtimeCall(
+        {},
+        {
+          sessionPath: "/api/realtime/lead-me-session",
+          initialResponse: null,
+        },
+      );
+    } catch (error) {
+      console.error("Failed to start Lead Me session:", error);
+      if (sessionRunRef.current === sessionRun) {
+        setSessionError(error instanceof Error ? error.message : "Could not start live dictation.");
+        disposeRecognition();
+        endRealtimeCall();
+        setSessionState("ended");
+      }
+    }
+  };
 
-    rec.onend = () => { setIsRecording(false); recognitionRef.current = null; };
-    rec.onerror = () => { setIsRecording(false); recognitionRef.current = null; };
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
 
-    rec.start();
-    recognitionRef.current = rec;
-    setIsRecording(true);
-    setQuery("");
-    finalTranscriptRef.current = "";
+    let normalizedQuery = query.trim();
+    try {
+      const res = await fetch("/api/agents/lead-me/normalize-transcript", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript: normalizedQuery }),
+      });
+
+      if (res.ok) {
+        const data = await res.json() as { correctedTranscript?: string };
+        normalizedQuery = cleanLeadTranscriptText(data.correctedTranscript ?? normalizedQuery) || normalizedQuery;
+        setQuery(normalizedQuery);
+      }
+    } catch (error) {
+      console.error("Failed to normalize Lead Me search query:", error);
+    }
+
+    setSavedIndices([]);
+    setSavedLeadIdsByIndex({});
+    setExpandedIdx(null);
+    generateLeads({ data: { query: normalizedQuery } });
+  };
+
+  const handleMicClick = async () => {
+    if (sessionState === "connecting" || sessionState === "live") {
+      stopSession();
+      return;
+    }
+
+    try {
+      await startListening();
+    } catch {
+      toast({ title: "Microphone error", description: "Could not start live transcription.", variant: "destructive" });
+    }
   };
 
   const handleSave = (lead: GeneratedLead, index: number) => {
     saveLead(
       { data: lead },
       {
-        onSuccess: () => {
+        onSuccess: (savedLead) => {
           setSavedIndices(prev => [...prev, index]);
+          const savedId = typeof savedLead === "object" && savedLead && "id" in savedLead
+            ? String((savedLead as { id?: string | number }).id ?? "")
+            : "";
+          if (savedId) {
+            setSavedLeadIdsByIndex(prev => ({ ...prev, [index]: savedId }));
+          }
           toast({ title: "Lead Saved", description: `${lead.name} has been added to your pipeline.` });
-        }
+        },
+        onError: () => {
+          toast({ title: "Save Failed", description: "Could not save lead. Please try again.", variant: "destructive" });
+        },
       }
     );
   };
 
   const toggleExpand = (i: number) => setExpandedIdx(prev => prev === i ? null : i);
+
+  const firstSavedLeadId = savedLeadIdsByIndex[savedIndices[0] ?? -1] ?? "";
+  const scheduleHref = firstSavedLeadId ? `/schedule-me/${firstSavedLeadId}` : "/leads";
 
   return (
     <Layout>
@@ -582,7 +949,7 @@ export default function LeadMe() {
             <Search className="w-6 h-6 text-blue-400" />
           </div>
           <div>
-            <h1 className="text-3xl font-display font-bold text-white">Lead Me</h1>
+            <h1 className="text-3xl font-display font-bold text-white">My Leads</h1>
             <p className="text-muted-foreground">AI-powered advisor matching from your real dataset.</p>
           </div>
         </div>
@@ -597,11 +964,17 @@ export default function LeadMe() {
                 className={`absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 focus:outline-none ${
                   isRecording
                     ? "bg-red-500/20 border border-red-500/40 text-red-400"
+                    : isTranscribing
+                    ? "bg-blue-500/20 border border-blue-500/40 text-blue-300"
                     : "bg-white/5 border border-white/10 text-muted-foreground hover:text-white hover:bg-white/10 hover:border-white/20"
                 }`}
               >
                 <AnimatePresence mode="wait">
-                  {isRecording ? (
+                  {isTranscribing ? (
+                    <motion.div key="transcribing" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    </motion.div>
+                  ) : isRecording ? (
                     <motion.div key="rec" initial={{ scale: 0.7 }} animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 1, ease: "easeInOut" }}>
                       <MicOff className="w-4 h-4" />
                     </motion.div>
@@ -615,8 +988,8 @@ export default function LeadMe() {
 
               <Input
                 value={query}
-                onChange={e => !isRecording && setQuery(e.target.value)}
-                placeholder={isRecording ? "Listening… speak now — words appear as you talk" : "Tap mic or type — e.g. Edward Jones advisors in Cook County with high FI opportunity…"}
+                onChange={e => !isRecording && !isTranscribing && setQuery(e.target.value)}
+                placeholder={isRecording ? "Listening live... tap the mic again to stop" : isTranscribing ? "Connecting realtime transcription..." : "Tap mic or type - e.g. Edward Jones advisors in Cook County with high FI opportunity..."}
                 className="w-full pl-16 pr-36 h-16 text-lg bg-transparent border-0 focus-visible:ring-0 text-white placeholder:text-muted-foreground/60"
               />
 
@@ -624,12 +997,12 @@ export default function LeadMe() {
                 <span className="absolute left-16 top-1/2 -translate-y-1/2 pointer-events-none text-lg text-white">
                   {query}
                   <motion.span className="inline-block w-0.5 h-5 bg-red-400 ml-0.5 align-middle"
-                    animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.5, ease: "steps(1)" }} />
+                    animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.5, ease: "linear" }} />
                 </span>
               )}
 
               <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                <Button type="submit" disabled={isGenerating || !query.trim() || isRecording}
+                <Button type="submit" disabled={isGenerating || isTranscribing || !query.trim() || isRecording}
                   className="h-12 px-6 rounded-xl font-semibold shadow-lg shadow-primary/25">
                   {isGenerating ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Search className="w-5 h-5 mr-2" />}
                   Generate
@@ -652,7 +1025,35 @@ export default function LeadMe() {
                     transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.15, ease: "easeInOut" }} />
                 ))}
               </div>
-              <span className="text-sm font-medium text-red-400">Live transcription active — tap the mic again to stop</span>
+              <span className="text-sm font-medium text-red-400">
+                {isUserSpeaking ? "Listening live to your lead query..." : "Realtime transcription is live - start speaking or tap again to stop"}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isTranscribing && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl border"
+              style={{ borderColor: "rgba(59,130,246,0.3)", background: "rgba(59,130,246,0.05)" }}>
+              <Loader2 className="w-4 h-4 text-blue-300 animate-spin" />
+              <span className="text-sm font-medium text-blue-300">Starting realtime transcription with advisor-dataset vocabulary</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {sessionError && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="flex items-center gap-3 rounded-xl border px-4 py-3"
+              style={{ borderColor: "rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.05)" }}
+            >
+              <MicOff className="h-4 w-4 text-red-400" />
+              <span className="text-sm font-medium text-red-300">{sessionError}</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -662,28 +1063,31 @@ export default function LeadMe() {
           {isGenerating ? (
             <GeneratingProgress key="generating" step={progressStep} />
           ) : null}
-          {!isGenerating && data?.leads && data.leads.length > 0 && (
+          {!isGenerating && responseData?.leads && responseData.leads.length > 0 && (
             <motion.div key="results" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
 
               {/* Query Intelligence Panel */}
-              {(data as any).parsedFilters && (
+              {responseData.parsedFilters && (
                 <QueryIntelligencePanel
-                  parsedFilters={(data as any).parsedFilters as ParsedFilters}
-                  filteredCount={(data as any).filteredCount as number ?? data.leads.length}
-                  totalCount={(data as any).totalCount as number ?? 200}
-                  usedFallback={(data as any).usedFallback as boolean ?? false}
+                  parsedFilters={responseData.parsedFilters}
+                  filteredCount={responseData.filteredCount ?? responseData.leads.length}
+                  totalCount={responseData.totalCount ?? 200}
+                  usedFallback={responseData.usedFallback ?? false}
+                  rankingMode={responseData.rankingMode}
                 />
               )}
 
               <div className="flex items-center justify-between pl-1">
                 <h3 className="text-xl font-display font-semibold text-white">
-                  Matched Advisors <span className="text-muted-foreground font-normal text-base">({data.leads.length})</span>
+                  Matched Advisors <span className="text-muted-foreground font-normal text-base">({responseData.leads.length})</span>
                 </h3>
-                <p className="text-xs text-muted-foreground">Click a card to view advisor profile</p>
+                <p className="text-xs text-muted-foreground">
+                  {responseData.showAdvisorProfile ? "Top advisor profile opened automatically from your query intent" : "Click a card to view advisor profile"}
+                </p>
               </div>
 
               <div className="grid gap-3">
-                {data.leads.map((lead, i) => {
+                {responseData.leads.map((lead, i) => {
                   const advisor = parseAdvisorData(lead.assets ?? "");
                   const isSaved = savedIndices.includes(i);
                   const isExpanded = expandedIdx === i;
@@ -800,7 +1204,7 @@ export default function LeadMe() {
                     <Link href="/leads"><ExternalLink className="w-4 h-4 mr-1" />Pipeline</Link>
                   </Button>
                   <Button asChild className="bg-cyan-500 hover:bg-cyan-400 text-white shadow-lg shadow-cyan-500/25">
-                    <Link href="/leads">Proceed <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
+                    <Link href={scheduleHref}>Proceed <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
                   </Button>
                 </div>
               </div>

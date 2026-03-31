@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 
 import Dashboard from "@/pages/dashboard";
 import LeadMe from "@/pages/lead-me";
+import EmailMe from "@/pages/email-me";
 import LeadsList from "@/pages/leads";
 import LeadProfile from "@/pages/lead-profile";
 import ScheduleMe from "@/pages/schedule-me";
@@ -28,6 +29,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/lead-me" component={LeadMe} />
+      <Route path="/email-me" component={EmailMe} />
       <Route path="/leads" component={LeadsList} />
       <Route path="/leads/:id" component={LeadProfile} />
       <Route path="/schedule-me/:id" component={ScheduleMe} />

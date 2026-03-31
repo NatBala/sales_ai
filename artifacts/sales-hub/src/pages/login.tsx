@@ -2,7 +2,7 @@ import { useAuth } from "@workspace/replit-auth-web";
 import { Redirect } from "wouter";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Activity, Search, Calendar, FileText, CheckSquare, ArrowRight } from "lucide-react";
+import { Activity, Search, Calendar, FileText, CheckSquare, ArrowRight, BrainCircuit, Mail } from "lucide-react";
 
 export default function Login() {
   const { isAuthenticated, login, isLoading } = useAuth();
@@ -11,11 +11,13 @@ export default function Login() {
   if (isAuthenticated) return <Redirect to="/" />;
 
   const agents = [
-    { icon: Search, title: "Lead Me", desc: "AI Lead Gen" },
-    { icon: Calendar, title: "Schedule Me", desc: "Smart Outreach" },
-    { icon: FileText, title: "Prep Me", desc: "Meeting Briefs" },
-    { icon: Activity, title: "Engage Me", desc: "Live Intel" },
-    { icon: CheckSquare, title: "Follow Me", desc: "Automated Tasks" },
+    { icon: Search, title: "My Leads", desc: "AI Lead Gen" },
+    { icon: Calendar, title: "My Schedule", desc: "Smart Outreach" },
+    { icon: FileText, title: "My Prep", desc: "Meeting Briefs" },
+    { icon: BrainCircuit, title: "My Coach", desc: "Practice & Coaching" },
+    { icon: Activity, title: "My Engage", desc: "Live Intel" },
+    { icon: CheckSquare, title: "My Follow up", desc: "Automated Tasks" },
+    { icon: Mail, title: "My Email", desc: "Email Workspace" },
   ];
 
   return (
@@ -43,7 +45,7 @@ export default function Login() {
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
-            One platform that manages your entire pipeline. Generate leads, automate outreach, prep for meetings, and extract real-time intelligence with five specialized AI agents.
+            One platform that manages your entire pipeline. Generate leads, automate outreach, prep for meetings, practice conversations, and extract real-time intelligence with seven specialized AI agents.
           </p>
 
           <Button 
