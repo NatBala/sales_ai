@@ -1,0 +1,7 @@
+{
+  "globalHeaders": {
+    "Permissions-Policy": "microphone=*, camera=*, autoplay=*, display-capture=*",
+    "Cross-Origin-Embedder-Policy": "unsafe-none",
+    "Cross-Origin-Opener-Policy": "unsafe-none"
+  }
+}

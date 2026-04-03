@@ -1,0 +1,25 @@
+DEPLOYED LINKS
+==============
+
+CAPITAL GROUP (CG)
+------------------
+  Landing Page  : https://ambitious-tree-0e978dd1e.6.azurestaticapps.net
+  App           : https://jolly-cliff-04bac391e.6.azurestaticapps.net
+  Backend API   : https://salesai-api.azurewebsites.net
+  Email Me      : https://nice-dune-093fa7f1e.1.azurestaticapps.net
+
+VANGUARD (VG)
+-------------
+  Landing Page  : https://gentle-pond-075c4741e.6.azurestaticapps.net
+  App           : https://black-plant-06553071e.6.azurestaticapps.net
+  Backend API   : https://salesai-vg-api.azurewebsites.net
+  Email Me      : https://gentle-moss-0d4d5121e.6.azurestaticapps.net
+
+SHARED TOOLS
+------------
+  Sales Coach   : https://coachme-vg.azurewebsites.net
+
+REPOSITORY
+----------
+  GitHub (Email Me source) : https://github.com/kpmg-us/marketing-research-demos
+  GitHub (Main codebase)   : https://github.com/kpmg-us/salesai.git

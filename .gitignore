@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.zip
+*.log
+.pnpm-store/
+.DS_Store

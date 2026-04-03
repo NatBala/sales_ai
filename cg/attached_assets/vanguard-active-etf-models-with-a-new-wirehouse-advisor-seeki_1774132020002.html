@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vanguard Active ETF Models with a new wirehouse advisor seeking a defensible, practical client-use case</title>
+    <style>
+      :root {
+        --bg: #edf4fb;
+        --bg-deep: #dbe7f5;
+        --ink: #10233c;
+        --muted: #5f7189;
+        --line: #d7e1ed;
+        --panel: #ffffff;
+        --panel-soft: #f6faff;
+        --accent: #1b77ff;
+        --accent-soft: #e8f2ff;
+        --accent-deep: #0f4db8;
+        --success: #23896a;
+        --warning: #c88f20;
+        --danger: #c6536c;
+        --shadow: 0 24px 70px rgba(16, 35, 60, 0.12);
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Aptos, Arial, sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(27, 119, 255, 0.08), transparent 24%),
+          radial-gradient(circle at top right, rgba(55, 166, 255, 0.06), transparent 18%),
+          linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+      }
+      .report-shell {
+        width: min(1240px, calc(100% - 48px));
+        margin: 28px auto 56px;
+        display: grid;
+        gap: 24px;
+      }
+      .hero {
+        background:
+          radial-gradient(circle at top right, rgba(141, 214, 255, 0.22), transparent 22%),
+          linear-gradient(135deg, rgba(27, 119, 255, 0.96), rgba(9, 56, 126, 0.96)),
+          #103f81;
+        color: white;
+        border-radius: 34px;
+        padding: 34px;
+        box-shadow: var(--shadow);
+      }
+      .hero__top {
+        display: flex;
+        justify-content: space-between;
+        gap: 28px;
+        align-items: flex-start;
+      }
+      .hero__main {
+        min-width: 0;
+      }
+      .brand {
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        opacity: 0.86;
+      }
+      .hero h1 {
+        margin: 12px 0 12px;
+        font-size: clamp(2.2rem, 4vw, 3.35rem);
+        line-height: 0.98;
+      }
+      .hero p {
+        margin: 0;
+        max-width: 70ch;
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.88);
+      }
+      .hero__side {
+        display: grid;
+        grid-template-columns: auto minmax(240px, 280px);
+        gap: 18px;
+        align-items: center;
+      }
+      .score-ring {
+        --score: 15;
+        width: 170px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background:
+          radial-gradient(closest-side, rgba(8, 28, 58, 0.98) 72%, transparent 74% 100%),
+          conic-gradient(#8ad2ff calc(var(--score) * 1%), rgba(255, 255, 255, 0.16) 0);
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
+      .score-ring__inner {
+        text-align: center;
+      }
+      .score-ring__value {
+        font-size: 2.6rem;
+        font-weight: 800;
+        line-height: 1;
+      }
+      .score-ring__label {
+        margin-top: 6px;
+        font-size: 0.82rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.78);
+      }
+      .advisor-card {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 26px;
+        padding: 18px;
+        backdrop-filter: blur(12px);
+      }
+      .advisor-card__portrait {
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        border-radius: 20px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.1);
+        margin-bottom: 14px;
+      }
+      .advisor-card__portrait img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .advisor-card__name {
+        font-size: 1.15rem;
+        font-weight: 800;
+      }
+      .advisor-card__role {
+        margin-top: 6px;
+        color: rgba(255, 255, 255, 0.78);
+        line-height: 1.5;
+      }
+      .advisor-card__meta {
+        display: grid;
+        gap: 8px;
+        margin-top: 14px;
+        font-size: 0.94rem;
+        color: rgba(255, 255, 255, 0.9);
+      }
+      .hero__meta {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 24px;
+      }
+      .meta-card, .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+      }
+      .meta-card {
+        padding: 18px 20px;
+      }
+      .meta-card__label {
+        color: var(--muted);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .meta-card__value {
+        margin-top: 8px;
+        font-size: 1.05rem;
+        font-weight: 700;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 24px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 1fr;
+        gap: 24px;
+      }
+      .panel {
+        padding: 24px;
+      }
+      .panel__eyebrow {
+        color: var(--accent);
+        font-size: 0.76rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .panel h2 {
+        margin: 10px 0 12px;
+        font-size: 1.5rem;
+      }
+      .panel p, .panel li {
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      .score-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+      .mini-score {
+        padding: 16px;
+        border-radius: 18px;
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+      }
+      .mini-score__label {
+        color: var(--muted);
+        font-size: 0.78rem;
+        text-transform: capitalize;
+      }
+      .mini-score__value {
+        margin-top: 8px;
+        font-size: 1.5rem;
+        font-weight: 800;
+      }
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 14px;
+        border-radius: 999px;
+        font-weight: 700;
+        background: rgba(200, 77, 103, 0.12);
+        color: var(--danger);
+      }
+      .callout {
+        margin-top: 18px;
+        padding: 16px 18px;
+        border-radius: 18px;
+        background: var(--accent-soft);
+        border: 1px solid #cfe3ff;
+      }
+      .callout strong {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .stage-nav {
+        position: sticky;
+        top: 16px;
+        z-index: 3;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(14px);
+        box-shadow: var(--shadow);
+      }
+      .stage-nav__chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        text-decoration: none;
+        color: var(--ink);
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+        font-size: 0.92rem;
+      }
+      .stage-nav__chip strong {
+        color: var(--accent-deep);
+      }
+      .section-stack {
+        display: grid;
+        gap: 20px;
+      }
+      .stage-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: var(--shadow);
+        scroll-margin-top: 100px;
+      }
+      .stage-card__header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .stage-card__eyebrow {
+        color: var(--muted);
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .stage-card h3 {
+        margin: 8px 0 0;
+        font-size: 1.35rem;
+      }
+      .stage-card__score {
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+        font-weight: 800;
+      }
+      .stage-card__bar {
+        margin-top: 16px;
+        height: 12px;
+        border-radius: 999px;
+        background: #e8eff8;
+        overflow: hidden;
+      }
+      .stage-card__bar span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #6cc8ff, #1677ff);
+      }
+      .stage-card__spoken {
+        margin: 14px 0 0;
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .stage-card__grid, .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+      .report-note, .detail-card {
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+      }
+      .report-note__label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+      }
+      .report-note p, .detail-card p, .detail-card__meta {
+        margin: 10px 0 0;
+        line-height: 1.7;
+        color: var(--muted);
+      }
+      .detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .focus-card {
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr);
+        gap: 16px;
+        padding: 18px;
+        border-radius: 20px;
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+      }
+      .focus-card + .focus-card {
+        margin-top: 14px;
+      }
+      .focus-card__rank {
+        width: 58px;
+        height: 58px;
+        border-radius: 18px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #d8e8ff, #eef5ff);
+        color: var(--accent-deep);
+        font-size: 1.15rem;
+        font-weight: 800;
+      }
+      .focus-card h3 {
+        margin: 0;
+        font-size: 1.08rem;
+      }
+      .focus-card p, .focus-card__example {
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      .focus-card__example strong {
+        color: var(--ink);
+      }
+      .detail-card h3 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+      .report-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+      }
+      .report-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.12);
+        color: white;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .list-panel ul, .list-panel ol {
+        margin: 14px 0 0;
+        padding-left: 18px;
+      }
+      .transcript {
+        display: grid;
+        gap: 12px;
+      }
+      .transcript-turn {
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+      }
+      .transcript-turn--salesperson {
+        background: #edf6ff;
+      }
+      .transcript-turn--advisor {
+        background: #ffffff;
+      }
+      .transcript-turn__role {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 800;
+        color: var(--accent);
+      }
+      .transcript-turn__text {
+        margin-top: 10px;
+        line-height: 1.7;
+        color: var(--ink);
+      }
+      .empty-copy {
+        color: var(--muted);
+      }
+      @media print {
+        body { background: white; }
+        .report-shell { width: 100%; margin: 0; }
+        .hero, .panel, .stage-card, .meta-card { box-shadow: none; }
+        .stage-nav { position: static; box-shadow: none; }
+      }
+      @media (max-width: 980px) {
+        .hero__top, .grid-2, .grid-3, .hero__meta, .score-grid, .stage-card__grid, .detail-grid {
+          grid-template-columns: 1fr;
+          display: grid;
+        }
+        .hero__top {
+          gap: 18px;
+        }
+        .hero__side {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="report-shell">
+      <section class="hero">
+        <div class="brand">Digital Sales Coach Report</div>
+        <div class="hero__top">
+          <div class="hero__main">
+            <h1>Vanguard Active ETF Models with a new wirehouse advisor seeking a defensible, practical client-use case</h1>
+            <p>Mixed performance. You created a usable opening and surfaced a live case, but discovery depth, prioritization, and closing discipline were below VG Way standard.</p>
+            <div class="report-actions">
+              <a class="report-button" href="javascript:window.print()">Print or Save PDF</a>
+              <a class="report-button" href="#section-review">Jump to Section Review</a>
+            </div>
+          </div>
+          <div class="hero__side">
+            <div class="score-ring">
+              <div class="score-ring__inner">
+                <div class="score-ring__value">15</div>
+                <div class="score-ring__label">Needs work</div>
+              </div>
+            </div>
+            <div class="advisor-card">
+              
+                <div class="advisor-card__portrait">
+                  <img src="data:image/jpeg;base64,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" alt="Ashley Taylor headshot" />
+                </div>
+              
+              <div class="advisor-card__name">Ashley Taylor</div>
+              <div class="advisor-card__role">Entry-Level Financial Conglomerate Advisor</div>
+              <div class="advisor-card__meta">
+                <div><strong>Firm:</strong> Merrill Lynch</div>
+                <div><strong>Firm type:</strong> Wirehouse / Financial Conglomerate</div>
+                <div>New Merrill advisor who wants simple, defensible ideas she can explain confidently to clients and veteran peers.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hero__meta">
+          <div class="meta-card">
+            <div class="meta-card__label">Topic</div>
+            <div class="meta-card__value">Vanguard Active ETF Models</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-card__label">Difficulty</div>
+            <div class="meta-card__value">adaptive</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-card__label">Transcript Turns</div>
+            <div class="meta-card__value">23</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-card__label">Generated</div>
+            <div class="meta-card__value">3/19/2026, 2:38:10 PM</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-3">
+        <article class="panel">
+          <div class="panel__eyebrow">Executive Summary</div>
+          <h2>Scorecard Overview</h2>
+          <div class="status-pill">Mixed performance. You created a usable opening and surfaced a live case, but discovery depth, prioritization, and closing discipline were below VG Way standard.</div>
+          <p>This was a decent start with a live case and a clear business theme, but the call was incomplete and too quick to solution. You did well opening with time and a rough agenda, and you got Ashley into a relevant taxable account scenario fast. The biggest issue is that you skipped core discovery and never truly earned the active ETF model recommendation. You did not explore her current framework, confidence level, approval constraints, client-facing language needs, or how she currently handles taxable implementation. Your insight was directionally relevant, but parts of it were vague, potentially inaccurate, and not clearly tied to the actual account in front of her. You also missed a proper summary and closed with a meeting request before fully helping her in the moment. This sounded more like an early product pivot than a consultative VG Way conversation.</p>
+          <div class="callout">
+            <strong>Top Priority Fix</strong>
+            <div>Stop jumping from live case to product pitch. After the advisor shares a scenario, ask 2 to 3 deeper questions about current process, communication challenge, and implementation constraints before offering insight.</div>
+          </div>
+          <div class="callout">
+            <strong>Coach Talk Track</strong>
+            <div>You did two important things well: you opened with a time check and rough agenda, and you got Ashley into a real taxable case quickly. That gave the conversation relevance. But after that, you jumped too fast to the solution. You never asked how she currently frames active versus passive, what she needs to defend internally at Merrill, how she handles embedded gains today, or what would make her sound credible with the client. Because of that, your insight felt generic. You used terms like tax-loss harvesting and lower turnover, but you did not clearly connect them to the actual household, account constraints, or a repeatable advisor workflow. You also tried to close for next week before fully answering her question, and you never summarized her priorities back to her. On the next call, slow down, deepen discovery, restate the problem in her language, then propose one specific follow-up with owner and timing.</div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel__eyebrow">Visualization</div>
+          <h2>VG Way Section Scores</h2>
+          <div class="score-grid">
+      <div class="mini-score">
+        <div class="mini-score__label">agenda</div>
+        <div class="mini-score__value">4/5</div>
+      </div>
+    
+      <div class="mini-score">
+        <div class="mini-score__label">discovery</div>
+        <div class="mini-score__value">2/5</div>
+      </div>
+    
+      <div class="mini-score">
+        <div class="mini-score__label">insights</div>
+        <div class="mini-score__value">3/5</div>
+      </div>
+    
+      <div class="mini-score">
+        <div class="mini-score__label">practice management</div>
+        <div class="mini-score__value">2/5</div>
+      </div>
+    
+      <div class="mini-score">
+        <div class="mini-score__label">summarize prioritize</div>
+        <div class="mini-score__value">1/5</div>
+      </div>
+    
+      <div class="mini-score">
+        <div class="mini-score__label">close</div>
+        <div class="mini-score__value">3/5</div>
+      </div>
+    </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel__eyebrow">Where To Focus</div>
+          <h2>Top Improvement Priorities</h2>
+          
+        <article class="focus-card">
+          <div class="focus-card__rank">01</div>
+          <div>
+            <h3>Summarize &amp; Prioritize</h3>
+            <p>This stage was essentially missing. You never summarized Ashley’s needs in her language or prioritized what mattered now versus later. That made the call feel unfinished and reduced the strength of your close.</p>
+            <div class="focus-card__example"><strong>Better example:</strong> “Let me make sure I’ve got it: you’re comfortable with simple ETF building blocks, but in this case the taxable sleeve and embedded gains make the conversation harder. What you need most is a clear way to explain when active ETF oversight earns its place without sounding like a performance pitch. Is that right?”</div>
+          </div>
+        </article>
+      
+        <article class="focus-card">
+          <div class="focus-card__rank">02</div>
+          <div>
+            <h3>Discovery</h3>
+            <p>You found a live case quickly, which is good, but discovery was too shallow. You did not uncover her current process, confidence level, client communication issue, internal scrutiny at Merrill, or what she needs to defend with peers and clients. You also led her toward an active solution before fully understanding the need.</p>
+            <div class="focus-card__example"><strong>Better example:</strong> “Before we go to solutions, how are you currently handling taxable sleeves when there are embedded gains? Where do you feel least confident: portfolio design, tax transition, or explaining active versus passive in a way you can defend?”</div>
+          </div>
+        </article>
+      
+        <article class="focus-card">
+          <div class="focus-card__rank">03</div>
+          <div>
+            <h3>Practice Management</h3>
+            <p>You touched the investment idea but not the advisor workflow. Ashley needed concise, defensible messaging and implementation help. You did not offer a practical client-ready comparison, a way to position this internally, or a process for reviewing taxable and retirement sleeves together.</p>
+            <div class="focus-card__example"><strong>Better example:</strong> “Ashley, if this is worth pursuing, I can help in a practical way: one short comparison you can use with the client, plus a simple framework for when you’d use broad ETFs versus an active ETF model in taxable accounts with embedded gains.”</div>
+          </div>
+        </article>
+      
+        </article>
+      </section>
+
+      <nav class="stage-nav" id="section-review">
+        
+        <a class="stage-nav__chip" href="#agenda">
+          <span>Agenda</span>
+          <strong>4/5</strong>
+        </a>
+      
+        <a class="stage-nav__chip" href="#discovery">
+          <span>Discovery</span>
+          <strong>2/5</strong>
+        </a>
+      
+        <a class="stage-nav__chip" href="#insights">
+          <span>Insights</span>
+          <strong>3/5</strong>
+        </a>
+      
+        <a class="stage-nav__chip" href="#practice-management">
+          <span>Practice Management</span>
+          <strong>2/5</strong>
+        </a>
+      
+        <a class="stage-nav__chip" href="#summarize-and-prioritize">
+          <span>Summarize &amp; Prioritize</span>
+          <strong>1/5</strong>
+        </a>
+      
+        <a class="stage-nav__chip" href="#close">
+          <span>Close</span>
+          <strong>3/5</strong>
+        </a>
+      
+      </nav>
+
+      <section class="section-stack">
+        
+        <section class="stage-card" id="agenda">
+          <div class="stage-card__header">
+            <div>
+              <div class="stage-card__eyebrow">VG Way Section</div>
+              <h3>Agenda</h3>
+            </div>
+            <div class="stage-card__score">4/5</div>
+          </div>
+          <div class="stage-card__bar">
+            <span style="width:80%"></span>
+          </div>
+          <p class="stage-card__spoken">Good start with thank you, time check, and a simple agenda. Next time make it more collaborative by asking what Ashley wants most before you steer the topic.</p>
+          <div class="stage-card__grid">
+            <div class="report-note">
+              <div class="report-note__label">Assessment</div>
+              <p>Good partial opening. You thanked her, checked time, and proposed a simple agenda. That aligns with the 3 Ts, but it was not fully collaborative because you did not confirm what Ashley wanted most from the call before steering to taxable accounts and a client case.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Evidence</div>
+              <p>You said, “Hi Ashley, thanks for connecting. If you&#39;ve got about 10 minutes, I&#39;d love to first hear how you&#39;re handling taxable accounts today... After that, we&#39;ll tackle a real client scenario...”</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Better Example</div>
+              <p>“Ashley, thanks for making time. Do you still have about 10 minutes? I was hoping to spend a couple minutes on how you’re handling taxable accounts today, then pressure-test one live case if that’s useful. Before we do that, what would make this most helpful for you?”</p>
+            </div>
+          </div>
+        </section>
+      
+        <section class="stage-card" id="discovery">
+          <div class="stage-card__header">
+            <div>
+              <div class="stage-card__eyebrow">VG Way Section</div>
+              <h3>Discovery</h3>
+            </div>
+            <div class="stage-card__score">2/5</div>
+          </div>
+          <div class="stage-card__bar">
+            <span style="width:40%"></span>
+          </div>
+          <p class="stage-card__spoken">You got to a live case fast, but you skipped the deeper questions that would earn the recommendation. Ask about her current process, confidence, and what she needs to defend internally and with clients.</p>
+          <div class="stage-card__grid">
+            <div class="report-note">
+              <div class="report-note__label">Assessment</div>
+              <p>You found a live case quickly, which is good, but discovery was too shallow. You did not uncover her current process, confidence level, client communication issue, internal scrutiny at Merrill, or what she needs to defend with peers and clients. You also led her toward an active solution before fully understanding the need.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Evidence</div>
+              <p>After Ashley said she uses broad ETFs and needs a more tax-aware approach, you moved directly to, “Can you share an example... And we&#39;ll look at how an active approach could help manage them more thoughtfully.”</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Better Example</div>
+              <p>“Before we go to solutions, how are you currently handling taxable sleeves when there are embedded gains? Where do you feel least confident: portfolio design, tax transition, or explaining active versus passive in a way you can defend?”</p>
+            </div>
+          </div>
+        </section>
+      
+        <section class="stage-card" id="insights">
+          <div class="stage-card__header">
+            <div>
+              <div class="stage-card__eyebrow">VG Way Section</div>
+              <h3>Insights</h3>
+            </div>
+            <div class="stage-card__score">3/5</div>
+          </div>
+          <div class="stage-card__bar">
+            <span style="width:60%"></span>
+          </div>
+          <p class="stage-card__spoken">Your ideas were relevant, but too generic. Tie the insight directly to the household, the taxable sleeve, and her need for a clear active-versus-passive explanation.</p>
+          <div class="stage-card__grid">
+            <div class="report-note">
+              <div class="report-note__label">Assessment</div>
+              <p>Your insight was relevant to her problem, but only partially effective. Tax-loss harvesting, lower turnover, and year-round tax awareness were directionally useful. However, the explanation was generic, loosely worded, and not clearly tied to the actual $525K household. Some phrasing also risked sounding imprecise or overpromised.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Evidence</div>
+              <p>You said, “One way is tax-loss harvesting... Another is rotating into lower turnover holdings...” and later, “it actively manages around tactible events... You&#39;re proactively managing taxes all year.”</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Better Example</div>
+              <p>“In this case, the value isn’t ‘active beats passive.’ It’s that an active ETF model may give you a cleaner way to talk about decision-making, transparency, and tax awareness for the taxable half of the household. The key question is whether you need a more thoughtful transition and ongoing oversight story than a static ETF allocation gives you.”</p>
+            </div>
+          </div>
+        </section>
+      
+        <section class="stage-card" id="practice-management">
+          <div class="stage-card__header">
+            <div>
+              <div class="stage-card__eyebrow">VG Way Section</div>
+              <h3>Practice Management</h3>
+            </div>
+            <div class="stage-card__score">2/5</div>
+          </div>
+          <div class="stage-card__bar">
+            <span style="width:40%"></span>
+          </div>
+          <p class="stage-card__spoken">You talked product features more than advisor workflow. Give her a simple repeatable way to explain, implement, and scale the idea.</p>
+          <div class="stage-card__grid">
+            <div class="report-note">
+              <div class="report-note__label">Assessment</div>
+              <p>You touched the investment idea but not the advisor workflow. Ashley needed concise, defensible messaging and implementation help. You did not offer a practical client-ready comparison, a way to position this internally, or a process for reviewing taxable and retirement sleeves together.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Evidence</div>
+              <p>The discussion stayed on model features and did not address how Ashley would explain the recommendation, document the rationale, or scale the process in her book.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Better Example</div>
+              <p>“Ashley, if this is worth pursuing, I can help in a practical way: one short comparison you can use with the client, plus a simple framework for when you’d use broad ETFs versus an active ETF model in taxable accounts with embedded gains.”</p>
+            </div>
+          </div>
+        </section>
+      
+        <section class="stage-card" id="summarize-and-prioritize">
+          <div class="stage-card__header">
+            <div>
+              <div class="stage-card__eyebrow">VG Way Section</div>
+              <h3>Summarize &amp; Prioritize</h3>
+            </div>
+            <div class="stage-card__score">1/5</div>
+          </div>
+          <div class="stage-card__bar">
+            <span style="width:20%"></span>
+          </div>
+          <p class="stage-card__spoken">You missed the summary. Pause and restate her need in her words before moving to next steps.</p>
+          <div class="stage-card__grid">
+            <div class="report-note">
+              <div class="report-note__label">Assessment</div>
+              <p>This stage was essentially missing. You never summarized Ashley’s needs in her language or prioritized what mattered now versus later. That made the call feel unfinished and reduced the strength of your close.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Evidence</div>
+              <p>There was no moment where you said back her challenge: taxable assets with embedded gains, desire for ETF transparency, need for active accountability, and need for a client-defensible explanation.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Better Example</div>
+              <p>“Let me make sure I’ve got it: you’re comfortable with simple ETF building blocks, but in this case the taxable sleeve and embedded gains make the conversation harder. What you need most is a clear way to explain when active ETF oversight earns its place without sounding like a performance pitch. Is that right?”</p>
+            </div>
+          </div>
+        </section>
+      
+        <section class="stage-card" id="close">
+          <div class="stage-card__header">
+            <div>
+              <div class="stage-card__eyebrow">VG Way Section</div>
+              <h3>Close</h3>
+            </div>
+            <div class="stage-card__score">3/5</div>
+          </div>
+          <div class="stage-card__bar">
+            <span style="width:60%"></span>
+          </div>
+          <p class="stage-card__spoken">You asked for a follow-up, which is good, but too early. Close after you’ve helped, and include owner, deliverable, and timing.</p>
+          <div class="stage-card__grid">
+            <div class="report-note">
+              <div class="report-note__label">Assessment</div>
+              <p>You did ask for a next step with timing, which is positive. But you tried to advance the meeting before fully answering her question, and you did not set a clear owner, deliverable, or purpose beyond ‘go over the details.’ The close became stronger only after Ashley herself pulled more value from you.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Evidence</div>
+              <p>You said, “Let&#39;s follow up next week. How about Wednesday to go over the details?” before fully resolving her request for concrete examples.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Better Example</div>
+              <p>“Based on this case, I’ll send you a one-page taxable-versus-retirement framing and two client-ready talking points by Tuesday. Then on Wednesday at 2, we can spend 15 minutes applying it to that $525K household. Does that work?”</p>
+            </div>
+          </div>
+        </section>
+      
+      </section>
+
+      <section class="grid-2">
+        <article class="panel list-panel">
+          <div class="panel__eyebrow">Next Rep Plan</div>
+          <h2>Immediate Actions</h2>
+          <ol><li>Use the full 3 Ts opening every time: thank you, time check, and a collaborative agenda that includes asking what would be most useful.</li><li>After a live case appears, ask at least three deeper discovery questions before offering any solution.</li><li>Probe for advisor confidence, internal defensibility, benchmark pressure, and client communication needs in addition to portfolio facts.</li><li>Tie any active ETF model insight to the advisor’s actual problem: taxable implementation, transparency, accountability, or scalability.</li><li>Replace vague product language with repeatable advisor language the client can actually use in front of a client or senior colleague.</li><li>Add a 15-second summary before every close: restate the need, the challenge, and the priority in the advisor’s words.</li><li>Close with a concrete agreement: what you will send, what the advisor will bring, and the exact day and time for follow-up.</li><li>Prepare one concise taxable-account talk track and one active-versus-passive comparison for entry-level wirehouse advisors so you can answer in the moment without overtalking.</li><li>Practice giving a two-sentence explanation of how active ETF oversight may help in taxable accounts without implying guaranteed outcomes or overclaiming tax benefits.</li><li>On the next call, offer a practical follow-up such as reviewing a real household, mapping taxable versus retirement sleeves, or sending a one-page client-ready framework instead of ‘going over details.’</li></ol>
+        </article>
+        <article class="panel list-panel">
+          <div class="panel__eyebrow">Discovery Gaps</div>
+          <h2>Questions Left On The Table</h2>
+          <ul><li>How are you currently deciding when a taxable household stays in broad ETFs versus when you consider a more hands-on approach?</li><li>When you think about this $525K case, what part feels hardest to explain to the client: taxes, active decision-making, or why not just use passive ETFs?</li><li>How do you usually handle embedded gains today when assets transfer in from another advisor?</li><li>What would you need to be able to say to a senior advisor at Merrill to feel confident defending this recommendation?</li><li>Is the bigger issue here portfolio construction, tax transition, or having a concise client-ready story?</li><li>How are you managing the retirement assets versus the taxable sleeve for this household today?</li><li>What benchmark or comparison is this client likely to use when evaluating your recommendation?</li><li>How much customization are you comfortable with today, and where does your current process stop being scalable?</li><li>If I could help with one thing on this case right now, would it be a client explanation, a portfolio comparison, or a transition approach?</li><li>What has the client already said they care about most: taxes, transparency, accountability, or simplicity?</li></ul>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel__eyebrow">Examples</div>
+        <h2>Strengths, Misses, and Rewrites</h2>
+        <div class="detail-grid">
+          <div>
+            <h3>What Worked</h3>
+            
+        <article class="detail-card">
+          <h3>Opened with time and structure</h3>
+          <p>It created efficiency and gave the advisor a clear expectation for the conversation.</p>
+          <div class="detail-card__meta"><strong>Evidence:</strong> “Thanks for connecting. If you&#39;ve got about 10 minutes...” followed by a two-step agenda.</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>Moved to a live client case quickly</h3>
+          <p>This made the conversation relevant and exposed a real implementation issue instead of staying theoretical.</p>
+          <div class="detail-card__meta"><strong>Evidence:</strong> You asked for an example with embedded gains, and Ashley shared the $525K executive case.</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>Responded with at least two concrete concepts when pressed</h3>
+          <p>Ashley explicitly asked for something she could repeat, and tax-loss harvesting plus lower turnover gave her a starting point.</p>
+          <div class="detail-card__meta"><strong>Evidence:</strong> After her pushback, you gave “tax-loss harvesting” and “rotating into lower turnover holdings,” which she said was concrete and helpful.</div>
+        </article>
+      
+          </div>
+          <div>
+            <h3>Where It Missed</h3>
+            
+        <article class="detail-card">
+          <h3>Led the advisor toward the solution before understanding the problem</h3>
+          <p>This weakened credibility. Ashley needed help framing and defending the recommendation, not just hearing that an active approach could help.</p>
+          <div class="detail-card__meta"><strong>What happened:</strong> You said, “we&#39;ll look at how an active approach could help manage them more thoughtfully” before asking how she currently handles these cases or what makes her hesitate.</div>
+          <div class="detail-card__meta"><strong>Fix:</strong> After the live case is introduced, ask what she is doing today, what feels insufficient, and what she needs to explain to the client or branch before mentioning the model.</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>Missed key Merrill and peer-defensibility discovery</h3>
+          <p>In this scenario, internal credibility and concise messaging are central. Without that, your solution was not tailored to her actual business challenge.</p>
+          <div class="detail-card__meta"><strong>What happened:</strong> You never asked how she would need to justify the recommendation to veteran advisors, compliance norms, or benchmark-oriented conversations.</div>
+          <div class="detail-card__meta"><strong>Fix:</strong> Add a question like: “If you brought this idea to a senior advisor or client today, what part would be hardest to defend?”</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>Insight was generic and occasionally imprecise</h3>
+          <p>Vague language reduces trust, especially with a guarded advisor who wants clarity. It also risks overpromising what a model can do.</p>
+          <div class="detail-card__meta"><strong>What happened:</strong> Phrases like “actively manages around tactible events,” “test position with gain,” and “ladding sector holding” were unclear and not tied to the actual household.</div>
+          <div class="detail-card__meta"><strong>Fix:</strong> Use plain language tied to the case: transition management, tax awareness, transparency, accountability, and what that means in the taxable sleeve.</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>No real summary before the close</h3>
+          <p>Without a summary, the advisor never heard her priorities reflected back. That makes the next step feel less purposeful.</p>
+          <div class="detail-card__meta"><strong>What happened:</strong> You went from explanation to “Let&#39;s follow up next week” without restating the problem or confirming priorities.</div>
+          <div class="detail-card__meta"><strong>Fix:</strong> Insert a 15-second recap: “You need a defensible way to explain active ETF oversight for the taxable half of this household without making it a performance debate.”</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>Close lacked a concrete deliverable</h3>
+          <p>A calendar ask alone is weaker than a business-moving agreement with owner, material, and timing.</p>
+          <div class="detail-card__meta"><strong>What happened:</strong> “How about Wednesday to go over the details?” did not specify what you would bring or what Ashley should prepare.</div>
+          <div class="detail-card__meta"><strong>Fix:</strong> Close with a specific follow-up package, such as a one-page comparison, a household review, or a model discussion tied to her live case.</div>
+        </article>
+      
+          </div>
+        </div>
+        <div style="margin-top: 18px;">
+          <h3>Better Examples To Use</h3>
+          <div class="detail-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+            
+        <article class="detail-card">
+          <h3>After Ashley said she uses broad ETFs and needs a more tax-aware approach</h3>
+          <div class="detail-card__meta"><strong>Issue:</strong> You jumped straight to an active solution instead of diagnosing her current process and confidence gap.</div>
+          <div class="detail-card__meta"><strong>Better example:</strong> “That helps. Before we go to a client example, how are you handling taxable accounts with embedded gains today, and where do you feel least confident: the implementation, the tax story, or explaining why you’d use something beyond a basic ETF allocation?”</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>When Ashley shared the $525K executive case</h3>
+          <div class="detail-card__meta"><strong>Issue:</strong> You answered with generic features instead of first clarifying the recommendation challenge.</div>
+          <div class="detail-card__meta"><strong>Better example:</strong> “Got it. For that household, what’s the tougher part for you right now: transitioning the taxable assets with gains, or explaining why an active ETF model deserves a place versus a simple passive allocation?”</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>Your first attempt to close for next week</h3>
+          <div class="detail-card__meta"><strong>Issue:</strong> You tried to advance the meeting before fully helping her with the question she asked in the moment.</div>
+          <div class="detail-card__meta"><strong>Better example:</strong> “Before we schedule anything, let me give you two crisp ways to frame it. First, for the taxable sleeve, the conversation can be about tax-aware decision-making and transparency, not just benchmark chasing. Second, it can give you a clearer accountability story than a static allocation. If that’s useful, I can send a one-pager and walk through this exact household Wednesday.”</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>When Ashley asked for a quick example now</h3>
+          <div class="detail-card__meta"><strong>Issue:</strong> Your example was vague and hard to repeat.</div>
+          <div class="detail-card__meta"><strong>Better example:</strong> “A simple way to explain it to the client is this: for the taxable half, you’re not just picking ETF building blocks and leaving them alone. You’re using an ETF-based approach with ongoing oversight, where tax impact, turnover, and portfolio changes are monitored throughout the year so the taxable account is managed more intentionally.”</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>End of call</h3>
+          <div class="detail-card__meta"><strong>Issue:</strong> You never summarized Ashley’s need before the next step.</div>
+          <div class="detail-card__meta"><strong>Better example:</strong> “So the real need here is not a big product pitch. You want a concise, client-defensible way to explain active ETF oversight for a taxable account with embedded gains. I’ll send two talking points and a simple comparison by Tuesday, and then we can apply it to this $525K case on Wednesday.”</div>
+        </article>
+      
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel__eyebrow">Transcript</div>
+        <h2>Full Conversation</h2>
+        <div class="transcript">
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">start the conversation.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--advisor">
+          <div class="transcript-turn__role">Advisor</div>
+          <div class="transcript-turn__text">Hello, this is Ashley Taylor from Merrill Lynch. How can I assist you today?</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">Hi Ashley, thanks for connecting. If you&#39;ve got about 10 minutes, I&#39;d love to first hear how you&#39;re handling taxable accounts today. Then we can pinpoint where it might feel too standard.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">Sound good?</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">After that, we&#39;ll tackle a real client scenario to see if we can create a more tailored, tax-efficient approach.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--advisor">
+          <div class="transcript-turn__role">Advisor</div>
+          <div class="transcript-turn__text">Sure, that sounds fair. I’ve got a few minutes. Right now, I’m mostly using broad ETFs for taxable accounts—keeping it simple. But I know I need a more tax-aware approach, especially when clients have embedded gains. So, where do you think we should dig in?</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">Let&#39;s dive into one client scenario where you face that. Can you share an example where a client had those embedded gains? And we&#39;ll look at how an active approach could help manage them more thoughtfully.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--advisor">
+          <div class="transcript-turn__role">Advisor</div>
+          <div class="transcript-turn__text">Alright, sure. I&#39;ve got one in mind: a 49-year-old executive, about $525K coming over from a previous advisor. Half of that’s in a taxable brokerage, and there are some embedded gains. The client wants a modern ETF-based approach, but also expects some active decision-making. That’s where I’m not quite sure how to best frame an active ETF model versus just sticking with passive.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">So, in that case, an active ETF model could gradually adjust holdings. It might realize losses to offset gains or shift sectors to manage concentration.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">all while maintaining transparency.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">I&#39;ll outline a specific scenario for your client.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">Let&#39;s follow up next week. How about Wednesday to go over the details?</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--advisor">
+          <div class="transcript-turn__role">Advisor</div>
+          <div class="transcript-turn__text">I hear you, but before we push it to next week, I want to be sure—can you give me just one or two concrete ways that the active ETF model would actually handle those embedded gains more effectively? That would help me feel confident bringing it up with the client.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">Absolutely. One way is tax-loss harvesting, where the model can sell positions at a loss to offset gains elsewhere.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">Another is rotating into lower turnover holdings, helping reduce unexpected taxable events. Next week, I&#39;ll show you exactly how that would apply to your play.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--advisor">
+          <div class="transcript-turn__role">Advisor</div>
+          <div class="transcript-turn__text">That makes sense. Tax-loss harvesting and lower turnover holdings—those are concrete. I’d like to dive into that sooner. Can we walk through a quick example now, just so I’m ready if the client asks?</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">I&#39;d love to. Let&#39;s say the model sees a test position with gain. If the market dips, it might sell a ladding sector holding at a loss, offsetting that gain.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">Meanwhile, it could reduce turnover by holding positions longer.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">In short, it actively manages around tactible events.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">So you&#39;re not just reacting once a year.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">You&#39;re proactively managing taxes all year.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">We&#39;ll build on that Nick</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--advisor">
+          <div class="transcript-turn__role">Advisor</div>
+          <div class="transcript-turn__text">That’s actually really helpful. So proactively managing the tax impact throughout the year, not just at year-end—that’s something I can explain. Let’s definitely build on that next time. I’m starting to see how this could fit.</div>
+        </div>
+      </div>
+      </section>
+    </main>
+  </body>
+</html>

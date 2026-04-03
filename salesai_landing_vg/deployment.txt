@@ -1,0 +1,58 @@
+Sales AI Hub VG Landing — Azure Deployment Steps
+=================================================
+
+App URL: https://gentle-pond-075c4741e.6.azurestaticapps.net
+Azure Resource: salesai-vg-landing
+Resource Group: cg_irvine (West US 2)
+SKU: Free
+
+--------------------------------------
+STEPS TAKEN
+--------------------------------------
+
+1. BUILD THE APP
+   npm run build
+   Output: ./dist folder (index.html + assets)
+
+2. CREATE AZURE STATIC WEB APP (one-time)
+   az staticwebapp create \
+     --name "salesai-vg-landing" \
+     --resource-group "cg_irvine" \
+     --location "westus2" \
+     --sku "Free"
+
+3. GET DEPLOYMENT TOKEN
+   az staticwebapp secrets list \
+     --name "salesai-vg-landing" \
+     --resource-group "cg_irvine" \
+     --query "properties.apiKey" -o tsv
+
+4. DEPLOY DIST FOLDER
+   npx @azure/static-web-apps-cli@latest deploy ./dist \
+     --deployment-token "<token from step 3>" \
+     --env production
+
+--------------------------------------
+RE-DEPLOYING AFTER CHANGES
+--------------------------------------
+
+Run steps 1 and 4 again:
+   npm run build
+   npx @azure/static-web-apps-cli@latest deploy ./dist \
+     --deployment-token "<token>" \
+     --env production
+
+--------------------------------------
+LINKS
+--------------------------------------
+
+VG Demo App (what "Launch App" buttons point to):
+  https://black-plant-06553071e.6.azurestaticapps.net
+
+--------------------------------------
+PREREQUISITES
+--------------------------------------
+
+- Azure CLI installed and logged in (az login)
+- Node.js / npm installed
+- Subscription: GO-SM-Digital Lighthouse Innovation

@@ -1,0 +1,15 @@
+packages:
+  "framer-motion": "For high-end page transitions, staggered list reveals, and micro-interactions"
+  "date-fns": "For human-readable date formatting in the meeting and follow-up views"
+
+images:
+  - path: "artifacts/sales-hub/public/images/auth-bg.png"
+    description: "Deep navy and dark teal abstract gradient mesh with subtle glowing geometric lines, highly professional enterprise software aesthetic, dark mode"
+    aspect_ratio: "16:9"
+  - path: "artifacts/sales-hub/public/images/dashboard-hero.png"
+    description: "Dark elegant abstract background with subtle cyan and teal glowing network nodes, professional corporate, dark mode"
+    aspect_ratio: "3:1"
+
+notes:
+  - "Using @workspace/replit-auth-web for authentication state and redirects"
+  - "Importing API hooks and types directly from @workspace/api-client-react as per monorepo standards"

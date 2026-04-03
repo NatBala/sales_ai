@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "DL-6zdSiBqanyzMiLWZiW"
+uri = "file://AGENTS.md"
+type = "text"
+title = "AGENTS.md — Sales AI Hub Agent Reference"

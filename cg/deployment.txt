@@ -1,0 +1,124 @@
+DEPLOYMENT STEPS
+================
+
+AZURE RESOURCES
+---------------
+  Subscription ID  : 5581d03e-5621-4415-bff1-e87a68da5dae
+  Resource Group   : cg_irvine
+  Region           : West US 2
+
+  Backend  (App Service)       : salesai-api
+    URL: https://salesai-api.azurewebsites.net
+    SCM: https://salesai-api.scm.azurewebsites.net
+
+  Frontend (Static Web App)    : salesai-cg
+    URL: https://jolly-cliff-04bac391e.6.azurestaticapps.net
+
+  Database (PostgreSQL)        : optional — backend falls back to in-memory if unreachable
+
+ENVIRONMENT VARIABLES (set in App Service > Configuration > Application Settings)
+----------------------------------------------------------------------------------
+  NODE_ENV                          production
+  DATABASE_URL                      postgresql://salesaiadmin:SalesAI2026!Secure@salesai-db.postgres.database.azure.com/sales_hub?sslmode=require
+  AI_INTEGRATIONS_OPENAI_API_KEY    sk-...
+  AI_INTEGRATIONS_OPENAI_BASE_URL   https://api.openai.com/v1
+  PORT                              8080
+
+
+BACKEND DEPLOYMENT
+------------------
+Run all commands from repo root: C:\Users\achalshah3\Desktop\salesai_app\cg
+
+Step 1 — Build:
+  pnpm --filter @workspace/api-server run build
+
+Step 2 — Fix pino Windows path (required after every build):
+  node -e "
+  const fs = require('fs');
+  const path = 'artifacts/api-server/dist/index.mjs';
+  let content = fs.readFileSync(path, 'utf8');
+  content = content.replace(/outputDir = \"C:\\\\\\\\[^\"]+\"/g, 'outputDir = __dirname');
+  fs.writeFileSync(path, content);
+  console.log('Pino path fixed');
+  "
+
+Step 3 — Create deploy zip using Python (NOT PowerShell — see note below):
+  python -c "
+  import zipfile, os
+  base = 'artifacts/api-server'
+  with zipfile.ZipFile(base + '/deploy.zip', 'w', zipfile.ZIP_DEFLATED) as zf:
+      for root, dirs, files in os.walk(base + '/dist'):
+          for file in files:
+              full = os.path.join(root, file)
+              zf.write(full, 'dist/' + file)
+      zf.write(base + '/src/data/advisors.csv', 'dist/advisors.csv')
+      zf.write(base + '/package.json', 'package.json')
+  print('Zip created')
+  "
+  NOTE: advisors.csv MUST be included next to index.mjs in dist/ —
+        the advisor dataset is loaded at runtime from that path.
+
+  !!! Do NOT use PowerShell Compress-Archive !!!
+  It stores paths with backslashes (dist\index.mjs) which cause rsync exit code 23
+  on the Linux App Service container. Use Python as shown above.
+
+Step 4 — Deploy:
+  az webapp deploy \
+    --name salesai-api \
+    --resource-group cg_irvine \
+    --src-path artifacts/api-server/deploy.zip \
+    --type zip
+
+  Expected output: "RuntimeSuccessful" with numberOfInstancesSuccessful: 1
+
+App Service start command (set in Configuration > General Settings):
+  node --enable-source-maps ./dist/index.mjs
+
+  !!! CRITICAL: The startup command MUST be set to the above !!!
+  If it is set to "node index.mjs" (the default), the App Service will run a stale
+  root-level file and ALL deployments will appear to work but have NO effect.
+  Verify with:
+    az webapp config show --name salesai-api --resource-group cg_irvine --query appCommandLine
+  Fix with:
+    az webapp config set --name salesai-api --resource-group cg_irvine \
+      --startup-file "node --enable-source-maps ./dist/index.mjs"
+
+
+FRONTEND DEPLOYMENT
+-------------------
+
+Step 1 — Ensure .env.production exists at artifacts/sales-hub/.env.production:
+  VITE_API_URL=https://salesai-api.azurewebsites.net
+
+Step 2 — Build:
+  PORT=4000 pnpm --filter @workspace/sales-hub run build
+  Output goes to: artifacts/sales-hub/dist/public/
+
+Step 3 — Get deployment token (one-time, or if token rotated):
+  az staticwebapp secrets list --name salesai-cg --resource-group cg_irvine --query "properties.apiKey" -o tsv
+
+Step 4 — Deploy to Static Web App:
+  swa deploy artifacts/sales-hub/dist/public \
+    --deployment-token "<token from step 3>" \
+    --env production
+
+  Live URL: https://jolly-cliff-04bac391e.6.azurestaticapps.net
+
+
+USEFUL COMMANDS
+---------------
+# Stream live app logs:
+  az webapp log tail --name salesai-api --resource-group cg_irvine
+
+# Enable application logging (first time):
+  az webapp log config --name salesai-api --resource-group cg_irvine \
+    --application-logging filesystem --level information
+
+# Check deployment status:
+  az webapp deployment list --name salesai-api --resource-group cg_irvine -o table
+
+# Restart the app:
+  az webapp restart --name salesai-api --resource-group cg_irvine
+
+# List all Static Web App environments:
+  az staticwebapp environment list --name salesai-cg --resource-group cg_irvine -o table
