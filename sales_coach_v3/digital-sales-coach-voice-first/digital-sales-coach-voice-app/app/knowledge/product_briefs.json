@@ -1,0 +1,32 @@
+{
+  "name": "Product briefs",
+  "briefs": [
+    {
+      "id": "active_etf_models",
+      "title": "Active ETF Models",
+      "summary": "Objective-based ETF-model offering positioned for advisors who want tax-aware implementation, transparency, and relatively low-cost active ETF building blocks.",
+      "key_points": [
+        "Combines the tax advantages of the ETF vehicle with tax-aware investing.",
+        "Emphasizes transparency through daily holdings disclosure.",
+        "Positions success through an objective-based lens rather than excess return alone.",
+        "Can be paired with practice-management and portfolio-analysis conversations instead of pure product pitching."
+      ],
+      "talk_tracks": [
+        "Use when the advisor needs a cleaner implementation format, not just another fund idea.",
+        "Tie the conversation to scalability, documentation, taxable implementation, advisor differentiation or client communication.",
+        "Lead with fit for the advisor's business problem before discussing product mechanics."
+      ],
+      "practice_management_tools": [
+        "Portfolio Analyzer",
+        "Run a Hypothetical",
+        "Screen or Compare Investments",
+        "PracticeLab"
+      ],
+      "risk_notes": [
+        "Avoid overstating history or promising outcomes.",
+        "Keep compliance and suitability language in mind for fiduciary-oriented advisors.",
+        "Use cases should be grounded in actual households, client objectives and account types."
+      ]
+    }
+  ]
+}

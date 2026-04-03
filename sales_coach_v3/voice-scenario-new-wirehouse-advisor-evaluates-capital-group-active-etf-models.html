@@ -1,0 +1,1689 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Scenario: New Wirehouse Advisor Evaluates Vanguard Active ETF Models</title>
+    <style>
+      :root {
+        --bg: #eef4fb;
+        --bg-deep: #dfe9f6;
+        --ink: #13243a;
+        --muted: #5e718b;
+        --line: #d6e0ee;
+        --panel: #ffffff;
+        --panel-soft: #f7fbff;
+        --accent: #1677ff;
+        --accent-soft: #e9f3ff;
+        --success: #1f9d73;
+        --warning: #c98a12;
+        --danger: #c84d67;
+        --shadow: 0 20px 60px rgba(18, 36, 58, 0.12);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Aptos, Arial, sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(22, 119, 255, 0.08), transparent 24%),
+          linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+      }
+      .report-shell {
+        width: min(1180px, calc(100% - 48px));
+        margin: 32px auto 56px;
+        display: grid;
+        gap: 24px;
+      }
+      .hero {
+        background:
+          linear-gradient(135deg, rgba(22, 119, 255, 0.96), rgba(6, 54, 119, 0.94)),
+          #0f3d79;
+        color: white;
+        border-radius: 32px;
+        padding: 32px;
+        box-shadow: var(--shadow);
+      }
+      .hero__top {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        align-items: flex-start;
+      }
+      .brand {
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        opacity: 0.86;
+      }
+      .hero h1 {
+        margin: 12px 0 12px;
+        font-size: clamp(2rem, 4vw, 3rem);
+        line-height: 1;
+      }
+      .hero p {
+        margin: 0;
+        max-width: 70ch;
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.88);
+      }
+      .score-ring {
+        --score: 11;
+        width: 166px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background:
+          radial-gradient(closest-side, rgba(8, 28, 58, 0.98) 72%, transparent 74% 100%),
+          conic-gradient(#8ad2ff calc(var(--score) * 1%), rgba(255, 255, 255, 0.16) 0);
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
+      .score-ring__inner {
+        text-align: center;
+      }
+      .score-ring__value {
+        font-size: 2.6rem;
+        font-weight: 800;
+        line-height: 1;
+      }
+      .score-ring__label {
+        margin-top: 6px;
+        font-size: 0.82rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.78);
+      }
+      .hero__meta {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 24px;
+      }
+      .meta-card, .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+      }
+      .meta-card {
+        padding: 18px 20px;
+      }
+      .meta-card__label {
+        color: var(--muted);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .meta-card__value {
+        margin-top: 8px;
+        font-size: 1.05rem;
+        font-weight: 700;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 24px;
+      }
+      .panel {
+        padding: 24px;
+      }
+      .panel__eyebrow {
+        color: var(--accent);
+        font-size: 0.76rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .panel h2 {
+        margin: 10px 0 12px;
+        font-size: 1.5rem;
+      }
+      .panel p, .panel li {
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      .score-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+      .mini-score {
+        padding: 16px;
+        border-radius: 18px;
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+      }
+      .mini-score__label {
+        color: var(--muted);
+        font-size: 0.78rem;
+        text-transform: capitalize;
+      }
+      .mini-score__value {
+        margin-top: 8px;
+        font-size: 1.5rem;
+        font-weight: 800;
+      }
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 14px;
+        border-radius: 999px;
+        font-weight: 700;
+        background: rgba(200, 77, 103, 0.12);
+        color: var(--danger);
+      }
+      .callout {
+        margin-top: 18px;
+        padding: 16px 18px;
+        border-radius: 18px;
+        background: var(--accent-soft);
+        border: 1px solid #cfe3ff;
+      }
+      .callout strong {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--ink);
+      }
+      .section-stack {
+        display: grid;
+        gap: 20px;
+      }
+      .stage-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: var(--shadow);
+      }
+      .stage-card__header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .stage-card__eyebrow {
+        color: var(--muted);
+        font-size: 0.76rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .stage-card h3 {
+        margin: 8px 0 0;
+        font-size: 1.35rem;
+      }
+      .stage-card__score {
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+        font-weight: 800;
+      }
+      .stage-card__bar {
+        margin-top: 16px;
+        height: 12px;
+        border-radius: 999px;
+        background: #e8eff8;
+        overflow: hidden;
+      }
+      .stage-card__bar span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #6cc8ff, #1677ff);
+      }
+      .stage-card__spoken {
+        margin: 14px 0 0;
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .stage-card__grid, .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+      .report-note, .detail-card {
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+      }
+      .report-note__label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+      }
+      .report-note p, .detail-card p, .detail-card__meta {
+        margin: 10px 0 0;
+        line-height: 1.7;
+        color: var(--muted);
+      }
+      .detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .detail-card h3 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+      .list-panel ul, .list-panel ol {
+        margin: 14px 0 0;
+        padding-left: 18px;
+      }
+      .transcript {
+        display: grid;
+        gap: 12px;
+      }
+      .transcript-turn {
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+      }
+      .transcript-turn--salesperson {
+        background: #edf6ff;
+      }
+      .transcript-turn--advisor {
+        background: #ffffff;
+      }
+      .transcript-turn__role {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 800;
+        color: var(--accent);
+      }
+      .transcript-turn__text {
+        margin-top: 10px;
+        line-height: 1.7;
+        color: var(--ink);
+      }
+      .empty-copy {
+        color: var(--muted);
+      }
+      @media print {
+        body { background: white; }
+        .report-shell { width: 100%; margin: 0; }
+        .hero, .panel, .stage-card, .meta-card { box-shadow: none; }
+      }
+      @media (max-width: 980px) {
+        .hero__top, .grid-2, .hero__meta, .score-grid, .stage-card__grid, .detail-grid {
+          grid-template-columns: 1fr;
+          display: grid;
+        }
+        .hero__top {
+          gap: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="report-shell">
+      <section class="hero">
+        <div class="brand">Digital Sales Coach Report</div>
+        <div class="hero__top">
+          <div>
+            <h1>Scorecard</h1>
+            <p>Needs improvement. Good instinct to move toward a live case, but the opening lacked polish, credibility, and structure, and the rest of the VG Way was largely missing from the transcript.</p>
+          </div>
+          <div class="score-ring">
+            <div class="score-ring__inner">
+              <div class="score-ring__value">11</div>
+              <div class="score-ring__label">Final Score</div>
+            </div>
+          </div>
+        </div>
+        <div class="hero__meta">
+          <div class="meta-card">
+            <div class="meta-card__label">Topic</div>
+            <div class="meta-card__value">Vanguard Active ETF Models</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-card__label">Difficulty</div>
+            <div class="meta-card__value">adaptive</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-card__label">Transcript Turns</div>
+            <div class="meta-card__value">10</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-card__label">Generated</div>
+            <div class="meta-card__value">3/11/2026, 10:12:02 PM</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-2">
+        <article class="panel">
+          <div class="panel__eyebrow">Executive Summary</div>
+          <h2>Scorecard Overview</h2>
+          <div class="status-pill">Needs improvement. Good instinct to move toward a live case, but the opening lacked polish, credibility, and structure, and the rest of the VG Way was largely missing from the transcript.</div>
+          <p>Very short call, but the early pattern is mixed. You did one thing right: you quickly asked for an example and invited a real case. That fits the VG Way. But the opening was shaky and credibility-damaging. You missed a clean 3 Ts opening, used confusing phrasing, and introduced yourself as &#39;Capital Crypto&#39; instead of Vanguard, which would immediately undermine trust with this advisor persona. Because the transcript ends early, most later stages were not executed, so those stages score low by absence. The biggest coaching point is opening discipline: sound credible, set a collaborative agenda, and earn the right to discover before you ask for the case.</p>
+          <div class="callout">
+            <strong>Top Priority Fix</strong>
+            <div>Fix the opening. Use a clean, credible 3 Ts opener and correctly position yourself as Vanguard before moving into focused discovery tied to one live taxable or model-implementation case.</div>
+          </div>
+          <div class="callout">
+            <strong>Coach Talk Track</strong>
+            <div>Alec, your best move was asking for an example early and signaling you wanted to work on a real case. That’s directionally right for Ashley. But your opening hurt you. You didn’t use a clean thank-you, time check, and agenda. &#39;It’s time for the conversation&#39; sounded unnatural, and saying &#39;Capital Crypto&#39; instead of Vanguard would seriously damage credibility, especially with a newer advisor who’s already cautious about sounding informed. You also started broad with &#39;how you’re helping clients&#39; instead of narrowing to her process, confidence level, or taxable-account needs. From there, the call ended before you delivered insight, practice management, a summary, or a close. On the next rep, tighten the first 20 seconds: thank her, confirm time, state a simple agenda, then ask one focused discovery question that gets to her current approach and one live case.</div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel__eyebrow">Visualization</div>
+          <h2>VG Way Section Scores</h2>
+          <div class="score-grid">
+      <div class="mini-score">
+        <div class="mini-score__label">agenda</div>
+        <div class="mini-score__value">2/5</div>
+      </div>
+    
+      <div class="mini-score">
+        <div class="mini-score__label">discovery</div>
+        <div class="mini-score__value">3/5</div>
+      </div>
+    
+      <div class="mini-score">
+        <div class="mini-score__label">insights</div>
+        <div class="mini-score__value">1/5</div>
+      </div>
+    
+      <div class="mini-score">
+        <div class="mini-score__label">practice management</div>
+        <div class="mini-score__value">1/5</div>
+      </div>
+    
+      <div class="mini-score">
+        <div class="mini-score__label">summarize prioritize</div>
+        <div class="mini-score__value">1/5</div>
+      </div>
+    
+      <div class="mini-score">
+        <div class="mini-score__label">close</div>
+        <div class="mini-score__value">1/5</div>
+      </div>
+    </div>
+        </article>
+      </section>
+
+      <section class="section-stack">
+        
+        <section class="stage-card">
+          <div class="stage-card__header">
+            <div>
+              <div class="stage-card__eyebrow">VG Way Section</div>
+              <h3>Agenda</h3>
+            </div>
+            <div class="stage-card__score">2/5</div>
+          </div>
+          <div class="stage-card__bar">
+            <span style="width:40%"></span>
+          </div>
+          <p class="stage-card__spoken">Your opener lacked a clean time check and credibility. Tighten the first 20 seconds and sound more polished.</p>
+          <div class="stage-card__grid">
+            <div class="report-note">
+              <div class="report-note__label">Assessment</div>
+              <p>You attempted an agenda, but it was incomplete and clumsy. You thanked her and suggested discussing her clients plus a real case, which is directionally good. But you missed a time check, the wording was fragmented, and your intro damaged credibility.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Evidence</div>
+              <p>You said, &#39;Thanks for taking my call... I&#39;d love to hear how you&#39;re helping clients... And then we can see if we can tackle a real case you have in mind.&#39; Earlier you also said, &#39;It&#39;s time for the conversation&#39; and introduced yourself as &#39;Alec from Capital Crypto.&#39;</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Better Example</div>
+              <p>&#39;Ashley, thanks for taking a few minutes. I know you may only have a short window—do you still have 3 to 5 minutes? I’d love to understand how you’re handling taxable and qualified accounts today, and if it makes sense, we can pressure-test one real client situation together. Would that be useful?&#39;</p>
+            </div>
+          </div>
+        </section>
+      
+        <section class="stage-card">
+          <div class="stage-card__header">
+            <div>
+              <div class="stage-card__eyebrow">VG Way Section</div>
+              <h3>Discovery</h3>
+            </div>
+            <div class="stage-card__score">3/5</div>
+          </div>
+          <div class="stage-card__bar">
+            <span style="width:60%"></span>
+          </div>
+          <p class="stage-card__spoken">Good instinct asking for an example, but go one layer deeper into her current process and confidence gaps.</p>
+          <div class="stage-card__grid">
+            <div class="report-note">
+              <div class="report-note__label">Assessment</div>
+              <p>This was the strongest part of the call so far. You did pivot to a live example quickly, which matches the scenario well. But your questions were still broad and did not yet uncover process, confidence level, book of business, or what she needs to defend an idea internally.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Evidence</div>
+              <p>After Ashley said many clients care about taxes and fees and asked where to start, you replied, &#39;Could you share an example of that?&#39;</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Better Example</div>
+              <p>&#39;Yes—let’s make it concrete. Can you walk me through one client where taxes, fees, and implementation are all in play? And before we go there, how are you currently deciding between passive ETFs, manager sleeves, and any model-based approach?&#39;</p>
+            </div>
+          </div>
+        </section>
+      
+        <section class="stage-card">
+          <div class="stage-card__header">
+            <div>
+              <div class="stage-card__eyebrow">VG Way Section</div>
+              <h3>Insights</h3>
+            </div>
+            <div class="stage-card__score">1/5</div>
+          </div>
+          <div class="stage-card__bar">
+            <span style="width:20%"></span>
+          </div>
+          <p class="stage-card__spoken">You never translated her tax-and-fee concern into a relevant Vanguard idea.</p>
+          <div class="stage-card__grid">
+            <div class="report-note">
+              <div class="report-note__label">Assessment</div>
+              <p>No insight was delivered in the transcript. You did not connect Vanguard Active ETF Models—or any relevant idea—to Ashley’s stated problem around taxes, fees, and account type mix.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Evidence</div>
+              <p>The conversation ended right after your request for an example, with no explanation or tailored point of view.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Better Example</div>
+              <p>&#39;That helps. Based on what you’re seeing, the reason some advisors look at active ETF models is not to replace everything—it’s to get a more scalable, ETF-based implementation they can explain simply in taxable households, while still keeping an objective-based framework instead of just a performance pitch.&#39;</p>
+            </div>
+          </div>
+        </section>
+      
+        <section class="stage-card">
+          <div class="stage-card__header">
+            <div>
+              <div class="stage-card__eyebrow">VG Way Section</div>
+              <h3>Practice Management</h3>
+            </div>
+            <div class="stage-card__score">1/5</div>
+          </div>
+          <div class="stage-card__bar">
+            <span style="width:20%"></span>
+          </div>
+          <p class="stage-card__spoken">Don’t stop at product talk—offer a workflow improvement like a compare, hypothetical, or client-ready rationale.</p>
+          <div class="stage-card__grid">
+            <div class="report-note">
+              <div class="report-note__label">Assessment</div>
+              <p>No practice management value was offered. Nothing in the transcript improved Ashley’s workflow, confidence, implementation process, or ability to explain an idea internally.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Evidence</div>
+              <p>There was no mention of how you could help her evaluate fit, compare options, run a hypothetical, or prepare a client/internal conversation.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Better Example</div>
+              <p>&#39;If we find a fit, I can help in a very practical way—we can take one taxable household, compare your current ETF mix to an active ETF model approach, and boil it down to a one-page rationale you can use with the client or a senior advisor.&#39;</p>
+            </div>
+          </div>
+        </section>
+      
+        <section class="stage-card">
+          <div class="stage-card__header">
+            <div>
+              <div class="stage-card__eyebrow">VG Way Section</div>
+              <h3>Summarize &amp; Prioritize</h3>
+            </div>
+            <div class="stage-card__score">1/5</div>
+          </div>
+          <div class="stage-card__bar">
+            <span style="width:20%"></span>
+          </div>
+          <p class="stage-card__spoken">You missed the chance to reflect back her needs and choose the most urgent problem to solve first.</p>
+          <div class="stage-card__grid">
+            <div class="report-note">
+              <div class="report-note__label">Assessment</div>
+              <p>No summary occurred. You did not restate Ashley’s need in her language or prioritize what to solve first.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Evidence</div>
+              <p>The transcript contains no recap after Ashley shared that her clients span taxable and qualified accounts and care about taxes and fees.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Better Example</div>
+              <p>&#39;So what I’m hearing is: you’re working across both taxable and qualified accounts, and the biggest pressure point is finding something cost- and tax-conscious that you can explain clearly. Let’s start with one taxable case first, since that seems to be where the trade-offs matter most.&#39;</p>
+            </div>
+          </div>
+        </section>
+      
+        <section class="stage-card">
+          <div class="stage-card__header">
+            <div>
+              <div class="stage-card__eyebrow">VG Way Section</div>
+              <h3>Close</h3>
+            </div>
+            <div class="stage-card__score">1/5</div>
+          </div>
+          <div class="stage-card__bar">
+            <span style="width:20%"></span>
+          </div>
+          <p class="stage-card__spoken">Always land a real next step with who does what and by when.</p>
+          <div class="stage-card__grid">
+            <div class="report-note">
+              <div class="report-note__label">Assessment</div>
+              <p>There was no close or shared next step. The call ended before you established an owner, action, or timing.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Evidence</div>
+              <p>No agreement was made on reviewing a case, sending a comparison, or scheduling a follow-up.</p>
+            </div>
+            <div class="report-note">
+              <div class="report-note__label">Better Example</div>
+              <p>&#39;Let’s do this: you send me one taxable case with the current allocation, I’ll come back with a simple compare and a clean explanation you can pressure-test internally, and we’ll review it together Thursday at 2. Does that work?&#39;</p>
+            </div>
+          </div>
+        </section>
+      
+      </section>
+
+      <section class="grid-2">
+        <article class="panel list-panel">
+          <div class="panel__eyebrow">Next Rep Plan</div>
+          <h2>Immediate Actions</h2>
+          <ol><li>Memorize a 15-second opener with the 3 Ts: thank you, time check, and a collaborative agenda.</li><li>State your firm correctly and confidently: Vanguard, not anything else.</li><li>Replace broad opener questions with one focused process question and one live-case question.</li><li>After the advisor answers, summarize in one sentence before sharing any idea.</li><li>Prepare a concise business-fit explanation of Active ETF Models: scalable, ETF-based, transparent, tax-aware vehicle benefits, objective-based positioning.</li><li>Be ready to differentiate against passive ETF-only allocations and generic firm models without turning it into a performance pitch.</li><li>Offer one practical help item, not a deck: a compare, hypothetical, or one-page rationale tied to an actual case.</li><li>End every call with a now/soon/later close: what happens now, who owns it, and when you reconnect.</li></ol>
+        </article>
+        <article class="panel list-panel">
+          <div class="panel__eyebrow">Discovery Gaps</div>
+          <h2>Questions Left On The Table</h2>
+          <ul><li>How are you currently building portfolios for taxable versus qualified accounts today?</li><li>What do you feel most confident explaining to clients right now, and where do you feel less confident?</li><li>When a client asks passive ETF versus active management, how are you answering that today?</li><li>Are you using any firm models now, and if so, what do you like or dislike about them?</li><li>What would you need to see to feel comfortable defending a new idea to senior advisors in your office?</li><li>What does your book look like right now in terms of household size and the mix of taxable assets?</li><li>Can you walk me through one live client case where taxes, fees, and simplicity are all part of the decision?</li><li>For that case, what are you using today and what feels unsolved?</li><li>When clients say they want something modern and transparent, what do they usually mean in your conversations?</li><li>Is your main need better portfolio construction, easier implementation, or a cleaner client story?</li></ul>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel__eyebrow">Examples</div>
+        <h2>Strengths, Misses, and Rewrites</h2>
+        <div class="detail-grid">
+          <div>
+            <h3>What Worked</h3>
+            
+        <article class="detail-card">
+          <h3>Invited a real case early</h3>
+          <p>Ashley is more likely to engage when the conversation becomes practical instead of theoretical. Moving toward a live example is aligned to the scenario and VG Way.</p>
+          <div class="detail-card__meta"><strong>Evidence:</strong> You said, &#39;And then we can see if we can tackle a real case you have in mind,&#39; and followed with, &#39;Could you share an example of that?&#39;</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>Asked for permission to proceed</h3>
+          <p>You did not bulldoze into a pitch. You checked whether your proposed direction sounded good, which helped Ashley stay engaged.</p>
+          <div class="detail-card__meta"><strong>Evidence:</strong> You asked, &#39;Does that sound good?&#39; and Ashley replied, &#39;Sure, Alec, that sounds fair.&#39;</div>
+        </article>
+      
+          </div>
+          <div>
+            <h3>Where It Missed</h3>
+            
+        <article class="detail-card">
+          <h3>Credibility-breaking introduction</h3>
+          <p>This persona is cautious and wants ideas she can defend. Saying &#39;Capital Crypto&#39; instead of Vanguard would create immediate skepticism and make the rest of the conversation harder.</p>
+          <div class="detail-card__meta"><strong>What happened:</strong> You introduced yourself as, &#39;I&#39;m Alec from Capital Crypto.&#39;</div>
+          <div class="detail-card__meta"><strong>Fix:</strong> Slow down and deliver a crisp, accurate intro: &#39;Hi Ashley, Alec with Vanguard.&#39;</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>No clean 3 Ts opening</h3>
+          <p>A strong opening earns time and sets collaboration. Without thank you, time check, and shared agenda, the call feels less professional and less respectful of a guarded advisor’s time.</p>
+          <div class="detail-card__meta"><strong>What happened:</strong> You thanked her, but there was no clear time check. The agenda was fragmented and started with broad language.</div>
+          <div class="detail-card__meta"><strong>Fix:</strong> Use a simple structure: thank you, confirm available time, then propose a concise agenda tied to her business problem.</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>Discovery started too broad</h3>
+          <p>Ashley needs help with confidence, internal defensibility, and taxable implementation. &#39;How you&#39;re helping clients&#39; is too generic to surface those issues quickly.</p>
+          <div class="detail-card__meta"><strong>What happened:</strong> You said, &#39;I&#39;d love to hear how you&#39;re helping clients.&#39;</div>
+          <div class="detail-card__meta"><strong>Fix:</strong> Start with one sharper question about process or fit: &#39;How are you currently handling taxable households that want low-cost ETF implementation but still ask about active management?&#39; </div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>No tailored insight or differentiation</h3>
+          <p>Ashley specifically needs a simple rationale she can defend versus passive ETFs or home-office models. You never gave her that business-fit framing.</p>
+          <div class="detail-card__meta"><strong>What happened:</strong> The transcript ends with no explanation of where an active ETF model could fit or how it differs from existing options.</div>
+          <div class="detail-card__meta"><strong>Fix:</strong> After discovery, offer a short, relevant insight tied to scalability, transparency, tax-aware ETF vehicle benefits, and objective-based use—not a broad product pitch.</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>No summary and no next step</h3>
+          <p>Without a recap and a concrete action, even a decent discovery opening goes nowhere. VG Way requires prioritization and a shared close.</p>
+          <div class="detail-card__meta"><strong>What happened:</strong> There is no summary of Ashley’s stated tax-and-fee concern and no agreed follow-up.</div>
+          <div class="detail-card__meta"><strong>Fix:</strong> Rephrase her need, choose one use case, and lock a next action with timing.</div>
+        </article>
+      
+          </div>
+        </div>
+        <div style="margin-top: 18px;">
+          <h3>Better Examples To Use</h3>
+          <div class="detail-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+            
+        <article class="detail-card">
+          <h3>Opening introduction</h3>
+          <div class="detail-card__meta"><strong>Issue:</strong> Unnatural phrasing and brand error hurt credibility immediately.</div>
+          <div class="detail-card__meta"><strong>Better example:</strong> Instead of &#39;It&#39;s time for the conversation... I&#39;m Alec from Capital Crypto,&#39; say: &#39;Hi Ashley, this is Alec with Vanguard. Thanks for taking my call.&#39;</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>Opening setup after thank-you</h3>
+          <div class="detail-card__meta"><strong>Issue:</strong> No time check and the agenda was vague and fragmented.</div>
+          <div class="detail-card__meta"><strong>Better example:</strong> Instead of &#39;I&#39;d love to hear how you&#39;re helping clients. Especially with that. And then we can see if we can tackle a real case you have in mind,&#39; say: &#39;If you have 3 minutes, I’d like to understand how you’re currently approaching taxable versus qualified accounts, and if it’s relevant, we can work through one real client situation together.&#39;</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>First discovery question</h3>
+          <div class="detail-card__meta"><strong>Issue:</strong> The question was acceptable, but too narrow without first clarifying her process.</div>
+          <div class="detail-card__meta"><strong>Better example:</strong> Instead of only &#39;Could you share an example of that?&#39; say: &#39;Absolutely. Before we jump into the example, how are you currently deciding between passive ETFs, firm models, and any active managers for those tax- and fee-sensitive clients? Then let’s make it concrete with one household.&#39;</div>
+        </article>
+      
+        <article class="detail-card">
+          <h3>Missed bridge after Ashley mentioned taxes and fees</h3>
+          <div class="detail-card__meta"><strong>Issue:</strong> You missed the chance to acknowledge and narrow on her stated concern.</div>
+          <div class="detail-card__meta"><strong>Better example:</strong> After Ashley said clients care about taxes and fees, say: &#39;That makes sense—those are usually the exact places where implementation gets tricky. Is the bigger challenge choosing the portfolio, or feeling confident explaining the trade-offs clearly to the client and your branch?&#39;</div>
+        </article>
+      
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel__eyebrow">Transcript</div>
+        <h2>Full Conversation</h2>
+        <div class="transcript">
+        <div class="transcript-turn transcript-turn--advisor">
+          <div class="transcript-turn__role">Advisor</div>
+          <div class="transcript-turn__text">Hi, this is Ashley Taylor, financial advisor with Merrill Lynch. Who am I speaking with today?</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">It&#39;s time for the conversation.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">Hi, Ashley. I&#39;m Alec from Capital Crypto.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">Thanks for taking my call.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">I&#39;d love to hear how you&#39;re helping clients.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">Especially with that</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">And then we can see if we can tackle a real case you have in mind.</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">Does that sound good?</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--advisor">
+          <div class="transcript-turn__role">Advisor</div>
+          <div class="transcript-turn__text">Sure, Alec, that sounds fair. Right now, I&#39;m working with a range of clients—some have taxable accounts, some have qualified. A lot of them care about taxes and fees. Where do you want to start digging in?</div>
+        </div>
+      
+        <div class="transcript-turn transcript-turn--salesperson">
+          <div class="transcript-turn__role">Salesperson</div>
+          <div class="transcript-turn__text">Could you share an example of that?</div>
+        </div>
+      </div>
+      </section>
+    </main>
+  
+  
+  
+  
+  <!-- enhanced-scorecard:start -->
+<style id="enhanced-scorecard-style">
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(44, 149, 255, 0.13), transparent 22%),
+      radial-gradient(circle at 86% 0%, rgba(24, 212, 199, 0.14), transparent 18%),
+      linear-gradient(180deg, #edf5ff 0%, #d7e6f8 100%);
+  }
+  .report-shell {
+    width: min(1320px, calc(100% - 40px));
+    margin: 24px auto 64px;
+    gap: 22px;
+  }
+  .hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 38px;
+    padding: 38px;
+    background:
+      radial-gradient(circle at 15% 18%, rgba(122, 205, 255, 0.2), transparent 22%),
+      radial-gradient(circle at 88% 14%, rgba(83, 241, 221, 0.18), transparent 18%),
+      linear-gradient(135deg, rgba(17, 87, 198, 0.98), rgba(8, 37, 89, 0.98));
+    box-shadow: 0 34px 94px rgba(17, 39, 71, 0.18);
+  }
+  .hero::before,
+  .hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .hero::before {
+    inset: auto auto -22% -8%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.11), transparent 68%);
+  }
+  .hero::after {
+    inset: -10% -4% auto auto;
+    width: 260px;
+    height: 260px;
+    background: radial-gradient(circle, rgba(119, 225, 255, 0.18), transparent 66%);
+  }
+  .hero__top {
+    align-items: start;
+    gap: 30px;
+  }
+  .hero__top--enhanced {
+    display: grid;
+    grid-template-columns: minmax(0, 1.16fr) minmax(360px, 430px);
+  }
+  .hero h1 {
+    font-size: clamp(2.4rem, 4vw, 3.3rem);
+    line-height: 1;
+    max-width: 10ch;
+    letter-spacing: -0.05em;
+  }
+  .brand {
+    opacity: 0.94;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .hero__main-copy {
+    min-width: 0;
+  }
+  .hero__summary {
+    max-width: 66ch;
+  }
+  .hero__summary p {
+    font-size: 1rem;
+    line-height: 1.72;
+  }
+  .enhanced-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .enhanced-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 999px;
+    text-decoration: none;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.11);
+    backdrop-filter: blur(10px);
+    font-weight: 700;
+    transition: transform 160ms ease, background 160ms ease;
+  }
+  .enhanced-action:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.16);
+  }
+  .enhanced-side {
+    display: grid;
+    grid-template-columns: auto minmax(210px, 1fr);
+    gap: 18px;
+    align-items: center;
+  }
+  .score-ring {
+    width: 186px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
+  .enhanced-advisor-card {
+    padding: 18px;
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+  }
+  .enhanced-advisor-card__portrait {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    margin-bottom: 14px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .enhanced-advisor-card__portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .enhanced-advisor-card__name {
+    font-size: 1.18rem;
+    font-weight: 800;
+  }
+  .enhanced-advisor-card__role {
+    margin-top: 6px;
+    color: rgba(255, 255, 255, 0.82);
+    line-height: 1.5;
+  }
+  .enhanced-advisor-card__meta {
+    display: grid;
+    gap: 8px;
+    margin-top: 14px;
+    color: rgba(255, 255, 255, 0.94);
+    font-size: 0.94rem;
+    line-height: 1.55;
+  }
+  .hero__meta {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .meta-card,
+  .panel,
+  .stage-card {
+    box-shadow: 0 18px 56px rgba(16, 35, 60, 0.1);
+  }
+  .meta-card {
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.94);
+  }
+  .meta-card__label {
+    color: #6d84a2;
+    font-weight: 800;
+  }
+  .meta-card__value {
+    font-size: 1.08rem;
+    color: #143258;
+    font-weight: 800;
+  }
+  .grid-2 {
+    gap: 22px;
+  }
+  .grid-2.grid-3-enhanced {
+    grid-template-columns: 1.16fr 0.9fr 0.94fr;
+  }
+  .panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: 26px;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.98));
+  }
+  .panel::before,
+  .stage-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0));
+    opacity: 0.7;
+  }
+  .panel > *,
+  .stage-card > * {
+    position: relative;
+    z-index: 1;
+  }
+  .status-pill {
+    margin-bottom: 14px;
+  }
+  .callout {
+    border-radius: 20px;
+    background: linear-gradient(135deg, #eef7ff, #f9fbff);
+  }
+  .enhanced-glance {
+    display: grid;
+    grid-template-columns: 1.16fr 0.96fr 0.88fr;
+    gap: 18px;
+  }
+  .enhanced-glance-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: 24px;
+    border: 1px solid var(--line);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.98));
+    box-shadow: 0 18px 56px rgba(16, 35, 60, 0.1);
+  }
+  .enhanced-glance-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0));
+    pointer-events: none;
+  }
+  .enhanced-glance-card > * {
+    position: relative;
+    z-index: 1;
+  }
+  .enhanced-glance-card h2 {
+    margin: 10px 0 10px;
+    font-size: 1.45rem;
+  }
+  .enhanced-glance-card p {
+    color: var(--muted);
+    line-height: 1.68;
+  }
+  .enhanced-glance-card--lead {
+    background:
+      radial-gradient(circle at top right, rgba(108, 204, 255, 0.18), transparent 26%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(246, 250, 255, 0.99));
+  }
+  .enhanced-priority {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    border: 1px solid #d8e7f8;
+    background: #f4f9ff;
+  }
+  .enhanced-priority strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #114d9a;
+  }
+  .enhanced-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .enhanced-kpi {
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid #dbe7f5;
+    background: #f8fbff;
+  }
+  .enhanced-kpi__label {
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .enhanced-kpi__value {
+    margin-top: 8px;
+    font-size: 1.24rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .enhanced-kpi__sub {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+  .enhanced-stage-strip {
+    display: grid;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .enhanced-stage-strip__item {
+    display: grid;
+    grid-template-columns: minmax(118px, 1fr) minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+  .enhanced-stage-strip__label {
+    font-weight: 700;
+  }
+  .enhanced-stage-strip__score {
+    font-weight: 800;
+    color: #114d9a;
+  }
+  .enhanced-mini-bar {
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #e5eef9;
+  }
+  .enhanced-mini-bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #60d7ee, #3d8cff);
+  }
+  .enhanced-checklist {
+    display: grid;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .enhanced-checklist__item {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+    padding: 12px 0;
+    border-top: 1px solid #e4edf8;
+  }
+  .enhanced-checklist__item:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+  .enhanced-checklist__bullet {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    color: #0f5fcb;
+    font-weight: 800;
+    background: linear-gradient(135deg, #dff0ff, #eff6ff);
+  }
+  .enhanced-focus-panel .panel__eyebrow {
+    color: #0f5fcb;
+  }
+  .enhanced-focus-card {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 14px;
+    padding: 16px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: var(--panel-soft);
+  }
+  .enhanced-focus-card + .enhanced-focus-card {
+    margin-top: 14px;
+  }
+  .enhanced-focus-card__rank {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    color: #0f5fcb;
+    background: linear-gradient(135deg, #dceaff, #f3f8ff);
+  }
+  .enhanced-focus-card h3 {
+    margin: 0;
+    font-size: 1.06rem;
+  }
+  .enhanced-focus-card p,
+  .enhanced-focus-card__example {
+    margin: 8px 0 0;
+    color: var(--muted);
+    line-height: 1.65;
+  }
+  .enhanced-stage-nav {
+    position: sticky;
+    top: 14px;
+    z-index: 4;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 18px 50px rgba(16, 35, 60, 0.1);
+  }
+  .enhanced-stage-nav__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    text-decoration: none;
+    color: var(--ink);
+    background: var(--panel-soft);
+    border: 1px solid var(--line);
+    font-size: 0.92rem;
+  }
+  .enhanced-stage-nav__chip strong {
+    color: #0f5fcb;
+  }
+  .mini-score {
+    border-radius: 20px;
+    padding: 18px;
+  }
+  .mini-score__label {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .mini-score__value {
+    margin-top: 8px;
+  }
+  .mini-score__state {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .mini-score__meter {
+    margin-top: 14px;
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #e7eef9;
+  }
+  .mini-score__meter span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #60d7ee, #3d8cff);
+  }
+  .mini-score--weak {
+    border-color: rgba(200, 77, 103, 0.2);
+    background: linear-gradient(180deg, #fff8fa, #fffdfd);
+  }
+  .mini-score--weak .mini-score__state {
+    color: #b63d5c;
+    background: rgba(200, 77, 103, 0.12);
+  }
+  .mini-score--medium {
+    border-color: rgba(201, 138, 18, 0.22);
+    background: linear-gradient(180deg, #fffaf1, #fffefe);
+  }
+  .mini-score--medium .mini-score__state {
+    color: #9a6b0c;
+    background: rgba(201, 138, 18, 0.12);
+  }
+  .mini-score--strong {
+    border-color: rgba(31, 157, 115, 0.22);
+    background: linear-gradient(180deg, #f4fff9, #fdfefe);
+  }
+  .mini-score--strong .mini-score__state {
+    color: #157353;
+    background: rgba(31, 157, 115, 0.12);
+  }
+  .section-stack {
+    gap: 18px;
+  }
+  .stage-card {
+    position: relative;
+    border-radius: 28px;
+    padding: 26px;
+    overflow: hidden;
+    scroll-margin-top: 92px;
+  }
+  .stage-card__header h3 {
+    font-size: 1.42rem;
+  }
+  .stage-card__score {
+    background: #f3f8ff;
+  }
+  .stage-card__bar {
+    height: 14px;
+    background: #e7eef8;
+  }
+  .stage-card__spoken {
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: #edf5ff;
+  }
+  .stage-card.stage-card--weak {
+    border-color: rgba(198, 83, 108, 0.24);
+  }
+  .stage-card.stage-card--medium {
+    border-color: rgba(200, 143, 32, 0.26);
+  }
+  .stage-card.stage-card--strong {
+    border-color: rgba(35, 137, 106, 0.22);
+  }
+  .detail-grid {
+    gap: 18px;
+  }
+  .detail-card {
+    border-radius: 20px;
+    padding: 18px;
+  }
+  .transcript-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 18px;
+    margin-bottom: 14px;
+    padding: 14px;
+    border-radius: 20px;
+    background: #f7fbff;
+    border: 1px solid #dbe8f7;
+  }
+  .transcript-toolbar__label {
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .transcript-toolbar__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .transcript-filter {
+    border: 1px solid #d8e6f7;
+    background: white;
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 10px 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .transcript-filter.is-active {
+    color: white;
+    border-color: transparent;
+    background: linear-gradient(135deg, #197fff, #0b57cd);
+    box-shadow: 0 10px 24px rgba(25, 127, 255, 0.22);
+  }
+  .transcript {
+    gap: 14px;
+    max-height: 860px;
+    overflow: auto;
+    padding-right: 6px;
+  }
+  .transcript-turn {
+    border-radius: 20px;
+    padding: 18px 20px;
+    border: 1px solid #d9e6f6;
+  }
+  .transcript-turn--advisor {
+    background: linear-gradient(180deg, #f8fbff, #fdfefe);
+  }
+  .transcript-turn--salesperson {
+    background: linear-gradient(180deg, #eef7ff, #f8fbff);
+  }
+  .transcript-turn__role {
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .transcript-turn__text {
+    font-size: 0.98rem;
+  }
+  @media print {
+    .enhanced-stage-nav {
+      position: static;
+      box-shadow: none;
+    }
+    .enhanced-actions,
+    .transcript-toolbar {
+      display: none !important;
+    }
+    .hero,
+    .panel,
+    .stage-card,
+    .meta-card,
+    .enhanced-glance-card {
+      box-shadow: none;
+    }
+    .transcript {
+      max-height: none;
+      overflow: visible;
+    }
+  }
+  @media (max-width: 1080px) {
+    .hero__top--enhanced,
+    .grid-2.grid-3-enhanced,
+    .enhanced-side,
+    .enhanced-glance,
+    .enhanced-kpi-row {
+      grid-template-columns: 1fr;
+    }
+    .enhanced-side {
+      gap: 16px;
+    }
+    .score-ring {
+      margin: 0 auto;
+    }
+  }
+  @media (max-width: 820px) {
+    .enhanced-stage-strip__item {
+      grid-template-columns: 1fr;
+    }
+    .transcript-toolbar {
+      align-items: flex-start;
+    }
+  }
+</style>
+<script>
+(() => {
+  const headshotDataUrl = 'data:image/jpeg;base64,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';
+  const advisor = {
+    name: 'Ashley Taylor',
+    role: 'Entry-Level Financial Conglomerate Advisor',
+    firm: 'Merrill Lynch',
+    firmType: 'Wirehouse / Financial Conglomerate',
+    headline: 'New wirehouse advisor who wants clear, defensible ETF-model ideas she can explain with confidence.'
+  };
+
+  function slugify(value) {
+    return String(value || '')
+      .toLowerCase()
+      .replace(/&/g, 'and')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
+  function scoreBucket(score) {
+    if (score >= 4) return 'strong';
+    if (score >= 3) return 'medium';
+    return 'weak';
+  }
+
+  function bucketLabel(score) {
+    if (score >= 4) return 'Strong';
+    if (score >= 3) return 'Mixed';
+    return 'Needs Work';
+  }
+
+  function titleCase(value) {
+    return String(value || '')
+      .split(/\s+/)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function getPanelByHeading(text) {
+    return Array.from(document.querySelectorAll('.panel')).find((panel) =>
+      panel.querySelector('h2')?.textContent?.trim() === text
+    );
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const hero = document.querySelector('.hero');
+    const heroTop = hero?.querySelector('.hero__top');
+    const scoreRing = heroTop?.querySelector('.score-ring');
+    const scoreValue = parseInt(scoreRing?.querySelector('.score-ring__value')?.textContent || '0', 10) || 0;
+    const scorePercent = Math.max(4, Math.min(100, Math.round((scoreValue / 30) * 100)));
+
+    if (scoreRing) {
+      scoreRing.style.setProperty('--score', String(scorePercent));
+      const label = scoreRing.querySelector('.score-ring__label');
+      if (label) label.textContent = 'Coach Score';
+    }
+
+    if (heroTop && !heroTop.classList.contains('hero__top--enhanced')) {
+      heroTop.classList.add('hero__top--enhanced');
+      const existingChildren = Array.from(heroTop.children);
+      const mainCopy = existingChildren[0];
+
+      if (mainCopy) {
+        mainCopy.classList.add('hero__main-copy');
+        const heroTitle = mainCopy.querySelector('h1');
+        if (heroTitle) {
+          heroTitle.textContent = 'Scorecard';
+        }
+        const summary = mainCopy.querySelector('p');
+        if (summary) summary.parentElement?.classList.add('hero__summary');
+        if (!hero.querySelector('.enhanced-actions')) {
+          const actions = document.createElement('div');
+          actions.className = 'enhanced-actions';
+          actions.innerHTML = `
+            <a class="enhanced-action" href="javascript:window.print()">Print or Save PDF</a>
+            <a class="enhanced-action" href="#section-review">Jump to Section Review</a>
+            <a class="enhanced-action" href="#transcript-review">Review Transcript</a>
+          `;
+          mainCopy.appendChild(actions);
+        }
+      }
+
+      if (scoreRing && !hero.querySelector('.enhanced-side')) {
+        const side = document.createElement('div');
+        side.className = 'enhanced-side';
+        const advisorCard = document.createElement('aside');
+        advisorCard.className = 'enhanced-advisor-card';
+        advisorCard.innerHTML = `
+          <div class="enhanced-advisor-card__portrait">
+            <img src="${headshotDataUrl}" alt="${advisor.name} headshot" />
+          </div>
+          <div class="enhanced-advisor-card__name">${advisor.name}</div>
+          <div class="enhanced-advisor-card__role">${advisor.role}</div>
+          <div class="enhanced-advisor-card__meta">
+            <div><strong>Firm:</strong> ${advisor.firm}</div>
+            <div><strong>Firm type:</strong> ${advisor.firmType}</div>
+            <div>${advisor.headline}</div>
+          </div>
+        `;
+        side.appendChild(scoreRing);
+        side.appendChild(advisorCard);
+        heroTop.appendChild(side);
+      }
+    }
+
+    const stageCards = Array.from(document.querySelectorAll('.stage-card'));
+    const stageStack = document.querySelector('.section-stack');
+    const summaryGrid = document.querySelector('.grid-2');
+    const listPanels = Array.from(document.querySelectorAll('.list-panel'));
+
+    if (summaryGrid) {
+      summaryGrid.classList.add('grid-3-enhanced');
+    }
+
+    const stageData = stageCards.map((card) => {
+      const title = card.querySelector('h3')?.textContent?.trim() || 'Stage';
+      const scoreText = card.querySelector('.stage-card__score')?.textContent || '0/5';
+      const score = parseInt(scoreText, 10) || 0;
+      const notes = Array.from(card.querySelectorAll('.report-note p'));
+      const assessment = notes[0]?.innerHTML || '';
+      const example = notes[2]?.innerHTML || '';
+      const id = slugify(title);
+      card.id = id;
+      card.classList.add(`stage-card--${scoreBucket(score)}`);
+      return { title, score, assessment, example, id };
+    });
+
+    if (stageData.length && stageStack && !document.querySelector('.enhanced-stage-nav')) {
+      const nav = document.createElement('nav');
+      nav.className = 'enhanced-stage-nav';
+      nav.id = 'section-review';
+      nav.innerHTML = stageData.map((stage) => `
+        <a class="enhanced-stage-nav__chip" href="#${stage.id}">
+          <span>${stage.title}</span>
+          <strong>${stage.score}/5</strong>
+        </a>
+      `).join('');
+      stageStack.parentNode.insertBefore(nav, stageStack);
+    }
+
+    const visualizationPanel = getPanelByHeading('VG Way Section Scores') || getPanelByHeading('CG Way Section Scores');
+    const miniScores = Array.from(document.querySelectorAll('.mini-score'));
+    miniScores.forEach((card) => {
+      const labelEl = card.querySelector('.mini-score__label');
+      const valueEl = card.querySelector('.mini-score__value');
+      const score = parseInt(valueEl?.textContent || '0', 10) || 0;
+      const bucket = scoreBucket(score);
+      if (labelEl) {
+        labelEl.textContent = titleCase(labelEl.textContent.replace(/[_-]+/g, ' '));
+      }
+      card.classList.add(`mini-score--${bucket}`);
+      if (!card.querySelector('.mini-score__state')) {
+        const badge = document.createElement('div');
+        badge.className = 'mini-score__state';
+        badge.textContent = bucketLabel(score);
+        card.appendChild(badge);
+      }
+      if (!card.querySelector('.mini-score__meter')) {
+        const meter = document.createElement('div');
+        meter.className = 'mini-score__meter';
+        meter.innerHTML = `<span style="width:${Math.max(12, score * 20)}%"></span>`;
+        card.appendChild(meter);
+      }
+    });
+
+    const strengthsGrid = Array.from(document.querySelectorAll('.detail-grid')).find((grid) =>
+      grid.querySelector(':scope > div > h3')?.textContent?.trim() === 'What Worked'
+    );
+    const strengthsCount = strengthsGrid?.querySelectorAll('.detail-card').length || 0;
+    const missesCount = Array.from(document.querySelectorAll('.detail-grid')).find((grid) =>
+      grid.querySelector(':scope > div > h3')?.textContent?.trim() === 'Where It Missed'
+    )?.querySelectorAll('.detail-card').length || 0;
+    const rewriteCount = Array.from(document.querySelectorAll('.detail-card')).filter((card) =>
+      card.closest('.panel')?.querySelector('h2')?.textContent?.includes('Strengths, Misses, and Rewrites') &&
+      card.parentElement?.parentElement?.previousElementSibling?.textContent?.includes('Better Examples To Use') === false
+    ).length;
+    const nextRepCount = listPanels[0]?.querySelectorAll('ol li').length || 0;
+    const discoveryGapCount = listPanels[1]?.querySelectorAll('ul li').length || 0;
+    const strongestStage = [...stageData].sort((a, b) => b.score - a.score)[0];
+    const weakestStages = [...stageData].sort((a, b) => a.score - b.score).slice(0, 3);
+    const statusText = document.querySelector('.status-pill')?.textContent?.trim() || hero?.querySelector('p')?.textContent?.trim() || '';
+    const topPriority = Array.from(document.querySelectorAll('.callout')).find((callout) =>
+      callout.querySelector('strong')?.textContent?.trim() === 'Top Priority Fix'
+    )?.textContent?.replace('Top Priority Fix', '').trim() || '';
+
+    if (hero && !document.querySelector('.enhanced-glance')) {
+      const glance = document.createElement('section');
+      glance.className = 'enhanced-glance';
+      glance.innerHTML = `
+        <article class="enhanced-glance-card enhanced-glance-card--lead">
+          <div class="panel__eyebrow">At A Glance</div>
+          <h2>What To Fix First</h2>
+          <p>${statusText}</p>
+          <div class="enhanced-priority">
+            <strong>Top priority for the next rep</strong>
+            <div>${topPriority}</div>
+          </div>
+          <div class="enhanced-kpi-row">
+            <div class="enhanced-kpi">
+              <div class="enhanced-kpi__label">Coach Score</div>
+              <div class="enhanced-kpi__value">${scoreValue}<span style="font-size:0.9rem;font-weight:700;"> / 30</span></div>
+              <div class="enhanced-kpi__sub">${scorePercent}% of full score</div>
+            </div>
+            <div class="enhanced-kpi">
+              <div class="enhanced-kpi__label">Strongest Stage</div>
+              <div class="enhanced-kpi__value">${escapeHtml(strongestStage?.title || 'None')}</div>
+              <div class="enhanced-kpi__sub">${strongestStage?.score || 0}/5</div>
+            </div>
+            <div class="enhanced-kpi">
+              <div class="enhanced-kpi__label">Need Work</div>
+              <div class="enhanced-kpi__value">${stageData.filter((stage) => stage.score < 3).length}</div>
+              <div class="enhanced-kpi__sub">sections below 3/5</div>
+            </div>
+            <div class="enhanced-kpi">
+              <div class="enhanced-kpi__label">Action Depth</div>
+              <div class="enhanced-kpi__value">${nextRepCount}</div>
+              <div class="enhanced-kpi__sub">next-step actions listed</div>
+            </div>
+          </div>
+        </article>
+        <article class="enhanced-glance-card">
+          <div class="panel__eyebrow">Section Scan</div>
+          <h2>See The Weak Spots Fast</h2>
+          <div class="enhanced-stage-strip">
+            ${stageData.map((stage) => `
+              <div class="enhanced-stage-strip__item">
+                <div class="enhanced-stage-strip__label">${escapeHtml(stage.title)}</div>
+                <div class="enhanced-mini-bar"><span style="width:${Math.max(12, stage.score * 20)}%"></span></div>
+                <div class="enhanced-stage-strip__score">${stage.score}/5</div>
+              </div>
+            `).join('')}
+          </div>
+        </article>
+        <article class="enhanced-glance-card">
+          <div class="panel__eyebrow">Next Rep</div>
+          <h2>Practice With Intent</h2>
+          <p>Use the next call to repair the weakest stages instead of replaying the same opening and hoping later sections improve on their own.</p>
+          <div class="enhanced-checklist">
+            ${weakestStages.map((stage, index) => `
+              <div class="enhanced-checklist__item">
+                <div class="enhanced-checklist__bullet">0${index + 1}</div>
+                <div>
+                  <strong>${escapeHtml(stage.title)}</strong>
+                  <div>${stage.example}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </article>
+      `;
+      hero.insertAdjacentElement('afterend', glance);
+    }
+
+    if (summaryGrid && !document.querySelector('.enhanced-focus-panel')) {
+      const focusPanel = document.createElement('article');
+      focusPanel.className = 'panel enhanced-focus-panel';
+      focusPanel.innerHTML = `
+        <div class="panel__eyebrow">Where To Focus</div>
+        <h2>Top Improvement Priorities</h2>
+        ${weakestStages.map((stage, index) => `
+          <div class="enhanced-focus-card">
+            <div class="enhanced-focus-card__rank">0${index + 1}</div>
+            <div>
+              <h3>${escapeHtml(stage.title)}</h3>
+              <p>${stage.assessment}</p>
+              <div class="enhanced-focus-card__example"><strong>Better example:</strong> ${stage.example}</div>
+            </div>
+          </div>
+        `).join('')}
+      `;
+      summaryGrid.appendChild(focusPanel);
+    }
+
+    if (visualizationPanel) {
+      const eyebrow = visualizationPanel.querySelector('.panel__eyebrow');
+      const heading = visualizationPanel.querySelector('h2');
+      if (eyebrow) eyebrow.textContent = 'Performance View';
+      if (heading) heading.textContent = 'VG Way Section Score Scan';
+    }
+
+    const transcriptPanel = getPanelByHeading('Full Conversation');
+    const transcript = transcriptPanel?.querySelector('.transcript');
+    if (transcriptPanel && transcript && !document.querySelector('.transcript-toolbar')) {
+      transcriptPanel.id = 'transcript-review';
+      const toolbar = document.createElement('div');
+      toolbar.className = 'transcript-toolbar';
+      toolbar.innerHTML = `
+        <div class="transcript-toolbar__label">Filter the transcript to review only your turns or only the advisor's turns.</div>
+        <div class="transcript-toolbar__filters">
+          <button class="transcript-filter is-active" type="button" data-role="all">All turns</button>
+          <button class="transcript-filter" type="button" data-role="salesperson">Salesperson only</button>
+          <button class="transcript-filter" type="button" data-role="advisor">Advisor only</button>
+        </div>
+      `;
+      transcript.before(toolbar);
+      const turns = Array.from(transcript.querySelectorAll('.transcript-turn'));
+      const filters = Array.from(toolbar.querySelectorAll('.transcript-filter'));
+      filters.forEach((button) => {
+        button.addEventListener('click', () => {
+          const role = button.dataset.role || 'all';
+          filters.forEach((item) => item.classList.toggle('is-active', item === button));
+          turns.forEach((turn) => {
+            const matches = role === 'all' || turn.classList.contains(`transcript-turn--${role}`);
+            turn.hidden = !matches;
+          });
+        });
+      });
+    }
+  });
+})();
+</script>
+<!-- enhanced-scorecard:end -->
+  </body>
+</html>
+
+
+
+
+

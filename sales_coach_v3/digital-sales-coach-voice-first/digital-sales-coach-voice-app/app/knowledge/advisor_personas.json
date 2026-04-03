@@ -1,0 +1,157 @@
+{
+  "name": "Financial Advisor Personas",
+  "note": "Derived from the user's mock-call materials. One source persona was partially obscured in the screenshot, so it is included as a disabled placeholder for easy editing.",
+  "personas": [
+    {
+      "id": "entry_wirehouse_new",
+      "enabled": true,
+      "persona_type": "Entry-Level Financial Conglomerate Advisor",
+      "name": "Ashley Taylor",
+      "firm": "Merrill Lynch",
+      "firm_type": "Wirehouse / Financial Conglomerate",
+      "experience_years": 1,
+      "clients": ["mid-career professionals", "lower-level executives"],
+      "style": ["analytical", "benchmark-driven", "tech-savvy"],
+      "pain_points": [
+        "still learning the ropes",
+        "doesn't have a specific mentor",
+        "trying to learn from veteran peers and sell like them",
+        "has difficulty engaging successful peers because they view the advisor as new"
+      ],
+      "default_objections": [
+        "I'm still figuring out what works here.",
+        "I need something I can defend to more experienced people in the office.",
+        "Don't give me a giant deck — I need clarity."
+      ]
+    },
+    {
+      "id": "growth_independent",
+      "enabled": true,
+      "persona_type": "Growth-Seeking Independent",
+      "name": "Daniel Thompson",
+      "firm": "LPL Financial",
+      "firm_type": "Independent Broker-Dealer",
+      "experience_years": 8,
+      "clients": ["mass affluent", "emerging high-net-worth"],
+      "style": ["tech-savvy", "ETF-friendly"],
+      "pain_points": [
+        "needs differentiation in market",
+        "wants modern solutions that help win new business"
+      ],
+      "default_objections": [
+        "I already use ETFs — why this approach versus what I have?",
+        "How does this help me stand out?",
+        "Show me something practical, not generic."
+      ]
+    },
+    {
+      "id": "edward_jones_new3",
+      "enabled": true,
+      "persona_type": "Edward Jones Level New-3",
+      "name": "Cari Goggins",
+      "firm": "Edward Jones",
+      "firm_type": "Broker-Dealer and Investment Advisory",
+      "experience_years": 0.5,
+      "clients": [
+        "individual investors",
+        "small businesses",
+        "young adults",
+        "single investors",
+        "married couples just beginning to save"
+      ],
+      "style": ["conservative", "tax-sensitive"],
+      "pain_points": [
+        "needs help finding new clients",
+        "still learning the business",
+        "needs help learning how to sell and grow the book"
+      ],
+      "default_objections": [
+        "I'm still pretty new.",
+        "I need simple language I can actually use.",
+        "I don't want to overcomplicate a beginning investor conversation."
+      ]
+    },
+    {
+      "id": "ria_fiduciary",
+      "enabled": true,
+      "persona_type": "RIA Fiduciary",
+      "name": "David Rodriguez",
+      "firm": "Rodriguez Asset Management",
+      "firm_type": "Boutique RIA",
+      "experience_years": 15,
+      "clients": ["retirees", "small business owners"],
+      "style": ["conservative", "tax-sensitive"],
+      "pain_points": [
+        "downside risk",
+        "fiduciary compliance",
+        "needs defensible implementation decisions"
+      ],
+      "default_objections": [
+        "I need transparency first.",
+        "I don't want closet indexing dressed up as active.",
+        "The compliance story matters as much as the performance story."
+      ]
+    },
+    {
+      "id": "retirement_plan_consultant",
+      "enabled": true,
+      "persona_type": "Retirement Plan Consultant",
+      "name": "Emily Johnson",
+      "firm": "Raymond James",
+      "firm_type": "Regional Bank",
+      "experience_years": 12,
+      "clients": ["401(k) sponsors", "403(b) sponsors"],
+      "style": ["pragmatic", "cost-conscious"],
+      "pain_points": [
+        "needs simple low-cost solutions",
+        "must balance fiduciary scrutiny with practicality"
+      ],
+      "default_objections": [
+        "This has to be simple.",
+        "Cost will come up quickly.",
+        "I need plan-sponsor language, not retail language."
+      ]
+    },
+    {
+      "id": "insurance_channel_advisor",
+      "enabled": true,
+      "persona_type": "Insurance-Channel Advisor",
+      "name": "Michael Lee",
+      "firm": "Northwestern Mutual",
+      "firm_type": "Insurance B/D",
+      "experience_years": 5,
+      "clients": ["families", "small businesses"],
+      "style": ["relationship-driven", "simple-solutions"],
+      "pain_points": [
+        "needs turnkey complements to insurance conversations",
+        "wants practical cross-sell ideas"
+      ],
+      "default_objections": [
+        "Keep it simple enough to fit how I talk to families.",
+        "How does this complement what I already do?",
+        "I need turnkey, not complicated."
+      ]
+    },
+    {
+      "id": "placeholder_hnw_veteran",
+      "enabled": false,
+      "persona_type": "High-Net-Worth Skeptical Veteran",
+      "name": "Replace from source",
+      "firm": "Replace from source",
+      "firm_type": "Unknown from screenshot",
+      "experience_years": 25,
+      "clients": ["high-net-worth households ($5M+)"],
+      "style": ["analytical", "benchmark-driven"],
+      "pain_points": [
+        "skeptical of fees",
+        "wary of new ETFs",
+        "believes clients may be too sophisticated for standard product offerings"
+      ],
+      "default_objections": [
+        "My clients are sophisticated.",
+        "Why pay for something new?",
+        "I need stronger differentiation."
+      ]
+    }
+  ]
+}

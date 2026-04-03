@@ -1,0 +1,84 @@
+DEPLOYMENT STEPS — Digital Sales Coach
+=======================================
+
+AZURE RESOURCES
+---------------
+  Subscription   : GO-SM-Digital Lighthouse Innovation
+  Resource Group : cg_irvine
+  Region         : West US 2
+
+  Backend (App Service)  : coachme-vg
+    URL: https://coachme-vg.azurewebsites.net
+    Plan: cg-voice-agent-plan (P1v2)
+    Runtime: Python 3.10 (Linux)
+    Startup Command: gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 app.main:app
+
+ENVIRONMENT VARIABLES (set in App Service > Configuration > Application Settings)
+----------------------------------------------------------------------------------
+  OPENAI_API_KEY                 <secret>
+  OPENAI_BASE_URL                https://api.openai.com/v1
+  OPENAI_SCENARIO_MODEL          gpt-5.4
+  OPENAI_CHAT_MODEL              gpt-5.4
+  OPENAI_COACH_MODEL             gpt-5.4
+  OPENAI_END_DETECTOR_MODEL      gpt-5-mini
+  OPENAI_REALTIME_MODEL          gpt-realtime
+  OPENAI_REALTIME_VOICE          marin
+  APP_NAME                       Digital Sales Coach
+  SCM_DO_BUILD_DURING_DEPLOYMENT true
+
+
+DEPLOYMENT
+----------
+Run all commands from:
+  C:\Users\achalshah3\Desktop\salesai_app\sales_coach_v3\digital-sales-coach-voice-first\digital-sales-coach-voice-app
+
+Step 1 — Create deploy zip (MUST use Python, NOT PowerShell Compress-Archive):
+  python -c "
+  import zipfile, os
+  with zipfile.ZipFile('deploy.zip', 'w', zipfile.ZIP_DEFLATED) as zf:
+      for dirpath, dirnames, filenames in os.walk('app'):
+          dirnames[:] = [d for d in dirnames if d != '__pycache__']
+          for filename in filenames:
+              if filename.endswith('.pyc'):
+                  continue
+              filepath = os.path.join(dirpath, filename)
+              arcname = filepath.replace(os.sep, '/')
+              zf.write(filepath, arcname)
+      zf.write('requirements.txt', 'requirements.txt')
+  print('deploy.zip created')
+  "
+
+  !!! Do NOT use PowerShell Compress-Archive !!!
+  It stores paths with backslashes (app\main.py) which on Linux are treated as
+  literal filenames, not directory separators, breaking all Python imports.
+
+Step 2 — Deploy:
+  az webapp deploy -g cg_irvine -n coachme-vg --src-path deploy.zip --type zip
+
+  Expected output: "RuntimeSuccessful" with numberOfInstancesSuccessful: 1
+
+  Note: The CLI may report "Site failed to start" due to a 10-minute warm-up
+  timeout, but the app usually starts successfully. Confirm with health check.
+
+Step 3 — Verify:
+  curl https://coachme-vg.azurewebsites.net/api/health
+  Expected: {"status":"ok","openai_configured":true}
+
+
+USEFUL COMMANDS
+---------------
+# Stream live logs:
+  az webapp log tail -g cg_irvine -n coachme-vg
+
+# Download logs:
+  az webapp log download -g cg_irvine -n coachme-vg --log-file logs.zip
+
+# Restart the app:
+  az webapp restart -g cg_irvine -n coachme-vg
+
+# Update an env var:
+  az webapp config appsettings set -g cg_irvine -n coachme-vg --settings KEY="VALUE"
+
+# Update startup command:
+  az webapp config set -g cg_irvine -n coachme-vg \
+    --startup-file "gunicorn -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 app.main:app"

@@ -1,0 +1,163 @@
+{
+  "name": "Engagement Framework Playbook",
+  "summary": "Sales-associate call framework used for advisor practice and coaching.",
+  "opening": {
+    "name": "3 Ts",
+    "items": [
+      "Thank you",
+      "Time check",
+      "Set an agenda, then invite the advisor to state what would be most useful"
+    ],
+    "example_prompt": "I had a few things I wanted to talk about, but before I go there, what would be most useful for you in our time?"
+  },
+  "stages": [
+    {
+      "id": "agenda",
+      "name": "Agenda",
+      "goal": "Set a collaborative opening and confirm what the advisor wants from the interaction.",
+      "coach_looks_for": [
+        "clear reason for the call",
+        "time check",
+        "agenda shaped with the advisor, not just delivered to them"
+      ]
+    },
+    {
+      "id": "discovery",
+      "name": "Discovery",
+      "goal": "Understand the advisor's needs, framework, workflow, book, and the specific case or catalyst behind the opportunity.",
+      "coach_looks_for": [
+        "advisor mindset questions",
+        "sales approach questions",
+        "product profiling / differences questions",
+        "relationship stage awareness",
+        "questions that uncover a live case"
+      ]
+    },
+    {
+      "id": "insights",
+      "name": "Insights / Idea Share / Practice Management",
+      "goal": "Share relevant insight or an idea that matches the discovered need and make the conversation useful beyond product facts.",
+      "coach_looks_for": [
+        "relevant market or portfolio insight",
+        "idea share tied directly to the advisor's business problem",
+        "practice-management or implementation help",
+        "prompter questions that open cross-sell or next-step opportunities"
+      ]
+    },
+    {
+      "id": "summarize_prioritize",
+      "name": "Summarize & Prioritize",
+      "goal": "Rephrase the advisor's need, identify the priority, and sequence the opportunity.",
+      "coach_looks_for": [
+        "clear summary in the advisor's language",
+        "explicit prioritization",
+        "now / soon / later sequencing"
+      ]
+    },
+    {
+      "id": "close",
+      "name": "Close",
+      "goal": "Create a shared commitment on next steps that moves the opportunity forward.",
+      "coach_looks_for": [
+        "explicit next step",
+        "owner for each task",
+        "timing or calendar commitment",
+        "connection to the business case uncovered in discovery"
+      ]
+    }
+  ],
+  "relationship_management_process": {
+    "question": "Where are you in the relationship? What do you need to know before the next meeting? What questions need to be answered before the meeting ends?",
+    "phases": [
+      {
+        "name": "Prospect / Introduction",
+        "signals": [
+          "AUM, number of clients or households",
+          "office or team structure",
+          "who makes investment decisions",
+          "catalyst for portfolio change"
+        ]
+      },
+      {
+        "name": "Assessment",
+        "signals": [
+          "current portfolio matrix",
+          "asset managers being used",
+          "client concerns or objections",
+          "money in motion opportunities"
+        ]
+      },
+      {
+        "name": "Implementation",
+        "signals": [
+          "portfolio positioning",
+          "potential specialist calls",
+          "reports and benchmarking services"
+        ]
+      },
+      {
+        "name": "Review and Referral",
+        "signals": [
+          "ongoing service preferences",
+          "ask for referrals"
+        ]
+      }
+    ]
+  },
+  "discovery_framework": {
+    "advisor_mindset": {
+      "guide": "Are they selective about the clients they accept? Are they looking for new business or referrals? Are they moving money? If so, where?",
+      "questions": [
+        "How would you describe your value to a prospect?",
+        "What does your ideal client look like?",
+        "How do you succession-plan your client list?"
+      ]
+    },
+    "sales_approach": {
+      "guide": "How do they sell? How do they ask clients for money? Who do they listen to?",
+      "questions": [
+        "From a portfolio-construction standpoint, what's working for you right now?",
+        "Where do you have your highest convictions right now? Lowest?",
+        "How do you construct portfolios? What is your process for selecting money managers?",
+        "What products or managers are working for you right now?",
+        "What is important to you when choosing an ETF, SMA or model provider?",
+        "What are your clients asking you for right now?",
+        "Are you looking for any special products to round out your mix?"
+      ]
+    },
+    "product_profiling": {
+      "guide": "How do they make buy and sell decisions, asset-allocation changes and implementation choices?",
+      "questions": [
+        "Do you use literature, hypotheses or tools with clients?",
+        "For investment and market commentary, what is the most valuable resource you use? Who do you listen to?",
+        "How much weight do you place on outlooks when making portfolio changes?",
+        "What is the breakdown of qualified versus nonqualified money? How do you manage taxable portfolios differently?",
+        "What do you like about your current approach? Tell me more.",
+        "What else should I know?",
+        "What made you choose that?"
+      ]
+    }
+  },
+  "closing_framework": {
+    "name": "Now, Soon, Later",
+    "guide": "Leverage the counselor-selling process to create actionable steps to close the business.",
+    "steps": [
+      "Identify gradient steps",
+      "Summarize and prioritize the opportunities discussed",
+      "Create an explicitly shared agreement on next steps",
+      "Clarify what the advisor will do now, soon and later"
+    ]
+  },
+  "reminders": [
+    "Rephrase the question or their need and clarify before answering.",
+    "Let the advisor finish both the question and the thought before jumping in.",
+    "The conversation should feel consultative, not like literature dumping."
+  ],
+  "bad_habits_to_avoid": [
+    "No opening agenda",
+    "Asking weak questions",
+    "Too many words or too much literature",
+    "No summary or prioritization of what the advisor shared",
+    "No close — leaving it sounding more like a service call than a sales call"
+  ]
+}
