@@ -276,5 +276,25 @@ router.post("/voice/maya-turn", async (req, res) => {
   }
 });
 
+// ─── POST /voice/transcribe ───────────────────────────────────────────────────
+router.post("/voice/transcribe", async (req: Request, res: Response) => {
+  try {
+    const { audio } = req.body as { audio?: string };
+    if (!audio) return res.status(400).json({ error: "Missing audio field" });
+
+    const audioBuffer = Buffer.from(audio, "base64");
+    if (audioBuffer.byteLength < 100) {
+      return res.json({ transcript: "" });
+    }
+
+    const transcript = await speechToText(audioBuffer, "webm");
+    return res.json({ transcript: transcript.trim() });
+  } catch (err) {
+    console.error("Transcribe error:", err);
+    const msg = err instanceof Error ? err.message : "Transcription failed";
+    return res.status(500).json({ error: msg });
+  }
+});
+
 export { AVAILABLE_SLOTS };
 export default router;

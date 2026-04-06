@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
+import { MayaBar } from "./maya-bar";
 
 export function Layout({ children }: { children: ReactNode }) {
   const style = {
@@ -19,6 +20,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="flex flex-col flex-1 relative z-10 overflow-hidden">
           <header className="h-16 flex items-center px-4 border-b border-white/5 bg-background/40 backdrop-blur-xl shrink-0 z-20 sticky top-0">
             <SidebarTrigger className="text-muted-foreground hover:text-white" />
+            <MayaBar />
           </header>
           <main className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
             <div className="max-w-7xl mx-auto h-full">
