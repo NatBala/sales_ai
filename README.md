@@ -1,6 +1,6 @@
 # Sales AI Hub
 
-AI-powered sales platform for financial services, built for Vanguard and Capital Group advisor teams. Six sequential AI agents cover the full sales cycle from lead discovery to follow-up.
+AI-powered sales platform for financial services, built for Vanguard and Capital Group advisor teams. Six sequential AI agents cover the full sales cycle from lead discovery to follow-up, with Ask Maya — a voice assistant that navigates the entire pipeline hands-free.
 
 ## Agent Pipeline
 
@@ -16,6 +16,7 @@ Lead Me → Schedule Me → Prep Me → Coach Me → Engage Me → Follow Me
 | Coach Me | Live roleplay practice against AI advisor personas with scorecard grading |
 | Engage Me | Real-time ETF detection during live meetings — surfaces data panels on voice trigger |
 | Follow Me | Converts meeting notes into tasks and a follow-up email draft |
+| Ask Maya | Voice assistant — speak a command to search leads, navigate agents, or prep for a meeting |
 
 ## Deployments
 
@@ -25,15 +26,15 @@ All deployed URLs for CG, VG, Email Me, Sales Coach, and landing pages are in `l
 
 ```
 salesai_app/
-├── vg/                     # Vanguard codebase (pnpm monorepo)
+├── cg_v2/                  # Capital Group codebase (pnpm monorepo) — active
 │   ├── artifacts/
 │   │   ├── api-server/     # Express 5 backend (ESM)
 │   │   └── sales-hub/      # React 19 + Vite frontend
 │   └── lib/                # Shared packages (DB, API spec, AI integrations)
-├── cg/                     # Capital Group codebase (same structure as vg/)
+├── vg/                     # Vanguard codebase (same structure as cg_v2/)
 ├── sales_coach_v3/         # Digital Sales Coach (Python/FastAPI + voice roleplay)
-├── salesai_landing_vg/     # Vanguard landing page (React + Vite)
 ├── salesai_landing_cg/     # Capital Group landing page (React + Vite)
+├── salesai_landing_vg/     # Vanguard landing page (React + Vite)
 └── links.txt               # All deployed URLs at a glance
 ```
 
@@ -51,7 +52,7 @@ salesai_app/
 ### VG / CG Apps
 
 ```bash
-# From vg/ or cg/ directory
+# From vg/ or cg_v2/ directory
 pnpm install
 
 # Start API server (port 8080)
