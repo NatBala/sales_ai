@@ -184,7 +184,7 @@ export function CoachScorecard({ scorecard, scenario, meeting, onRetry }: Props)
       <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="space-y-4">
           <div className="rounded-2xl border border-white/8 bg-card/40 p-5">
-            <p className="mb-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">VG Way Scores</p>
+            <p className="mb-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">CG Way Scores</p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
               {stageScores.map((stage) => (
                 <div key={stage.key} className="rounded-xl border border-white/6 bg-background/40 p-3">

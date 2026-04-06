@@ -903,12 +903,12 @@ export default function PrepMe() {
                 </CardContent>
               </Card>
             ) : selectedMeeting ? (
-              <Card className="overflow-hidden border border-red-950/20 bg-[#fff9f7] text-slate-900 shadow-[0_20px_60px_rgba(80,0,0,0.18)]">
+              <Card className="overflow-hidden border border-blue-950/20 bg-[#f0f7ff] text-slate-900 shadow-[0_20px_60px_rgba(0,30,80,0.18)]">
                 <div
-                  className="border-b border-red-950/10 px-5 py-5 text-white"
+                  className="border-b border-blue-950/10 px-5 py-5 text-white"
                   style={{
                     background:
-                      "radial-gradient(circle at 12px 12px, rgba(255,255,255,0.08) 2px, transparent 2px), linear-gradient(135deg, #7f0d0d 0%, #991b1b 55%, #b91c1c 100%)",
+                      "radial-gradient(circle at 12px 12px, rgba(255,255,255,0.08) 2px, transparent 2px), linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 55%, #2563eb 100%)",
                     backgroundSize: "24px 24px, auto",
                   }}
                 >
@@ -930,32 +930,32 @@ export default function PrepMe() {
 
                 <CardContent className="space-y-5 p-5">
                   <div>
-                    <p className="text-sm font-semibold text-red-900">Meeting Objective</p>
-                    <div className="mt-2 rounded-xl border border-red-100 bg-white px-4 py-3 text-sm leading-relaxed text-slate-700 shadow-sm">
+                    <p className="text-sm font-semibold text-blue-900">Meeting Objective</p>
+                    <div className="mt-2 rounded-xl border border-blue-100 bg-white px-4 py-3 text-sm leading-relaxed text-slate-700 shadow-sm">
                       {selectedMeeting.purpose}
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-sm font-semibold text-red-900">Advisor Snapshot</p>
+                    <p className="text-sm font-semibold text-blue-900">Advisor Snapshot</p>
                     <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                      <div className="rounded-lg border border-red-100 bg-white p-3 shadow-sm">
+                      <div className="rounded-lg border border-blue-100 bg-white p-3 shadow-sm">
                         <div className="flex items-center gap-2 font-semibold text-slate-800">
-                          <Building2 className="h-3.5 w-3.5 text-red-700" />
+                          <Building2 className="h-3.5 w-3.5 text-blue-700" />
                           Segment
                         </div>
                         <p className="mt-1 text-slate-600">{selectedAdvisorData?.segment || "N/A"}</p>
                       </div>
-                      <div className="rounded-lg border border-red-100 bg-white p-3 shadow-sm">
+                      <div className="rounded-lg border border-blue-100 bg-white p-3 shadow-sm">
                         <div className="flex items-center gap-2 font-semibold text-slate-800">
-                          <Users className="h-3.5 w-3.5 text-red-700" />
+                          <Users className="h-3.5 w-3.5 text-blue-700" />
                           Buying Unit
                         </div>
                         <p className="mt-1 text-slate-600">{selectedAdvisorData?.buyingUnit || "N/A"}</p>
                       </div>
-                      <div className="col-span-2 rounded-lg border border-red-100 bg-white p-3 shadow-sm">
+                      <div className="col-span-2 rounded-lg border border-blue-100 bg-white p-3 shadow-sm">
                         <div className="flex items-center gap-2 font-semibold text-slate-800">
-                          <MapPin className="h-3.5 w-3.5 text-red-700" />
+                          <MapPin className="h-3.5 w-3.5 text-blue-700" />
                           Territory
                         </div>
                         <p className="mt-1 text-slate-600">{selectedAdvisorData?.territory || selectedLead?.location || "N/A"}</p>
@@ -964,17 +964,17 @@ export default function PrepMe() {
                   </div>
 
                   <div>
-                    <p className="text-sm font-semibold text-red-900">Assets Overview</p>
+                    <p className="text-sm font-semibold text-blue-900">Assets Overview</p>
                     <div className="mt-2 grid grid-cols-3 gap-2 text-center">
-                      <div className="rounded-lg bg-gradient-to-br from-red-900 to-red-700 px-2 py-3 text-white shadow-sm">
+                      <div className="rounded-lg bg-gradient-to-br from-blue-900 to-blue-700 px-2 py-3 text-white shadow-sm">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-white/75">AUM</p>
                         <p className="mt-1 text-base font-bold">{formatCompactMoney((selectedAdvisorData?.aumM ?? 0) * 1_000_000, selectedLead?.aum ?? "N/A")}</p>
                       </div>
-                      <div className="rounded-lg bg-gradient-to-br from-red-900 to-red-700 px-2 py-3 text-white shadow-sm">
+                      <div className="rounded-lg bg-gradient-to-br from-blue-900 to-blue-700 px-2 py-3 text-white shadow-sm">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-white/75">Sales</p>
                         <p className="mt-1 text-base font-bold">{formatCompactMoney(selectedAdvisorData?.salesAmt)}</p>
                       </div>
-                      <div className="rounded-lg bg-gradient-to-br from-red-900 to-red-700 px-2 py-3 text-white shadow-sm">
+                      <div className="rounded-lg bg-gradient-to-br from-blue-900 to-blue-700 px-2 py-3 text-white shadow-sm">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-white/75">Redemptions</p>
                         <p className="mt-1 text-base font-bold">{formatCompactMoney(selectedAdvisorData?.redemption)}</p>
                       </div>
@@ -982,13 +982,13 @@ export default function PrepMe() {
                   </div>
 
                   <div>
-                    <p className="text-sm font-semibold text-red-900">Topics For Discussion</p>
-                    <div className="mt-2 space-y-3 border-t border-red-100 pt-3">
+                    <p className="text-sm font-semibold text-blue-900">Topics For Discussion</p>
+                    <div className="mt-2 space-y-3 border-t border-blue-100 pt-3">
                       {agendaTopics.length ? (
                         agendaTopics.map((topic, index) => (
                           <div key={`${topic.title}-${index}`} className="flex gap-3">
-                            <div className="pt-1 text-red-700">
-                              {index === 1 ? <TrendingUp className="h-4 w-4" /> : index === 2 ? <TrendingDown className="h-4 w-4" /> : <span className="block h-2 w-2 rounded-full bg-red-700" />}
+                            <div className="pt-1 text-blue-700">
+                              {index === 1 ? <TrendingUp className="h-4 w-4" /> : index === 2 ? <TrendingDown className="h-4 w-4" /> : <span className="block h-2 w-2 rounded-full bg-blue-700" />}
                             </div>
                             <div>
                               <p className="text-sm font-semibold text-slate-800">{topic.title}</p>
@@ -1006,12 +1006,12 @@ export default function PrepMe() {
 
                   {activeAgendaArticles.length ? (
                     <div>
-                      <p className="text-sm font-semibold text-red-900">Articles To Share</p>
-                      <div className="mt-2 space-y-3 border-t border-red-100 pt-3">
+                      <p className="text-sm font-semibold text-blue-900">Articles To Share</p>
+                      <div className="mt-2 space-y-3 border-t border-blue-100 pt-3">
                         {activeAgendaArticles.map((article) => (
                           <div
                             key={`${article.title}-${article.url}`}
-                            className="rounded-xl border border-red-100 bg-white p-3 shadow-sm"
+                            className="rounded-xl border border-blue-100 bg-white p-3 shadow-sm"
                           >
                             <p className="text-sm font-semibold text-slate-800">{article.title}</p>
                             <p className="mt-1 text-xs text-slate-500">{article.topic || "Seismic article"}</p>
@@ -1019,7 +1019,7 @@ export default function PrepMe() {
                               href={article.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="mt-2 inline-block text-xs font-medium text-red-700 underline-offset-2 hover:underline"
+                              className="mt-2 inline-block text-xs font-medium text-blue-700 underline-offset-2 hover:underline"
                             >
                               {article.url}
                             </a>
@@ -1030,12 +1030,12 @@ export default function PrepMe() {
                   ) : null}
 
                   <div>
-                    <p className="text-sm font-semibold text-red-900">Team Members</p>
-                    <div className="mt-2 space-y-3 border-t border-red-100 pt-3">
+                    <p className="text-sm font-semibold text-blue-900">Team Members</p>
+                    <div className="mt-2 space-y-3 border-t border-blue-100 pt-3">
                       {AGENDA_TEAM_MEMBERS.map((member) => (
                         <div
                           key={member.email}
-                          className="rounded-xl border border-red-100 bg-white p-4 shadow-sm"
+                          className="rounded-xl border border-blue-100 bg-white p-4 shadow-sm"
                         >
                           <p className="text-sm font-semibold text-slate-800">{member.name}</p>
                           <p className="text-xs text-slate-500">{member.role}</p>
@@ -1092,7 +1092,7 @@ export default function PrepMe() {
                   <Button
                     type="button"
                     onClick={handleEmailAgenda}
-                    className="h-auto w-full justify-start gap-2 rounded-xl px-4 py-3 text-left whitespace-normal bg-red-700 text-white hover:bg-red-600"
+                    className="h-auto w-full justify-start gap-2 rounded-xl px-4 py-3 text-left whitespace-normal bg-blue-700 text-white hover:bg-blue-600"
                   >
                     <Mail className="h-4 w-4 shrink-0" />
                     Email Agenda
@@ -1101,7 +1101,7 @@ export default function PrepMe() {
                     type="button"
                     onClick={handleAddToCalendar}
                     variant="outline"
-                    className="h-auto w-full justify-start gap-2 rounded-xl px-4 py-3 text-left whitespace-normal border-red-200 bg-white text-red-800 hover:bg-red-50"
+                    className="h-auto w-full justify-start gap-2 rounded-xl px-4 py-3 text-left whitespace-normal border-blue-200 bg-white text-blue-800 hover:bg-blue-50"
                   >
                     <CalendarPlus className="h-4 w-4 shrink-0" />
                     Add To Calendar
@@ -1110,7 +1110,7 @@ export default function PrepMe() {
                     type="button"
                     onClick={handleDownloadAgenda}
                     variant="outline"
-                    className="h-auto w-full justify-start gap-2 rounded-xl px-4 py-3 text-left whitespace-normal border-red-200 bg-white text-red-800 hover:bg-red-50"
+                    className="h-auto w-full justify-start gap-2 rounded-xl px-4 py-3 text-left whitespace-normal border-blue-200 bg-white text-blue-800 hover:bg-blue-50"
                   >
                     <Download className="h-4 w-4 shrink-0" />
                     Download Agenda

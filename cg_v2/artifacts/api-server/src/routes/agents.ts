@@ -1552,7 +1552,7 @@ async function generateCoachScenario(input: {
 Do not write a script. Build a concise scenario brief that a live voice roleplay can improvise from in realtime.
 The selected advisor remains the advisor being simulated. Do not invent a different advisor identity, different firm, or multiple persona options.
 The advisor should feel realistic, reveal information only when earned, ask practical questions, and raise objections naturally.
-Make the scenario easy to evaluate against the VG Way while keeping the visible fields tight enough for a prep screen.
+Make the scenario easy to evaluate against the CG Way while keeping the visible fields tight enough for a prep screen.
 Use the structured advisor context and dataset row when available so the persona reflects real sales notes, AUM, opportunity size, competitor usage, territory, segment, and engagement context.
 Prefer real advisor signals over generic invented traits.
 Always respond with valid JSON only.`,
@@ -1574,7 +1574,7 @@ Constraints:
 - The visible persona must match the selected advisor, not a fictional replacement.
 - The hidden brief must be rich enough for a realistic realtime call.
 - Include 2-4 realistic objections and at least 2 live-case examples.
-- Make the scenario strongly evaluable against the VG Way.
+- Make the scenario strongly evaluable against the CG Way.
 - Keep all fields concise and practical.
 - Do not create alternate personas, extra advisor variants, or a catalog structure.
 - Make the trainer preview useful for the rep before the call, not a generic summary.
@@ -1768,7 +1768,7 @@ router.post("/agents/coach-me/scorecard", async (req: Request, res: Response) =>
         },
         {
           role: "user",
-          content: `Evaluate this sales roleplay conversation against the 6-stage VG Way framework.
+          content: `Evaluate this sales roleplay conversation against the 6-stage CG Way framework.
 
 Advisor Persona: ${persona.name}, ${persona.role} at ${persona.company} (${persona.firmType})
 Meeting Purpose: ${meetingContext.purpose}
@@ -1782,7 +1782,7 @@ Return a JSON scorecard with these exact fields:
 - overallVerdict: string (e.g. "Strong Start", "Needs Work", "Mixed Performance", "Excellent", "Below Standard")
 - summary: string (2–3 sentences on overall performance — be specific, cite what happened)
 - topPriorityFix: string (the single most important change for next time — 1–2 sentences, specific and actionable)
-- stages: array of exactly 6 objects for the VG Way stages, each with:
+- stages: array of exactly 6 objects for the CG Way stages, each with:
   - name: string (MUST be one of: "Agenda", "Discovery", "Insights", "Practice Management", "Summarize & Prioritize", "Close")
   - score: number 0–5 (be rigorous — if skipped or weak, score 0–2)
   - assessment: string (1–2 sentences, specific to what happened in this conversation)
@@ -1979,7 +1979,7 @@ Write in short sections in this exact order:
 3. Quick section notes
 4. Immediate next rep
 
-For quick section notes, touch each VG Way stage briefly:
+For quick section notes, touch each CG Way stage briefly:
 - Agenda
 - Discovery
 - Insights
@@ -2048,7 +2048,7 @@ router.post("/agents/coach-me/scorecard-v2", async (req: Request, res: Response)
 Evaluate the salesperson only. Use the transcript as evidence.
 Be direct, specific, concise, and useful. Avoid generic praise.
 Tie your evaluation to the stages: Agenda, Discovery, Insights, Practice Management, Summarize & Prioritize, Close.
-Use these VG Way expectations:
+Use these CG Way expectations:
 - Strong openings use thank you, time check, and a clear agenda with the advisor.
 - Discovery should identify needs, framework, book of business, and ideally a live case.
 - Insights should connect directly to the advisor's real business problem.

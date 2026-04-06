@@ -27,7 +27,7 @@ export function Navbar() {
           </div>
 
           <a
-            href="https://jolly-cliff-04bac391e.6.azurestaticapps.net"
+            href="https://calm-grass-06c54321e.6.azurestaticapps.net"
             target="_blank"
             rel="noreferrer"
             className="px-5 py-2.5 rounded-xl bg-white text-background font-semibold text-sm hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all duration-200 shadow-[0_0_20px_rgba(255,255,255,0.15)]"

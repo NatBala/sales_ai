@@ -7,12 +7,12 @@ AZURE RESOURCES
   Resource Group   : cg_irvine
   Region           : West US 2
 
-  Backend  (App Service)       : salesai-api
-    URL: https://salesai-api.azurewebsites.net
-    SCM: https://salesai-api.scm.azurewebsites.net
+  Backend  (App Service)       : salesai-cg2-api
+    URL: https://salesai-cg2-api.azurewebsites.net
+    SCM: https://salesai-cg2-api.scm.azurewebsites.net
 
-  Frontend (Static Web App)    : salesai-cg
-    URL: https://jolly-cliff-04bac391e.6.azurestaticapps.net
+  Frontend (Static Web App)    : salesai-cg2
+    URL: https://calm-grass-06c54321e.6.azurestaticapps.net
 
   Database (PostgreSQL)        : optional — backend falls back to in-memory if unreachable
 
@@ -27,7 +27,7 @@ ENVIRONMENT VARIABLES (set in App Service > Configuration > Application Settings
 
 BACKEND DEPLOYMENT
 ------------------
-Run all commands from repo root: C:\Users\achalshah3\Desktop\salesai_app\cg
+Run all commands from repo root: C:\Users\achalshah3\Desktop\salesai_app\cg_v2
 
 Step 1 — Build:
   pnpm --filter @workspace/api-server run build
@@ -64,7 +64,7 @@ Step 3 — Create deploy zip using Python (NOT PowerShell — see note below):
 
 Step 4 — Deploy:
   az webapp deploy \
-    --name salesai-api \
+    --name salesai-cg2-api \
     --resource-group cg_irvine \
     --src-path artifacts/api-server/deploy.zip \
     --type zip
@@ -75,12 +75,10 @@ App Service start command (set in Configuration > General Settings):
   node --enable-source-maps ./dist/index.mjs
 
   !!! CRITICAL: The startup command MUST be set to the above !!!
-  If it is set to "node index.mjs" (the default), the App Service will run a stale
-  root-level file and ALL deployments will appear to work but have NO effect.
   Verify with:
-    az webapp config show --name salesai-api --resource-group cg_irvine --query appCommandLine
+    az webapp config show --name salesai-cg2-api --resource-group cg_irvine --query appCommandLine
   Fix with:
-    az webapp config set --name salesai-api --resource-group cg_irvine \
+    az webapp config set --name salesai-cg2-api --resource-group cg_irvine \
       --startup-file "node --enable-source-maps ./dist/index.mjs"
 
 
@@ -88,37 +86,37 @@ FRONTEND DEPLOYMENT
 -------------------
 
 Step 1 — Ensure .env.production exists at artifacts/sales-hub/.env.production:
-  VITE_API_URL=https://salesai-api.azurewebsites.net
+  VITE_API_URL=https://salesai-cg2-api.azurewebsites.net
 
 Step 2 — Build:
   PORT=4000 pnpm --filter @workspace/sales-hub run build
   Output goes to: artifacts/sales-hub/dist/public/
 
 Step 3 — Get deployment token (one-time, or if token rotated):
-  az staticwebapp secrets list --name salesai-cg --resource-group cg_irvine --query "properties.apiKey" -o tsv
+  az staticwebapp secrets list --name salesai-cg2 --resource-group cg_irvine --query "properties.apiKey" -o tsv
 
 Step 4 — Deploy to Static Web App:
   swa deploy artifacts/sales-hub/dist/public \
     --deployment-token "<token from step 3>" \
     --env production
 
-  Live URL: https://jolly-cliff-04bac391e.6.azurestaticapps.net
+  Live URL: https://calm-grass-06c54321e.6.azurestaticapps.net
 
 
 USEFUL COMMANDS
 ---------------
 # Stream live app logs:
-  az webapp log tail --name salesai-api --resource-group cg_irvine
+  az webapp log tail --name salesai-cg2-api --resource-group cg_irvine
 
 # Enable application logging (first time):
-  az webapp log config --name salesai-api --resource-group cg_irvine \
+  az webapp log config --name salesai-cg2-api --resource-group cg_irvine \
     --application-logging filesystem --level information
 
 # Check deployment status:
-  az webapp deployment list --name salesai-api --resource-group cg_irvine -o table
+  az webapp deployment list --name salesai-cg2-api --resource-group cg_irvine -o table
 
 # Restart the app:
-  az webapp restart --name salesai-api --resource-group cg_irvine
+  az webapp restart --name salesai-cg2-api --resource-group cg_irvine
 
 # List all Static Web App environments:
-  az staticwebapp environment list --name salesai-cg --resource-group cg_irvine -o table
+  az staticwebapp environment list --name salesai-cg2 --resource-group cg_irvine -o table

@@ -25,7 +25,7 @@ export function CTA() {
           </p>
 
           <a
-            href="https://jolly-cliff-04bac391e.6.azurestaticapps.net"
+            href="https://calm-grass-06c54321e.6.azurestaticapps.net"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-2 px-10 py-5 bg-white text-background rounded-2xl font-bold text-lg hover:scale-105 active:scale-95 hover:bg-blue-50 transition-all duration-200 shadow-[0_0_40px_rgba(255,255,255,0.2)]"

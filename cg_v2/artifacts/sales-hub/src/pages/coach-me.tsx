@@ -653,7 +653,7 @@ export default function CoachMe() {
                 <Trophy className="w-12 h-12 text-violet-400 animate-pulse mb-6" />
                 <h3 className="text-xl font-semibold text-white mb-2">Generating Your Scorecard...</h3>
                 <p className="text-muted-foreground max-w-sm">
-                  Evaluating your practice session against the VG Way and building a compact report with examples.
+                  Evaluating your practice session against the CG Way and building a compact report with examples.
                 </p>
                 {scorecardPreview && (
                   <div className="mt-6 max-w-3xl rounded-2xl border border-white/8 bg-background/40 p-5 text-left">
@@ -723,7 +723,7 @@ export default function CoachMe() {
                       <Card className="bg-card/40 border-white/5">
                         <CardHeader className="border-b border-white/5 bg-background/30 pb-4">
                           <CardTitle className="text-lg flex items-center gap-2 text-white">
-                            <BookOpen className="w-5 h-5 text-cyan-400" /> VG Way
+                            <BookOpen className="w-5 h-5 text-cyan-400" /> CG Way
                             <span className="text-xs font-normal text-muted-foreground ml-1">- The framework to run the call</span>
                           </CardTitle>
                         </CardHeader>

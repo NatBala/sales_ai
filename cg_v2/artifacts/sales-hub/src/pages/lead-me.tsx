@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Layout } from "@/components/layout";
+import { useMaya } from "@/contexts/maya-context";
 import { resolveApiUrl } from "@/lib/api-url";
 import { useAgentLeadMe } from "@/hooks/use-agents";
 import { useCreateLead } from "@/hooks/use-leads";
@@ -641,6 +642,20 @@ export default function LeadMe() {
   const [savedLeadIdsByIndex, setSavedLeadIdsByIndex] = useState<Record<number, string>>({});
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const responseData = data as LeadSearchResponse | undefined;
+
+  const { autoQuery, clearAutoQuery } = useMaya();
+
+  // Auto-trigger search when Ask Maya sends a query
+  useEffect(() => {
+    if (autoQuery) {
+      setQuery(autoQuery);
+      setSavedIndices([]);
+      setSavedLeadIdsByIndex({});
+      setExpandedIdx(null);
+      generateLeads({ data: { query: autoQuery } });
+      clearAutoQuery();
+    }
+  }, [autoQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [progressStep, setProgressStep] = useState(0);
   const progressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

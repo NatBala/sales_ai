@@ -6,6 +6,7 @@ import meetingsRouter from "./meetings";
 import agentsRouter from "./agents";
 import realtimeRouter from "./realtime";
 import voiceRouter from "./voice";
+import mayaRouter from "./maya";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(meetingsRouter);
 router.use(agentsRouter);
 router.use(realtimeRouter);
 router.use(voiceRouter);
+router.use(mayaRouter);
 
 export default router;

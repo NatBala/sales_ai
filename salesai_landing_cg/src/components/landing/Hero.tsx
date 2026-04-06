@@ -83,7 +83,7 @@ export function Hero() {
 
           <motion.div variants={item} className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="https://jolly-cliff-04bac391e.6.azurestaticapps.net"
+              href="https://calm-grass-06c54321e.6.azurestaticapps.net"
               target="_blank"
               rel="noreferrer"
               className="group relative px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-semibold text-lg overflow-hidden shadow-glow hover:shadow-glow-strong transition-all duration-300 hover:-translate-y-0.5"

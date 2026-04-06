@@ -625,8 +625,8 @@ export function CoachPractice({ scenario, meeting, onScorecard, onBack }: Props)
             className="gap-2 border-white/10 bg-background/40 text-white hover:bg-background/60"
           >
             <BookOpen className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Show VG Way</span>
-            <span className="sm:hidden">VG Way</span>
+            <span className="hidden sm:inline">Show CG Way</span>
+            <span className="sm:hidden">CG Way</span>
           </Button>
           <Button
             onClick={finishRoleplay}
@@ -835,7 +835,7 @@ export function CoachPractice({ scenario, meeting, onScorecard, onBack }: Props)
           <>
             <motion.button
               type="button"
-              aria-label="Close VG Way panel"
+              aria-label="Close CG Way panel"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -852,7 +852,7 @@ export function CoachPractice({ scenario, meeting, onScorecard, onBack }: Props)
               <div className="flex items-start justify-between border-b border-white/8 px-5 py-4 md:px-6">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-cyan-300/70">Framework</p>
-                  <h3 className="mt-1 text-lg font-bold text-white">VG Way</h3>
+                  <h3 className="mt-1 text-lg font-bold text-white">CG Way</h3>
                   <p className="mt-1 max-w-md text-sm leading-relaxed text-white/65">
                     Use this during the call to keep the conversation consultative, specific, and headed toward a real next step.
                   </p>
