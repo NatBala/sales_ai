@@ -10,7 +10,7 @@ export function Footer() {
         </div>
 
         <div className="text-sm text-muted-foreground text-center md:text-left">
-          &copy; 2026 Capital Group. Built exclusively for internal sales teams.
+          &copy; 2026 Vanguard. Built exclusively for internal sales teams.
         </div>
 
         <div className="flex gap-6">
