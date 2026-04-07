@@ -751,18 +751,42 @@ export function CoachPractice({ scenario, meeting, onScorecard, onBack }: Props)
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-5 md:px-6">
-            <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-dashed border-white/8 bg-card/20 p-10 text-center">
-              <Volume2 className="mb-4 h-10 w-10 text-violet-400/70" />
-              <h3 className="mb-2 text-lg font-semibold text-white">Live transcript hidden</h3>
-              <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
-                Scheduled practice still records the conversation for live coaching and the final scorecard, but the running transcript stays off-screen during the call.
-              </p>
-              <div className="mt-6 rounded-2xl border border-white/8 bg-background/40 px-4 py-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Current Status</p>
-                <p className="mt-1 text-sm font-medium text-white">{statusLabel}</p>
+            {transcript.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center rounded-3xl border border-dashed border-white/8 bg-card/20 p-10 text-center">
+                <Volume2 className="mb-4 h-10 w-10 text-violet-400/70" />
+                <h3 className="mb-2 text-lg font-semibold text-white">
+                  {sessionState === "idle" ? "Start the session to begin" : sessionState === "connecting" ? "Connecting…" : "Waiting for conversation…"}
+                </h3>
+                <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">
+                  The conversation will appear here in real time as you speak.
+                </p>
               </div>
-              <div ref={bottomRef} />
-            </div>
+            ) : (
+              <div className="space-y-4">
+                {transcript.map((line) => (
+                  <div
+                    key={line.id}
+                    className={`flex items-start gap-3 ${line.role === "user" ? "flex-row-reverse" : ""}`}
+                  >
+                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                      line.role === "user"
+                        ? "bg-violet-500/20 border border-violet-500/30 text-violet-300"
+                        : "bg-blue-500/20 border border-blue-500/30 text-blue-300"
+                    }`}>
+                      {line.role === "user" ? "You" : initials}
+                    </div>
+                    <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                      line.role === "user"
+                        ? "bg-violet-500/15 border border-violet-500/20 text-white rounded-tr-sm"
+                        : "bg-white/5 border border-white/8 text-white/90 rounded-tl-sm"
+                    } ${line.partial ? "opacity-60" : ""}`}>
+                      {line.content}
+                    </div>
+                  </div>
+                ))}
+                <div ref={bottomRef} />
+              </div>
+            )}
           </div>
         </div>
 
