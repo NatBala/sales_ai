@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useMaya } from "@/contexts/maya-context";
 import { useMeetings } from "@/hooks/use-meetings";
+import { useLeads } from "@/hooks/use-leads";
 import { Mic, Loader2, X, Users, ChevronRight, Sparkles, Bot } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -73,6 +74,7 @@ export function MayaBar() {
     mayaFocused, setMayaFocused,
   } = useMaya();
   const { data: meetingsData } = useMeetings();
+  const { data: leadsData } = useLeads();
 
   const [, navigate] = useLocation();
   const [location] = useLocation();
@@ -120,21 +122,51 @@ export function MayaBar() {
       navigate("/lead-me");
     } else if (result.action === "schedule") {
       if (advisorName) {
-        const matchedLead = selectedLeads.find(l => {
-          const hay = l.generatedLead.name.toLowerCase();
-          return advisorName.toLowerCase().split(/\s+/).some(t => t.length > 1 && hay.includes(t));
+        // 1. Check saved meetings first (have leadId for direct navigation)
+        const needle = advisorName.trim().toLowerCase();
+        const tokens = needle.split(/\s+/);
+        const matchedMeeting = meetings.find(m => {
+          const hay = m.leadName.toLowerCase();
+          if (hay === needle || hay.includes(needle)) return true;
+          return tokens.some(t => t.length > 1 && hay.includes(t));
         });
-        if (matchedLead) {
-          navigate(`/schedule-me/${matchedLead.savedLeadId}`);
+        if (matchedMeeting && (matchedMeeting as { leadId?: string }).leadId) {
+          navigate(`/schedule-me/${(matchedMeeting as { leadId: string }).leadId}`);
         } else {
-          setAutoQuery(advisorName);
+          // 2. Check Maya-queued leads
+          const matchedLead = selectedLeads.find(l => {
+            const hay = l.generatedLead.name.toLowerCase();
+            return tokens.some(t => t.length > 1 && hay.includes(t));
+          });
+          if (matchedLead) {
+            navigate(`/schedule-me/${matchedLead.savedLeadId}`);
+          } else {
+            // 3. Check all saved leads in DB
+            const savedLeads = (leadsData as { leads?: { id: string; name: string }[] })?.leads ?? [];
+            const matchedSaved = savedLeads.find(l => {
+              const hay = l.name.toLowerCase();
+              if (hay === needle || hay.includes(needle)) return true;
+              return tokens.some(t => t.length > 1 && hay.includes(t));
+            });
+            if (matchedSaved) {
+              navigate(`/schedule-me/${matchedSaved.id}`);
+            } else {
+              // 4. Search for advisor in lead-me
+              setAutoQuery(advisorName);
+              navigate("/lead-me");
+            }
+          }
+        }
+      } else {
+        // No name given — open first meeting in My Schedule
+        const firstMeetingLeadId = (meetings[0] as { leadId?: string } | undefined)?.leadId;
+        if (firstMeetingLeadId) {
+          navigate(`/schedule-me/${firstMeetingLeadId}`);
+        } else if (selectedLeads.length > 0) {
+          navigate(`/schedule-me/${selectedLeads[0].savedLeadId}`);
+        } else {
           navigate("/lead-me");
         }
-      } else if (selectedLeads.length === 0) {
-        showMessage("You don't have any advisors selected yet. Let me help you find some first.");
-        navigate("/lead-me");
-      } else {
-        navigate(`/schedule-me/${selectedLeads[0].savedLeadId}`);
       }
     } else if (result.action === "prep") {
       if (advisorName) {

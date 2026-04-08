@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Layout } from "@/components/layout";
 import { useMaya } from "@/contexts/maya-context";
 import { useMeetings } from "@/hooks/use-meetings";
+import { useLeads } from "@/hooks/use-leads";
 import { Mic, Loader2, Sparkles, StopCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -55,6 +56,7 @@ const SUGGESTIONS = [
 export default function AskMaya() {
   const { setAutoQuery, setMayaMeetingId, selectedLeads } = useMaya();
   const { data: meetingsData } = useMeetings();
+  const { data: leadsData } = useLeads();
   const [, navigate] = useLocation();
 
   const [phase, setPhase] = useState<Phase>("idle");
@@ -93,16 +95,50 @@ export default function AskMaya() {
       navigate("/lead-me");
     } else if (result.action === "schedule") {
       if (advisorName) {
-        const matchedLead = selectedLeads.find(l => {
-          const hay = l.generatedLead.name.toLowerCase();
-          return advisorName.toLowerCase().split(/\s+/).some(t => t.length > 1 && hay.includes(t));
+        // 1. Check saved meetings first
+        const needle = advisorName.trim().toLowerCase();
+        const tokens = needle.split(/\s+/);
+        const matchedMeeting = meetings.find(m => {
+          const hay = m.leadName.toLowerCase();
+          if (hay === needle || hay.includes(needle)) return true;
+          return tokens.some(t => t.length > 1 && hay.includes(t));
         });
-        if (matchedLead) navigate(`/schedule-me/${matchedLead.savedLeadId}`);
-        else { setAutoQuery(advisorName); navigate("/lead-me"); }
-      } else if (selectedLeads.length > 0) {
-        navigate(`/schedule-me/${selectedLeads[0].savedLeadId}`);
+        if (matchedMeeting && (matchedMeeting as { leadId?: string }).leadId) {
+          navigate(`/schedule-me/${(matchedMeeting as { leadId: string }).leadId}`);
+        } else {
+          // 2. Check Maya-queued leads
+          const matchedLead = selectedLeads.find(l => {
+            const hay = l.generatedLead.name.toLowerCase();
+            return tokens.some(t => t.length > 1 && hay.includes(t));
+          });
+          if (matchedLead) {
+            navigate(`/schedule-me/${matchedLead.savedLeadId}`);
+          } else {
+            // 3. Check all saved leads in DB
+            const savedLeads = (leadsData as { leads?: { id: string; name: string }[] })?.leads ?? [];
+            const matchedSaved = savedLeads.find(l => {
+              const hay = l.name.toLowerCase();
+              if (hay === needle || hay.includes(needle)) return true;
+              return tokens.some(t => t.length > 1 && hay.includes(t));
+            });
+            if (matchedSaved) {
+              navigate(`/schedule-me/${matchedSaved.id}`);
+            } else {
+              setAutoQuery(advisorName);
+              navigate("/lead-me");
+            }
+          }
+        }
       } else {
-        navigate("/lead-me");
+        // No name given — open first meeting in My Schedule
+        const firstMeetingLeadId = (meetings[0] as { leadId?: string } | undefined)?.leadId;
+        if (firstMeetingLeadId) {
+          navigate(`/schedule-me/${firstMeetingLeadId}`);
+        } else if (selectedLeads.length > 0) {
+          navigate(`/schedule-me/${selectedLeads[0].savedLeadId}`);
+        } else {
+          navigate("/lead-me");
+        }
       }
     } else if (result.action === "prep") {
       if (advisorName) { const id = matchAdvisor(meetings, advisorName); if (id) setMayaMeetingId(id); }
