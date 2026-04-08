@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { setBaseUrl } from "@workspace/api-client-react";
 import { MayaProvider } from "@/contexts/maya-context";
+import { MayaFloat } from "@/components/maya-float";
 
 if (import.meta.env.VITE_API_URL) {
   setBaseUrl(import.meta.env.VITE_API_URL);
@@ -20,7 +21,6 @@ import PrepMe from "@/pages/prep-me";
 import CoachMe from "@/pages/coach-me";
 import EngageMe from "@/pages/engage-me";
 import FollowMe from "@/pages/follow-me";
-import AskMaya from "@/pages/ask-maya";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,7 +44,6 @@ function Router() {
       <Route path="/coach-me" component={CoachMe} />
       <Route path="/engage-me" component={EngageMe} />
       <Route path="/follow-me" component={FollowMe} />
-      <Route path="/ask-maya" component={AskMaya} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -57,6 +56,7 @@ function App() {
         <TooltipProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
             <Router />
+            <MayaFloat />
           </WouterRouter>
           <Toaster />
         </TooltipProvider>

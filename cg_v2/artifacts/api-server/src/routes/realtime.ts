@@ -1586,4 +1586,185 @@ If a response is ever requested, stay minimal and neutral.`,
   }
 });
 
+router.post("/realtime/maya-session", async (req, res) => {
+  try {
+    const {
+      offerSdp,
+      currentPage = "Dashboard",
+      selectedLeadCount = 0,
+    } = req.body as {
+      offerSdp?: string;
+      currentPage?: string;
+      selectedLeadCount?: number;
+    };
+
+    if (!offerSdp) {
+      return res.status(400).json({ error: "offerSdp is required" });
+    }
+
+    const instructions = `You are Maya, an AI assistant inside the Capital Group Sales Hub — an internal sales app for CG sales reps.
+
+Your sole job is to help the user navigate the app using voice. The app has these sections:
+- Lead Me: Find and discover new financial advisor leads
+- My Schedule (leads page): Browse saved advisors and open outreach
+- Schedule Me: Open Schedule Outreach page for a specific advisor
+- Prep Me: Prepare for meetings with advisor talking points
+- My Coach: Practice sales call roleplay
+- Engage Me: Real-time ETF market data during calls
+- Follow Me: Capture meeting notes and follow-up tasks
+
+The user is currently on: ${currentPage}.${selectedLeadCount > 0 ? `\nThey have ${selectedLeadCount} advisor leads selected.` : ""}
+
+Instructions:
+- Respond in 1 short sentence confirming what you'll do, then call the function immediately.
+- Do not ask clarifying questions unless absolutely necessary.
+- Do not describe Capital Group products, funds, or strategies.
+- If unsure which page to go to, use "navigate_to".
+- For scheduling: use "schedule_advisor". If user says "schedule me" with no name, pass no advisorName.
+- For finding leads: use "find_leads" with the user's search criteria as the query.`;
+
+    const sessionPayload = {
+      model: "gpt-4o-realtime-preview-2024-12-17",
+      instructions,
+      audio: {
+        input: {
+          format: { type: "audio/pcm", rate: 24000 },
+          turn_detection: {
+            type: "server_vad",
+            silence_duration_ms: 600,
+            threshold: 0.4,
+            prefix_padding_ms: 300,
+            create_response: true,
+            interrupt_response: true,
+          },
+          transcription: {
+            model: "whisper-1",
+            language: "en",
+            prompt: "Capital Group Sales Hub. Lead Me, Schedule Me, Prep Me, Coach Me, Engage Me, Follow Me. Advisor names, firm names, territory names.",
+          },
+        },
+        output: {
+          format: { type: "audio/pcm", rate: 24000 },
+          voice: "shimmer",
+        },
+      },
+      tools: [
+        {
+          type: "function",
+          name: "navigate_to",
+          description: "Navigate to a page in the app",
+          parameters: {
+            type: "object",
+            properties: {
+              page: {
+                type: "string",
+                enum: ["dashboard", "lead-me", "leads", "prep-me", "coach-me", "engage-me", "follow-me"],
+                description: "The app page to navigate to",
+              },
+            },
+            required: ["page"],
+          },
+        },
+        {
+          type: "function",
+          name: "find_leads",
+          description: "Search for financial advisor leads using a natural language query",
+          parameters: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "Search criteria, e.g. 'large RIAs in California with high ETF opportunity'",
+              },
+            },
+            required: ["query"],
+          },
+        },
+        {
+          type: "function",
+          name: "schedule_advisor",
+          description: "Open Schedule Outreach for a specific advisor, or open My Schedule if no name given",
+          parameters: {
+            type: "object",
+            properties: {
+              advisorName: {
+                type: "string",
+                description: "Name of the advisor to schedule with. Omit if no specific name was given.",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          type: "function",
+          name: "prep_advisor",
+          description: "Go to Prep Me to prepare for a meeting with an advisor",
+          parameters: {
+            type: "object",
+            properties: {
+              advisorName: {
+                type: "string",
+                description: "Name of the advisor to prepare for",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          type: "function",
+          name: "coach_advisor",
+          description: "Go to Coach Me for sales coaching or practice roleplay",
+          parameters: {
+            type: "object",
+            properties: {
+              advisorName: {
+                type: "string",
+                description: "Name of the advisor to practice with",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          type: "function",
+          name: "engage_advisor",
+          description: "Go to Engage Me to start a live call or engagement session with an advisor",
+          parameters: {
+            type: "object",
+            properties: {
+              advisorName: {
+                type: "string",
+                description: "Name of the advisor to engage with",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          type: "function",
+          name: "follow_advisor",
+          description: "Go to Follow Me to capture meeting notes and follow-up tasks for an advisor",
+          parameters: {
+            type: "object",
+            properties: {
+              advisorName: {
+                type: "string",
+                description: "Name of the advisor to follow up with",
+              },
+            },
+            required: [],
+          },
+        },
+      ],
+      tool_choice: "auto",
+    };
+
+    const realtimeSession = await createOpenAIRealtimeSession(offerSdp, sessionPayload);
+    return res.json(realtimeSession);
+  } catch (err) {
+    console.error("Maya realtime session error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;

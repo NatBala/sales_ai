@@ -81,8 +81,17 @@ function emptyAnalysis(): FollowUpAnalysis {
 export default function FollowMe() {
   const { data: meetingsData } = useMeetings();
   const { toast } = useToast();
-
+  const mayaLeadIdRef = useRef(sessionStorage.getItem("maya_follow_lead"));
+  if (mayaLeadIdRef.current) sessionStorage.removeItem("maya_follow_lead");
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const leadId = mayaLeadIdRef.current;
+    if (!leadId || !meetingsData?.meetings) return;
+    const meeting = meetingsData.meetings.find(m => m.leadId === leadId || m.id === leadId);
+    if (meeting) setSelectedMeetingId(meeting.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meetingsData]);
   const [notes, setNotes] = useState("");
   const [analysis, setAnalysis] = useState<FollowUpAnalysis | null>(null);
   const [partialUtterance, setPartialUtterance] = useState("");

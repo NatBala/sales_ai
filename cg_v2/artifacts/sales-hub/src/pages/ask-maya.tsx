@@ -4,30 +4,17 @@ import { Layout } from "@/components/layout";
 import { useMaya } from "@/contexts/maya-context";
 import { useMeetings } from "@/hooks/use-meetings";
 import { useLeads } from "@/hooks/use-leads";
-import { Mic, Loader2, Sparkles, StopCircle } from "lucide-react";
+import { useRealtimeCall } from "@/hooks/use-realtime-call";
+import {
+  Mic, MicOff, Sparkles, PhoneOff, Loader2, Volume2, AlertCircle,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-type Phase = "idle" | "listening" | "thinking" | "done" | "error";
-
 interface Turn {
+  id: string;
   role: "user" | "maya";
   text: string;
-}
-
-interface IntentResult {
-  action: "find_leads" | "schedule" | "prep" | "coach" | "engage" | "follow" | "general";
-  query?: string;
-  targetAdvisor?: string;
-  message: string;
-}
-
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve((reader.result as string).split(",")[1] ?? "");
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+  partial?: boolean;
 }
 
 function matchAdvisor(meetings: { id: string; leadName: string }[], name: string): string | null {
@@ -48,10 +35,13 @@ function matchAdvisor(meetings: { id: string; leadName: string }[], name: string
 
 const SUGGESTIONS = [
   "Find me ESG-focused advisors in New York",
-  "Prep me for my next meeting",
+  "Schedule outreach with my first advisor",
   "Coach me on overcoming fee objections",
   "Show me my follow-up tasks",
 ];
+
+let idCounter = 0;
+function nextId() { return `t-${++idCounter}`; }
 
 export default function AskMaya() {
   const { setAutoQuery, setMayaMeetingId, selectedLeads } = useMaya();
@@ -59,215 +49,185 @@ export default function AskMaya() {
   const { data: leadsData } = useLeads();
   const [, navigate] = useLocation();
 
-  const [phase, setPhase] = useState<Phase>("idle");
   const [turns, setTurns] = useState<Turn[]>([]);
-  const [elapsedSecs, setElapsedSecs] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const mrRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const streamRef = useRef<MediaStream | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const partialMayaIdRef = useRef<string | null>(null);
+  const partialUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [turns]);
 
-  const stopMic = useCallback(() => {
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current = null;
+  const addTurn = useCallback((role: "user" | "maya", text: string, id?: string): string => {
+    const turnId = id ?? nextId();
+    setTurns(prev => [...prev, { id: turnId, role, text }]);
+    return turnId;
   }, []);
 
-  const addTurn = (role: "user" | "maya", text: string) => {
-    setTurns(prev => [...prev, { role, text }]);
-  };
+  const updateTurn = useCallback((id: string, text: string, partial = false) => {
+    setTurns(prev => prev.map(t => t.id === id ? { ...t, text, partial } : t));
+  }, []);
 
-  const handleAction = useCallback(async (result: IntentResult) => {
-    addTurn("maya", result.message);
+  // Navigation helpers
+  const handleScheduleNavigation = useCallback((advisorName?: string) => {
     const meetings = meetingsData?.meetings ?? [];
-    const advisorName = result.targetAdvisor;
-    await new Promise(r => setTimeout(r, 1400));
-
-    if (result.action === "find_leads" && result.query) {
-      setAutoQuery(result.query);
+    if (advisorName?.trim()) {
+      const needle = advisorName.trim().toLowerCase();
+      const tokens = needle.split(/\s+/);
+      const matchedMeeting = meetings.find(m => {
+        const hay = m.leadName.toLowerCase();
+        if (hay === needle || hay.includes(needle)) return true;
+        return tokens.some(t => t.length > 1 && hay.includes(t));
+      });
+      if (matchedMeeting && (matchedMeeting as { leadId?: string }).leadId) {
+        navigate(`/schedule-me/${(matchedMeeting as { leadId: string }).leadId}`); return;
+      }
+      const matchedLead = selectedLeads.find(l => {
+        const hay = l.generatedLead.name.toLowerCase();
+        return tokens.some(t => t.length > 1 && hay.includes(t));
+      });
+      if (matchedLead) { navigate(`/schedule-me/${matchedLead.savedLeadId}`); return; }
+      const savedLeads = (leadsData as { leads?: { id: string; name: string }[] })?.leads ?? [];
+      const matchedSaved = savedLeads.find(l => {
+        const hay = l.name.toLowerCase();
+        if (hay === needle || hay.includes(needle)) return true;
+        return tokens.some(t => t.length > 1 && hay.includes(t));
+      });
+      if (matchedSaved) { navigate(`/schedule-me/${matchedSaved.id}`); return; }
+      setAutoQuery(advisorName);
       navigate("/lead-me");
-    } else if (result.action === "schedule") {
-      if (advisorName) {
-        // 1. Check saved meetings first
-        const needle = advisorName.trim().toLowerCase();
-        const tokens = needle.split(/\s+/);
-        const matchedMeeting = meetings.find(m => {
-          const hay = m.leadName.toLowerCase();
-          if (hay === needle || hay.includes(needle)) return true;
-          return tokens.some(t => t.length > 1 && hay.includes(t));
-        });
-        if (matchedMeeting && (matchedMeeting as { leadId?: string }).leadId) {
-          navigate(`/schedule-me/${(matchedMeeting as { leadId: string }).leadId}`);
-        } else {
-          // 2. Check Maya-queued leads
-          const matchedLead = selectedLeads.find(l => {
-            const hay = l.generatedLead.name.toLowerCase();
-            return tokens.some(t => t.length > 1 && hay.includes(t));
-          });
-          if (matchedLead) {
-            navigate(`/schedule-me/${matchedLead.savedLeadId}`);
-          } else {
-            // 3. Check all saved leads in DB
-            const savedLeads = (leadsData as { leads?: { id: string; name: string }[] })?.leads ?? [];
-            const matchedSaved = savedLeads.find(l => {
-              const hay = l.name.toLowerCase();
-              if (hay === needle || hay.includes(needle)) return true;
-              return tokens.some(t => t.length > 1 && hay.includes(t));
-            });
-            if (matchedSaved) {
-              navigate(`/schedule-me/${matchedSaved.id}`);
-            } else {
-              setAutoQuery(advisorName);
-              navigate("/lead-me");
-            }
-          }
-        }
-      } else {
-        // No name given — open first meeting in My Schedule
-        const firstMeetingLeadId = (meetings[0] as { leadId?: string } | undefined)?.leadId;
-        if (firstMeetingLeadId) {
-          navigate(`/schedule-me/${firstMeetingLeadId}`);
-        } else if (selectedLeads.length > 0) {
-          navigate(`/schedule-me/${selectedLeads[0].savedLeadId}`);
-        } else {
-          navigate("/lead-me");
-        }
-      }
-    } else if (result.action === "prep") {
-      if (advisorName) { const id = matchAdvisor(meetings, advisorName); if (id) setMayaMeetingId(id); }
-      navigate("/prep-me");
-    } else if (result.action === "coach") {
-      if (advisorName) { const id = matchAdvisor(meetings, advisorName); if (id) setMayaMeetingId(id); }
-      navigate("/coach-me");
-    } else if (result.action === "engage") {
-      if (advisorName) { const id = matchAdvisor(meetings, advisorName); if (id) setMayaMeetingId(id); }
-      navigate("/engage-me");
-    } else if (result.action === "follow") {
-      if (advisorName) { const id = matchAdvisor(meetings, advisorName); if (id) setMayaMeetingId(id); }
-      navigate("/follow-me");
     } else {
-      setPhase("idle");
+      const firstMeetingLeadId = meetings[0]?.leadId;
+      if (firstMeetingLeadId) navigate(`/schedule-me/${firstMeetingLeadId}`);
+      else if (selectedLeads.length > 0) navigate(`/schedule-me/${selectedLeads[0].savedLeadId}`);
+      else navigate("/leads");
     }
-  }, [selectedLeads, meetingsData, navigate, setAutoQuery, setMayaMeetingId]);
+  }, [meetingsData, selectedLeads, leadsData, navigate, setAutoQuery]);
 
-  const processAudio = useCallback(async (blob: Blob) => {
-    setPhase("thinking");
-    setErrorMsg(null);
-
-    if (blob.size < 500) {
-      setErrorMsg("Too short — try again and speak clearly.");
-      setPhase("error");
-      setTimeout(() => { setPhase("idle"); setErrorMsg(null); }, 3000);
-      return;
+  const handlePrepNavigation = useCallback((advisorName?: string) => {
+    const meetings = meetingsData?.meetings ?? [];
+    if (advisorName?.trim()) {
+      const id = matchAdvisor(meetings, advisorName);
+      if (id) setMayaMeetingId(id);
     }
+    navigate("/prep-me");
+  }, [meetingsData, navigate, setMayaMeetingId]);
 
-    try {
-      const base64 = await blobToBase64(blob);
-      const tsRes = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/voice/transcribe`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audio: base64 }),
-      });
-      if (!tsRes.ok) throw new Error(`Transcription failed (${tsRes.status})`);
-      const { transcript } = await tsRes.json() as { transcript: string };
+  const handleCoachNavigation = useCallback((advisorName?: string) => {
+    const meetings = meetingsData?.meetings ?? [];
+    if (advisorName?.trim()) {
+      const id = matchAdvisor(meetings, advisorName);
+      if (id) setMayaMeetingId(id);
+    }
+    navigate("/coach-me");
+  }, [meetingsData, navigate, setMayaMeetingId]);
 
-      if (!transcript?.trim()) {
-        setErrorMsg("Didn't catch that — try again.");
-        setPhase("error");
-        setTimeout(() => { setPhase("idle"); setErrorMsg(null); }, 3000);
-        return;
-      }
+  const { connectionState, agentSpeaking, isMuted, startCall, endCall, toggleMute } =
+    useRealtimeCall({
+      playbackWorkletPath: `${import.meta.env.BASE_URL}audio-playback-worklet.js`,
+      captureWorkletPath: `${import.meta.env.BASE_URL}audio-capture-worklet.js`,
 
-      addTurn("user", transcript);
+      onUserTranscriptDelta: (_delta, accumulated) => {
+        if (partialUserIdRef.current) {
+          updateTurn(partialUserIdRef.current, accumulated, true);
+        } else {
+          const id = nextId();
+          partialUserIdRef.current = id;
+          setTurns(prev => [...prev, { id, role: "user", text: accumulated, partial: true }]);
+        }
+      },
+      onUserTranscript: (text) => {
+        if (partialUserIdRef.current) {
+          updateTurn(partialUserIdRef.current, text, false);
+          partialUserIdRef.current = null;
+        } else {
+          addTurn("user", text);
+        }
+      },
 
-      const intentRes = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/agents/maya/intent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transcript,
-          firm: "CG",
-          context: {
-            currentPage: "Ask Maya",
-            selectedLeadCount: selectedLeads.length,
-            selectedLeadNames: selectedLeads.map(l => l.generatedLead.name),
+      onAgentTranscriptDelta: (_delta, accumulated) => {
+        if (partialMayaIdRef.current) {
+          updateTurn(partialMayaIdRef.current, accumulated, true);
+        } else {
+          const id = nextId();
+          partialMayaIdRef.current = id;
+          setTurns(prev => [...prev, { id, role: "maya", text: accumulated, partial: true }]);
+        }
+      },
+      onAgentResponseDone: (text) => {
+        if (partialMayaIdRef.current) {
+          updateTurn(partialMayaIdRef.current, text, false);
+          partialMayaIdRef.current = null;
+        } else {
+          addTurn("maya", text);
+        }
+      },
+
+      onFunctionCall: (toolCall, { sendRealtimeEvent }) => {
+        const { name, callId, argumentsText } = toolCall;
+        let args: Record<string, string> = {};
+        try { args = JSON.parse(argumentsText); } catch { /* ignore */ }
+
+        sendRealtimeEvent({
+          type: "conversation.item.create",
+          item: {
+            type: "function_call_output",
+            call_id: callId ?? "",
+            output: JSON.stringify({ success: true }),
           },
-        }),
-      });
-      if (!intentRes.ok) throw new Error(`Intent failed (${intentRes.status})`);
-      const result = await intentRes.json() as IntentResult;
+        });
 
-      setPhase("done");
-      await handleAction(result);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Something went wrong";
-      setErrorMsg(msg);
-      setPhase("error");
-      setTimeout(() => { setPhase("idle"); setErrorMsg(null); }, 4000);
-    }
-  }, [selectedLeads, handleAction]);
+        setTimeout(() => {
+          if (name === "navigate_to") {
+            const routes: Record<string, string> = {
+              "dashboard": "/", "lead-me": "/lead-me", "leads": "/leads",
+              "prep-me": "/prep-me", "coach-me": "/coach-me",
+              "engage-me": "/engage-me", "follow-me": "/follow-me",
+            };
+            navigate(routes[args.page ?? "dashboard"] ?? "/");
+          } else if (name === "find_leads") {
+            setAutoQuery(args.query ?? "");
+            navigate("/lead-me");
+          } else if (name === "schedule_advisor") {
+            handleScheduleNavigation(args.advisorName || undefined);
+          } else if (name === "prep_advisor") {
+            handlePrepNavigation(args.advisorName || undefined);
+          } else if (name === "coach_advisor") {
+            handleCoachNavigation(args.advisorName || undefined);
+          }
+        }, 800);
+      },
 
-  const startListening = useCallback(async () => {
-    setErrorMsg(null);
-    chunksRef.current = [];
-    let stream: MediaStream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-    } catch {
-      setErrorMsg("Mic access denied");
-      setPhase("error");
-      setTimeout(() => { setPhase("idle"); setErrorMsg(null); }, 3000);
-      return;
-    }
-    streamRef.current = stream;
+      onError: (err) => {
+        setErrorMsg(err.message);
+        setTimeout(() => setErrorMsg(null), 6000);
+      },
+    });
 
-    const mimeType =
-      MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" :
-      MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
-    const mr = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-    mrRef.current = mr;
-    mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-    mr.start(200);
-    setPhase("listening");
-    setElapsedSecs(0);
-    timerRef.current = setInterval(() => setElapsedSecs(s => s + 1), 1000);
-    setTimeout(() => { if (mrRef.current?.state === "recording") stopListening(); }, 20000);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const stopListening = useCallback(() => {
-    const mr = mrRef.current;
-    if (!mr || mr.state !== "recording") return;
-    mr.onstop = () => {
-      stopMic();
-      const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
-      chunksRef.current = [];
-      void processAudio(blob);
-    };
-    mr.stop();
-  }, [stopMic, processAudio]);
-
-  useEffect(() => () => stopMic(), [stopMic]);
-
-  const handleMicClick = () => {
-    if (phase === "listening") stopListening();
-    else if (phase === "idle" || phase === "done") void startListening();
-  };
-
-  const isListening = phase === "listening";
-  const isThinking = phase === "thinking";
+  const isConnected = connectionState === "connected";
+  const isConnecting = connectionState === "connecting";
+  const isIdle = connectionState === "idle" || connectionState === "disconnected";
   const isEmpty = turns.length === 0;
+
+  const handleStart = useCallback(async () => {
+    setErrorMsg(null);
+    await startCall(
+      { currentPage: "Ask Maya", selectedLeadCount: selectedLeads.length },
+      {
+        sessionPath: "/api/realtime/maya-session",
+        initialResponse: null,
+      },
+    );
+  }, [startCall, selectedLeads.length]);
+
+  useEffect(() => () => { endCall(); }, [endCall]);
 
   return (
     <Layout>
       <div className="flex flex-col h-full max-w-2xl mx-auto relative">
 
-        {/* Empty state — centered hero */}
+        {/* Empty state */}
         <AnimatePresence>
           {isEmpty && (
             <motion.div
@@ -278,26 +238,38 @@ export default function AskMaya() {
             >
               {/* Orb */}
               <div className={`relative w-24 h-24 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
-                isListening
-                  ? "bg-red-500/15 border-red-500/50 shadow-[0_0_40px_rgba(239,68,68,0.3)]"
-                  : isThinking
-                  ? "bg-purple-500/15 border-purple-500/50 shadow-[0_0_40px_rgba(168,85,247,0.3)]"
+                isConnecting
+                  ? "bg-purple-500/10 border-purple-500/30"
+                  : agentSpeaking
+                  ? "bg-violet-500/20 border-violet-500/60 shadow-[0_0_50px_rgba(139,92,246,0.4)]"
+                  : isConnected
+                  ? "bg-purple-500/15 border-purple-500/50 shadow-[0_0_40px_rgba(168,85,247,0.25)]"
                   : "bg-purple-500/10 border-purple-500/30 shadow-[0_0_40px_rgba(168,85,247,0.1)]"
               }`}>
-                {isThinking ? (
+                {isConnecting ? (
                   <Loader2 className="w-9 h-9 text-purple-400 animate-spin" />
-                ) : isListening ? (
-                  <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 0.8 }}>
-                    <Mic className="w-9 h-9 text-red-400" />
+                ) : agentSpeaking ? (
+                  <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 0.6 }}>
+                    <Volume2 className="w-9 h-9 text-violet-300" />
                   </motion.div>
                 ) : (
                   <Sparkles className="w-9 h-9 text-purple-400" />
                 )}
-                {isListening && (
+
+                {/* Speaking ripple */}
+                {agentSpeaking && (
                   <motion.span
-                    className="absolute inset-0 rounded-full border border-red-400/40"
-                    animate={{ scale: [1, 1.6], opacity: [0.5, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.5, ease: "easeOut" }}
+                    className="absolute inset-0 rounded-full border border-violet-400/40"
+                    animate={{ scale: [1, 1.7], opacity: [0.6, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.2, ease: "easeOut" }}
+                  />
+                )}
+                {/* Listening ripple */}
+                {isConnected && !agentSpeaking && !isMuted && (
+                  <motion.span
+                    className="absolute inset-0 rounded-full border border-purple-500/30"
+                    animate={{ scale: [1, 1.5], opacity: [0.4, 0] }}
+                    transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
                   />
                 )}
               </div>
@@ -305,32 +277,41 @@ export default function AskMaya() {
               <div className="text-center space-y-2">
                 <h1 className="text-3xl font-bold text-white tracking-tight">Ask Maya</h1>
                 <p className="text-muted-foreground text-sm max-w-xs">
-                  {isListening
-                    ? `Listening… ${elapsedSecs}s`
-                    : isThinking
-                    ? "Processing your request…"
-                    : "Voice-control your entire sales pipeline"}
+                  {isConnecting
+                    ? "Connecting to Maya…"
+                    : agentSpeaking
+                    ? "Maya is speaking…"
+                    : isConnected && isMuted
+                    ? "You're muted — tap to unmute"
+                    : isConnected
+                    ? "Listening — speak your command"
+                    : "Real-time voice assistant for your sales pipeline"}
                 </p>
               </div>
 
-              {errorMsg && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="px-4 py-2.5 rounded-2xl bg-red-950/80 border border-red-500/30 text-red-300 text-sm"
-                >
-                  {errorMsg}
-                </motion.div>
-              )}
+              {/* Error */}
+              <AnimatePresence>
+                {errorMsg && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-red-950/80 border border-red-500/30 text-red-300 text-sm"
+                  >
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    {errorMsg}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-              {/* Suggestions */}
-              {!isListening && !isThinking && (
+              {/* Suggestions — only when idle */}
+              {isIdle && !isConnecting && (
                 <div className="grid grid-cols-2 gap-2 mt-2 w-full max-w-sm">
                   {SUGGESTIONS.map((s) => (
                     <button
                       key={s}
                       className="px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-muted-foreground hover:bg-white/10 hover:text-white hover:border-purple-500/30 transition-all text-left leading-snug"
-                      onClick={() => void startListening()}
+                      onClick={handleStart}
                     >
                       {s}
                     </button>
@@ -341,13 +322,13 @@ export default function AskMaya() {
           )}
         </AnimatePresence>
 
-        {/* Conversation turns */}
+        {/* Conversation transcript */}
         {!isEmpty && (
           <div className="flex-1 overflow-y-auto pt-6 pb-4 space-y-5">
             <AnimatePresence initial={false}>
-              {turns.map((turn, i) => (
+              {turns.map((turn) => (
                 <motion.div
-                  key={i}
+                  key={turn.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.25 }}
@@ -358,7 +339,9 @@ export default function AskMaya() {
                       <Sparkles className="w-4 h-4 text-purple-400" />
                     </div>
                   )}
-                  <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                  <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed transition-opacity ${
+                    turn.partial ? "opacity-60" : "opacity-100"
+                  } ${
                     turn.role === "user"
                       ? "bg-white/10 border border-white/10 text-white rounded-tr-sm"
                       : "bg-purple-500/10 border border-purple-500/20 text-white/90 rounded-tl-sm"
@@ -372,8 +355,8 @@ export default function AskMaya() {
               ))}
             </AnimatePresence>
 
-            {/* Thinking indicator */}
-            {isThinking && (
+            {/* Live speaking indicator */}
+            {agentSpeaking && turns[turns.length - 1]?.role !== "maya" && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -400,32 +383,77 @@ export default function AskMaya() {
           </div>
         )}
 
-        {/* Bottom mic bar — always visible */}
-        <div className={`${isEmpty ? "mt-0" : "pt-4 border-t border-white/5"} pb-2 flex flex-col items-center gap-2`}>
+        {/* Bottom controls */}
+        <div className={`${isEmpty ? "mt-0" : "pt-4 border-t border-white/5"} pb-2 flex flex-col items-center gap-3`}>
+
+          {/* Error (when not empty) */}
+          {!isEmpty && errorMsg && (
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-950/80 border border-red-500/30 text-red-300 text-xs"
+            >
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              {errorMsg}
+            </motion.div>
+          )}
+
           {!isEmpty && (
             <p className="text-xs text-muted-foreground">
-              {isListening ? `${elapsedSecs}s — tap to stop` : isThinking ? "Processing…" : "Tap to speak again"}
+              {isConnecting
+                ? "Connecting…"
+                : agentSpeaking
+                ? "Maya is speaking…"
+                : isConnected && isMuted
+                ? "You're muted"
+                : isConnected
+                ? "Listening — speak your command"
+                : "Session ended"}
             </p>
           )}
-          <button
-            onClick={handleMicClick}
-            disabled={isThinking}
-            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 focus:outline-none ${
-              isListening
-                ? "bg-red-500/20 border-2 border-red-500/50 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.2)] hover:bg-red-500/30"
-                : isThinking
-                ? "bg-purple-500/15 border-2 border-purple-500/30 text-purple-400 cursor-wait opacity-60"
-                : "bg-purple-600/20 border-2 border-purple-500/30 text-purple-300 hover:bg-purple-600/30 hover:border-purple-400/50 hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]"
-            }`}
-          >
-            {isThinking ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : isListening ? (
-              <StopCircle className="w-5 h-5" />
-            ) : (
-              <Mic className="w-5 h-5" />
+
+          <div className="flex items-center gap-3">
+            {/* Mute toggle — only when connected */}
+            {isConnected && (
+              <button
+                onClick={toggleMute}
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 border ${
+                  isMuted
+                    ? "bg-red-500/20 border-red-500/40 text-red-300 hover:bg-red-500/30"
+                    : "bg-white/10 border-white/20 text-white/70 hover:bg-white/20"
+                }`}
+              >
+                {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              </button>
             )}
-          </button>
+
+            {/* Start / End button */}
+            {isIdle || connectionState === "error" ? (
+              <button
+                onClick={handleStart}
+                className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm bg-gradient-to-r from-purple-600/20 to-indigo-600/20 border border-purple-500/30 text-purple-200 hover:from-purple-600/30 hover:to-indigo-600/30 hover:border-purple-400/50 hover:text-white shadow-lg shadow-purple-500/10 transition-all duration-200"
+              >
+                <Sparkles className="w-4 h-4" />
+                Start Maya
+              </button>
+            ) : isConnecting ? (
+              <button
+                disabled
+                className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm bg-purple-500/15 border border-purple-500/30 text-purple-300 cursor-wait opacity-70"
+              >
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Connecting…
+              </button>
+            ) : (
+              <button
+                onClick={() => endCall()}
+                className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm bg-red-500/15 border border-red-500/30 text-red-300 hover:bg-red-500/25 transition-all duration-200"
+              >
+                <PhoneOff className="w-4 h-4" />
+                End Session
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </Layout>

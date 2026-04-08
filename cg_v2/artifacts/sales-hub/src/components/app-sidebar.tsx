@@ -69,17 +69,6 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  className={`hover-elevate transition-all duration-200 ${location === "/ask-maya" ? "bg-purple-500/15 text-purple-200 border border-purple-500/30" : "text-purple-300 hover:text-white hover:bg-purple-500/10 border border-transparent hover:border-purple-500/20"}`}
-                >
-                  <Link href="/ask-maya">
-                    <Sparkles className={location === "/ask-maya" ? "text-purple-300" : "text-purple-400"} />
-                    <span className="font-medium">Ask Maya</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

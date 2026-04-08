@@ -618,7 +618,18 @@ export default function EngageMe() {
   }
   const meetings = Array.from(byLead.values());
 
+  const mayaLeadIdRef = useRef(sessionStorage.getItem("maya_engage_lead"));
+  if (mayaLeadIdRef.current) sessionStorage.removeItem("maya_engage_lead");
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const leadId = mayaLeadIdRef.current;
+    if (!leadId || !meetingsData?.meetings) return;
+    const meeting = meetingsData.meetings.find(m => m.leadId === leadId || m.id === leadId);
+    if (meeting) setSelectedMeetingId(meeting.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meetingsData]);
+
   const [isConnecting, setIsConnecting] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isUserSpeaking, setIsUserSpeaking] = useState(false);
